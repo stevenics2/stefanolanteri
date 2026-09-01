@@ -42,6 +42,7 @@
   let entries = []; // {date, turno, desc}
   let searchTerm = "";
   let filterMode = "all";
+  let didInitialScroll = false;
 
   function saveToStorage(fileName) {
     try {
@@ -361,6 +362,14 @@
     }
 
     els.shiftList.appendChild(frag);
+
+    if (!didInitialScroll) {
+      didInitialScroll = true;
+      const todayEl = els.shiftList.querySelector(".day-row.is-today-row");
+      if (todayEl) {
+        requestAnimationFrame(() => todayEl.scrollIntoView({ behavior: "auto", block: "center" }));
+      }
+    }
   }
 
   loadFromStorage();

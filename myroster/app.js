@@ -43,6 +43,7 @@
   let entries = []; // {date, turno, desc, isRest}
   let searchTerm = "";
   let filterMode = "all";
+  let didInitialScroll = false;
 
   function loadDefaultEntries() {
     const source = Array.isArray(window.DEFAULT_ENTRIES) ? window.DEFAULT_ENTRIES : [];
@@ -369,6 +370,14 @@
     }
 
     els.shiftList.appendChild(frag);
+
+    if (!didInitialScroll) {
+      didInitialScroll = true;
+      const todayEl = els.shiftList.querySelector(".day-row.is-today-row");
+      if (todayEl) {
+        requestAnimationFrame(() => todayEl.scrollIntoView({ behavior: "auto", block: "center" }));
+      }
+    }
   }
 
   if (!loadFromStorage()) {
