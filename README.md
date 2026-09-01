@@ -9,12 +9,12 @@ Webapp statica (HTML/CSS/JS, nessun backend) per caricare un file Excel (`.xls`,
 3. Trascina il tuo file Excel oppure selezionalo dal file picker.
 4. L'app rileva automaticamente:
    - la colonna che contiene le **date**;
-   - la colonna con **turno/orario** (es. `2 (07:00-13:00)`), mostrata come prima riga del blocco;
-   - la colonna con la **descrizione** (es. `112323 - Operativi`), mostrata come seconda riga.
-5. Puoi correggere manualmente le colonne rilevate tramite i menu a tendina, e modificare l'elenco dei **codici di riposo** (es. `RD, FER, MAL, PERM, ROL, L104`) separati da virgola: qualunque riga il cui valore "turno" corrisponde a uno di questi codici viene mostrata come blocco verde a riga singola, invece del blocco blu.
+   - la colonna **Turno** (es. `2`) e la colonna **Orario** (es. `07:00-13:00`), combinate nella prima riga del blocco come `2 (07:00-13:00)`;
+   - la colonna con la **descrizione / unità operativa** (es. `112323 - Operativi`), mostrata come seconda riga.
+5. Se il file ha un secondo foglio chiamato "Legenda" con colonne `Codice`/`Significato` (es. `RD` → `Riposo Domenicale`, `R` → `Riposo`), l'app lo legge automaticamente e precompila i **codici di riposo** con tutti i codici il cui significato contiene "riposo". Puoi comunque correggere manualmente le colonne rilevate e l'elenco dei codici di riposo (separati da virgola): qualunque riga il cui valore "Turno" corrisponde a uno di questi codici viene mostrata come blocco verde a riga singola, invece del blocco blu.
 6. Clicca "Genera vista" per visualizzare l'elenco.
 
-Non è richiesto un formato Excel fisso: basta avere una colonna data e una o due colonne di testo per turno/descrizione. Il file non lascia mai il browser: il parsing avviene interamente lato client con [SheetJS](https://sheetjs.com/), la cui libreria (`vendor/xlsx.full.min.js`, v0.18.5) è inclusa nel repository: l'app funziona anche offline / dietro proxy restrittivi, senza dipendere da CDN esterni.
+Non è richiesto un formato Excel fisso: basta avere una colonna data e una o due colonne di testo per turno/orario/descrizione (la colonna Orario è opzionale — se assente si mostra solo il codice turno). Il file non lascia mai il browser: il parsing avviene interamente lato client con [SheetJS](https://sheetjs.com/), la cui libreria (`vendor/xlsx.full.min.js`, v0.18.5) è inclusa nel repository: l'app funziona anche offline / dietro proxy restrittivi, senza dipendere da CDN esterni.
 
 ## Funzioni della barra superiore
 
@@ -31,7 +31,7 @@ Essendo file statici, puoi pubblicarla ovunque:
 
 - **GitHub Pages**: abilita Pages sul repository puntando alla root (o alla cartella con questi file).
 - **Netlify / Vercel**: drag & drop della cartella, nessuna build necessaria.
-- **Uso locale**: apri direttamente `index.html` nel browser (richiede connessione internet solo per caricare la libreria SheetJS da CDN).
+- **Uso locale**: apri direttamente `index.html` nel browser (funziona anche senza connessione internet, la libreria è inclusa nel repository).
 
 ## Struttura
 

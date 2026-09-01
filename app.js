@@ -14,6 +14,7 @@
     mappingSection: document.getElementById("mappingSection"),
     colDate: document.getElementById("colDate"),
     colTurno: document.getElementById("colTurno"),
+    colOrario: document.getElementById("colOrario"),
     colDesc: document.getElementById("colDesc"),
     restCodes: document.getElementById("restCodes"),
     btnGenerate: document.getElementById("btnGenerate"),
@@ -104,15 +105,20 @@
       try {
         const data = new Uint8Array(evt.target.result);
         const workbook = XLSX.read(data, { type: "array", cellDates: true });
-        const firstSheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[firstSheetName];
+
+        const dataSheetName = workbook.SheetNames.find((n) => !/legend/i.test(n)) || workbook.SheetNames[0];
+        const sheet = workbook.Sheets[dataSheetName];
         sheetRows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, defval: "" });
         if (!sheetRows.length) {
           els.sidebarStatus.textContent = "Il file sembra vuoto.";
           return;
         }
         headers = sheetRows[0].map((h, i) => (h === "" || h == null ? `Colonna ${i + 1}` : String(h)));
-        populateMappingSelects();
+
+        const legendSheetName = workbook.SheetNames.find((n) => /legend/i.test(n));
+        const detectedRestCodes = legendSheetName ? extractRestCodesFromLegend(workbook.Sheets[legendSheetName]) : null;
+
+        populateMappingSelects(detectedRestCodes);
         els.mappingSection.classList.remove("hidden");
       } catch (err) {
         console.error(err);
@@ -122,23 +128,38 @@
     reader.readAsArrayBuffer(file);
   }
 
-  function populateMappingSelects() {
+  function extractRestCodesFromLegend(legendSheet) {
+    const rows = XLSX.utils.sheet_to_json(legendSheet, { header: 1, raw: true, defval: "" });
+    const codes = [];
+    for (const row of rows) {
+      const code = row[0] != null ? String(row[0]).trim() : "";
+      const meaning = row[1] != null ? String(row[1]).trim().toLowerCase() : "";
+      if (code && meaning.includes("riposo")) codes.push(code.toUpperCase());
+    }
+    return codes.length ? codes : null;
+  }
+
+  function populateMappingSelects(detectedRestCodes) {
     const dataRows = sheetRows.slice(1);
     const guesses = guessColumns(headers, dataRows);
 
-    [els.colDate, els.colTurno, els.colDesc].forEach((sel) => (sel.innerHTML = ""));
+    [els.colDate, els.colTurno, els.colOrario, els.colDesc].forEach((sel) => (sel.innerHTML = ""));
     headers.forEach((h, i) => {
-      const opt1 = new Option(h, i);
-      const opt2 = new Option(h, i);
-      const opt3 = new Option(h, i);
-      els.colDate.add(opt1);
-      els.colTurno.add(opt2);
-      els.colDesc.add(opt3);
+      els.colDate.add(new Option(h, i));
+      els.colTurno.add(new Option(h, i));
+      els.colOrario.add(new Option(h, i));
+      els.colDesc.add(new Option(h, i));
     });
+    els.colOrario.add(new Option("— nessuna —", -1));
 
     els.colDate.value = guesses.dateIdx;
     els.colTurno.value = guesses.turnoIdx;
+    els.colOrario.value = guesses.orarioIdx;
     els.colDesc.value = guesses.descIdx;
+
+    if (detectedRestCodes) {
+      els.restCodes.value = detectedRestCodes.join(",");
+    }
   }
 
   function guessColumns(headers, dataRows) {
@@ -157,24 +178,28 @@
 
     const findByKeyword = (keywords, exclude) => {
       for (let c = 0; c < headers.length; c++) {
-        if (c === exclude) continue;
+        if (exclude.includes(c)) continue;
         const h = headers[c].toLowerCase();
         if (keywords.some((k) => h.includes(k))) return c;
       }
       return -1;
     };
 
-    let turnoIdx = findByKeyword(["turno", "orario", "shift", "fascia"], dateIdx);
+    let turnoIdx = findByKeyword(["turno", "shift"], [dateIdx]);
+    if (turnoIdx === -1) turnoIdx = findByKeyword(["codice"], [dateIdx]);
     if (turnoIdx === -1) turnoIdx = headers.findIndex((_, i) => i !== dateIdx);
     if (turnoIdx === -1) turnoIdx = dateIdx;
 
-    let descIdx = findByKeyword(["descr", "reparto", "note", "attivit", "servizio"], dateIdx);
-    if (descIdx === -1 || descIdx === turnoIdx) {
-      descIdx = headers.findIndex((_, i) => i !== dateIdx && i !== turnoIdx);
+    let orarioIdx = findByKeyword(["orario", "fascia"], [dateIdx, turnoIdx]);
+
+    const usedForTurnoOrario = orarioIdx === -1 ? [dateIdx, turnoIdx] : [dateIdx, turnoIdx, orarioIdx];
+    let descIdx = findByKeyword(["descr", "reparto", "note", "attivit", "servizio", "unit"], usedForTurnoOrario);
+    if (descIdx === -1) {
+      descIdx = headers.findIndex((_, i) => !usedForTurnoOrario.includes(i));
     }
     if (descIdx === -1) descIdx = turnoIdx;
 
-    return { dateIdx, turnoIdx, descIdx };
+    return { dateIdx, turnoIdx, orarioIdx, descIdx };
   }
 
   els.btnGenerate.addEventListener("click", () => {
@@ -191,6 +216,7 @@
   function buildEntriesFromMapping() {
     const dateIdx = Number(els.colDate.value);
     const turnoIdx = Number(els.colTurno.value);
+    const orarioIdx = Number(els.colOrario.value);
     const descIdx = Number(els.colDesc.value);
     const restCodes = els.restCodes.value
       .split(",")
@@ -210,10 +236,13 @@
       if (!date) continue;
 
       const turno = row[turnoIdx] != null ? String(row[turnoIdx]).trim() : "";
+      const orario = orarioIdx >= 0 && row[orarioIdx] != null ? String(row[orarioIdx]).trim() : "";
       const desc = row[descIdx] != null ? String(row[descIdx]).trim() : "";
       const isRest = restCodes.includes(turno.toUpperCase()) || (turno === "" && desc !== "" && restCodes.includes(desc.toUpperCase()));
 
-      out.push({ date, turno, desc, isRest });
+      const line1 = isRest || !orario ? turno : `${turno} (${orario})`;
+
+      out.push({ date, turno: line1, desc: isRest ? "" : desc, isRest });
     }
     out.sort((a, b) => a.date - b.date);
     entries = out;
