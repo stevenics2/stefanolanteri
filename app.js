@@ -129,7 +129,10 @@
   });
 
   // --- File loading ---
-  els.fileDrop.addEventListener("click", () => els.fileInput.click());
+  // Note: fileInput lives inside the fileDrop <label>, so clicking the label
+  // already opens the file picker natively. Do NOT also call fileInput.click()
+  // here: firing it twice in the same tick breaks the picker on many mobile
+  // browsers (iOS Safari, Android WebViews) even though desktop tolerates it.
   els.fileDrop.addEventListener("dragover", (e) => {
     e.preventDefault();
     els.fileDrop.classList.add("dragover");
