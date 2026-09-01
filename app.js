@@ -4,6 +4,12 @@
   const WEEKDAYS = ["dom", "lun", "mar", "mer", "gio", "ven", "sab"];
   const MONTHS = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"];
 
+  function formatClock(date) {
+    const h = String(date.getHours()).padStart(2, "0");
+    const m = String(date.getMinutes()).padStart(2, "0");
+    return `${h}:${m}`;
+  }
+
   const els = {
     sidebar: document.getElementById("sidebar"),
     btnMenu: document.getElementById("btnMenu"),
@@ -358,6 +364,14 @@
 
       row.appendChild(label);
       row.appendChild(card);
+
+      if (todayFlag) {
+        const extra = document.createElement("div");
+        extra.className = "day-extra";
+        extra.innerHTML = `<div class="clock-icon">&#128336;</div><div class="clock-time">${formatClock(new Date())}</div>`;
+        row.appendChild(extra);
+      }
+
       frag.appendChild(row);
     }
 
@@ -371,6 +385,11 @@
       }
     }
   }
+
+  setInterval(() => {
+    const el = document.querySelector(".day-extra .clock-time");
+    if (el) el.textContent = formatClock(new Date());
+  }, 30000);
 
   loadFromStorage();
   render();

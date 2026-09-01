@@ -214,6 +214,9 @@ body {
   color: #2c7a2c;
 }
 
+.day-extra .clock-icon { font-size: 17px; line-height: 1; }
+.day-extra .clock-time { font-weight: 700; margin-top: 4px; font-size: 12px; }
+
 .fab {
   position: fixed;
   right: 20px;
