@@ -14,6 +14,8 @@ Webapp statica (HTML/CSS/JS, nessun backend) per caricare un file Excel (`.xls`,
 5. Se il file ha un secondo foglio chiamato "Legenda" con colonne `Codice`/`Significato` (es. `RD` → `Riposo Domenicale`, `R` → `Riposo`), l'app lo legge automaticamente e precompila i **codici di riposo** con tutti i codici il cui significato contiene "riposo". Puoi comunque correggere manualmente le colonne rilevate e l'elenco dei codici di riposo (separati da virgola): qualunque riga il cui valore "Turno" corrisponde a uno di questi codici viene mostrata come blocco verde a riga singola, invece del blocco blu.
 6. Clicca "Genera vista" per visualizzare l'elenco.
 
+I turni generati vengono salvati automaticamente nel `localStorage` del browser: se riapri la pagina (anche chiudendo e riaprendo il browser) la vista è già lì, senza dover ricaricare il file. Il salvataggio è **locale a quel browser/dispositivo**: aprendo il link su un altro telefono o computer, o in navigazione privata, dovrai ricaricare il file una volta. Per rimuovere i dati salvati usa il link "Rimuovi dati salvati dal browser" nel pannello di caricamento.
+
 Non è richiesto un formato Excel fisso: basta avere una colonna data e una o due colonne di testo per turno/orario/descrizione (la colonna Orario è opzionale — se assente si mostra solo il codice turno). Il file non lascia mai il browser: il parsing avviene interamente lato client con [SheetJS](https://sheetjs.com/), la cui libreria (`vendor/xlsx.full.min.js`, v0.18.5) è inclusa nel repository: l'app funziona anche offline / dietro proxy restrittivi, senza dipendere da CDN esterni.
 
 ## Funzioni della barra superiore

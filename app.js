@@ -32,13 +32,60 @@
     btnFilter: document.getElementById("btnFilter"),
     filterBar: document.getElementById("filterBar"),
     btnAdd: document.getElementById("btnAdd"),
+    btnClearSaved: document.getElementById("btnClearSaved"),
   };
+
+  const STORAGE_KEY = "turniViewer.v1";
 
   let sheetRows = []; // array of arrays, row 0 = header
   let headers = [];
   let entries = []; // {date, turno, desc}
   let searchTerm = "";
   let filterMode = "all";
+
+  function saveToStorage(fileName) {
+    try {
+      const payload = {
+        fileName: fileName || "",
+        savedAt: new Date().toISOString(),
+        entries: entries.map((e) => ({ date: e.date.toISOString(), turno: e.turno, desc: e.desc, isRest: e.isRest })),
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    } catch (err) {
+      console.warn("Impossibile salvare i turni nel browser:", err);
+    }
+  }
+
+  function loadFromStorage() {
+    let raw;
+    try {
+      raw = localStorage.getItem(STORAGE_KEY);
+    } catch (err) {
+      return;
+    }
+    if (!raw) return;
+    try {
+      const payload = JSON.parse(raw);
+      entries = payload.entries.map((e) => ({ ...e, date: new Date(e.date) }));
+      if (payload.fileName) {
+        els.fileDropLabel.textContent = `Ultimo file caricato: ${payload.fileName} (carica un nuovo file per aggiornarlo)`;
+      }
+      els.btnClearSaved.classList.remove("hidden");
+    } catch (err) {
+      console.warn("Dati salvati non validi, li ignoro:", err);
+    }
+  }
+
+  els.btnClearSaved.addEventListener("click", () => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (err) {}
+    entries = [];
+    sheetRows = [];
+    els.fileDropLabel.textContent = "Trascina qui il file .xls / .xlsx oppure clicca per selezionarlo";
+    els.btnClearSaved.classList.add("hidden");
+    render();
+  });
 
   function openSidebar() { els.sidebar.classList.remove("hidden"); }
   function closeSidebar() { els.sidebar.classList.add("hidden"); }
@@ -97,7 +144,10 @@
     if (e.target.files.length) handleFile(e.target.files[0]);
   });
 
+  let currentFileName = "";
+
   function handleFile(file) {
+    currentFileName = file.name;
     els.fileDropLabel.textContent = `File: ${file.name}`;
     els.sidebarStatus.textContent = "";
     const reader = new FileReader();
@@ -209,6 +259,8 @@
       return;
     }
     els.sidebarStatus.textContent = `Caricate ${entries.length} righe.`;
+    saveToStorage(currentFileName);
+    els.btnClearSaved.classList.remove("hidden");
     closeSidebar();
     render();
   });
@@ -308,5 +360,6 @@
     els.shiftList.appendChild(frag);
   }
 
+  loadFromStorage();
   render();
 })();

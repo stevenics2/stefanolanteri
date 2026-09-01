@@ -127,6 +127,18 @@ body {
 
 .sidebar-status { margin-top: 14px; font-size: 13px; color: #900; white-space: pre-line; }
 
+.link-btn {
+  display: block;
+  margin-top: 18px;
+  background: none;
+  border: none;
+  color: #a33;
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
 .list-container { padding-bottom: 100px; }
 
 .empty-state {
