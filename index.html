@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Visualizzatore Turni</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <button id="btnMenu" class="icon-btn" title="Menu">&#9776;</button>
+  <div class="topbar-spacer"></div>
+  <button id="btnRefresh" class="icon-btn" title="Aggiorna">&#8635;</button>
+  <button id="btnToday" class="icon-btn" title="Vai a oggi">&#128197;</button>
+  <button id="btnSearch" class="icon-btn" title="Cerca">&#128269;</button>
+  <button id="btnLegend" class="icon-btn" title="Legenda">&#128276;</button>
+  <button id="btnFilter" class="icon-btn" title="Filtra">&#9776;&#65038;</button>
+</header>
+
+<div id="searchBar" class="search-bar hidden">
+  <input type="text" id="searchInput" placeholder="Cerca per data, turno, descrizione..." />
+</div>
+
+<div id="filterBar" class="filter-bar hidden">
+  <label><input type="radio" name="filterMode" value="all" checked /> Tutti</label>
+  <label><input type="radio" name="filterMode" value="shift" /> Solo turni</label>
+  <label><input type="radio" name="filterMode" value="rest" /> Solo riposi</label>
+</div>
+
+<div id="legendPopover" class="legend-popover hidden">
+  <div><span class="swatch shift"></span> Turno di lavoro</div>
+  <div><span class="swatch rest"></span> Riposo / assenza</div>
+</div>
+
+<aside id="sidebar" class="sidebar hidden">
+  <div class="sidebar-header">
+    <h2>Carica turni</h2>
+    <button id="btnCloseSidebar" class="icon-btn">&times;</button>
+  </div>
+
+  <div class="sidebar-section">
+    <label class="file-drop" id="fileDrop">
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" hidden />
+      <span id="fileDropLabel">Trascina qui il file .xls / .xlsx oppure clicca per selezionarlo</span>
+    </label>
+  </div>
+
+  <div id="mappingSection" class="sidebar-section hidden">
+    <h3>Colonne rilevate</h3>
+    <label>Colonna Data
+      <select id="colDate"></select>
+    </label>
+    <label>Colonna Turno / Orario (riga 1)
+      <select id="colTurno"></select>
+    </label>
+    <label>Colonna Descrizione (riga 2)
+      <select id="colDesc"></select>
+    </label>
+    <label>Codici di riposo (separati da virgola)
+      <input type="text" id="restCodes" value="RD,FER,MAL,PERM,ROL,L104" />
+    </label>
+    <button id="btnGenerate" class="primary-btn">Genera vista</button>
+  </div>
+
+  <div id="sidebarStatus" class="sidebar-status"></div>
+</aside>
+
+<main id="listContainer" class="list-container">
+  <div id="emptyState" class="empty-state">
+    <p>Nessun turno caricato.</p>
+    <button id="btnEmptyUpload" class="primary-btn">Carica file Excel</button>
+  </div>
+  <div id="shiftList"></div>
+</main>
+
+<button id="btnAdd" class="fab" title="Carica file">+</button>
+
+<script src="vendor/xlsx.full.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
