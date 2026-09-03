@@ -1,3 +1,5 @@
+> Cerchi la gestione ferie della squadra E / E1? È nella cartella [`ferie/`](./ferie/README.md).
+
 # Visualizzatore Turni
 
 Webapp statica (HTML/CSS/JS, nessun backend) per caricare un file Excel (`.xls`, `.xlsx`) o CSV con i turni annuali e visualizzarlo come una lista giornaliera in stile app mobile, con blocchi blu per i turni di lavoro e blocchi verdi per i riposi (RD, ferie, ecc.).

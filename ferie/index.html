@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ferie</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- Schermata di configurazione mancante -->
+<div id="screenConfigError" class="screen hidden">
+  <div class="center-box">
+    <h1>Configurazione Firebase mancante</h1>
+    <p>Per usare l'app devi prima creare un progetto Firebase gratuito e incollarne le credenziali in <code>ferie/firebase-config.js</code>.</p>
+    <p>Segui le istruzioni nel file <code>ferie/README.md</code>.</p>
+  </div>
+</div>
+
+<!-- Schermata selezione/creazione operatore (primo accesso) -->
+<div id="screenLogin" class="screen hidden">
+  <div class="center-box">
+    <h1>Chi sei?</h1>
+    <p class="subtitle">Seleziona il tuo nome per continuare. La scelta resta salvata su questo dispositivo.</p>
+
+    <div id="loginStatus" class="login-status"></div>
+
+    <div class="login-group">
+      <label for="loginTeamFilter">Squadra</label>
+      <select id="loginTeamFilter">
+        <option value="E">Squadra E</option>
+        <option value="E1">Squadra E1</option>
+      </select>
+    </div>
+
+    <div class="login-group">
+      <label for="operatorSelect">Operatore</label>
+      <select id="operatorSelect">
+        <option value="">— seleziona —</option>
+      </select>
+    </div>
+
+    <button id="btnSelectOperator" class="primary-btn" disabled>Continua</button>
+
+    <button id="btnShowNewOperator" class="link-btn">Non trovi il tuo nome? Aggiungilo</button>
+
+    <div id="newOperatorForm" class="login-group hidden">
+      <label for="newOperatorName">Nome nuovo operatore</label>
+      <input type="text" id="newOperatorName" placeholder="Es. Mario Rossi" />
+      <label for="newOperatorTeam">Squadra</label>
+      <select id="newOperatorTeam">
+        <option value="E">Squadra E</option>
+        <option value="E1">Squadra E1</option>
+      </select>
+      <button id="btnCreateOperator" class="primary-btn">Crea e seleziona</button>
+    </div>
+  </div>
+</div>
+
+<!-- App principale -->
+<div id="screenApp" class="screen hidden">
+  <header class="topbar">
+    <button id="btnMenu" class="icon-btn" title="Menu">&#9776;</button>
+    <div class="team-tabs">
+      <button class="team-tab" data-team="E">Squadra E</button>
+      <button class="team-tab" data-team="E1">Squadra E1</button>
+    </div>
+    <div class="topbar-spacer"></div>
+    <span id="currentOperatorBadge" class="operator-badge"></span>
+  </header>
+
+  <div class="month-nav">
+    <button id="btnPrevMonth" class="icon-btn" title="Mese precedente">&#8592;</button>
+    <div id="monthLabel" class="month-label"></div>
+    <button id="btnNextMonth" class="icon-btn" title="Mese successivo">&#8594;</button>
+    <button id="btnTodayMonth" class="link-btn">Oggi</button>
+  </div>
+
+  <div id="legendBar" class="legend-bar"></div>
+
+  <main class="calendar-wrap">
+    <div id="calendarGrid" class="calendar-grid"></div>
+  </main>
+
+  <section class="add-vacation-panel">
+    <h3>Aggiungi le tue ferie</h3>
+    <div class="add-vacation-row">
+      <label>Dal
+        <input type="date" id="vacationStart" />
+      </label>
+      <label>Al
+        <input type="date" id="vacationEnd" />
+      </label>
+      <button id="btnAddVacation" class="primary-btn">Salva periodo</button>
+    </div>
+    <div id="addVacationStatus" class="status-line"></div>
+  </section>
+
+  <section class="my-vacations-panel">
+    <h3>Le mie ferie salvate</h3>
+    <div id="myVacationsList" class="my-vacations-list"></div>
+  </section>
+</div>
+
+<!-- Sidebar menu -->
+<aside id="sidebar" class="sidebar hidden">
+  <div class="sidebar-header">
+    <h2>Menu</h2>
+    <button id="btnCloseSidebar" class="icon-btn">&times;</button>
+  </div>
+
+  <div class="sidebar-section">
+    <h3>Operatore attuale</h3>
+    <p id="sidebarOperatorInfo"></p>
+    <button id="btnChangeOperator" class="link-btn">Cambia utente</button>
+  </div>
+
+  <div class="sidebar-section">
+    <h3>Carica turni (xlsx)</h3>
+    <p class="hint">Carica il file unico con i turni di tutti gli operatori. Verrà condiviso con tutta la squadra.</p>
+    <label class="file-drop" id="fileDrop">
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" hidden />
+      <span id="fileDropLabel">Trascina qui il file .xls / .xlsx dei turni</span>
+    </label>
+
+    <div id="mappingSection" class="sidebar-section hidden">
+      <h4>Colonne rilevate</h4>
+      <label>Colonna Data
+        <select id="colDate"></select>
+      </label>
+      <label>Colonna Operatore
+        <select id="colOperatore"></select>
+      </label>
+      <label>Colonna Turno
+        <select id="colTurno"></select>
+      </label>
+      <label>Colonna Orario
+        <select id="colOrario"></select>
+      </label>
+      <label>Colonna Descrizione
+        <select id="colDesc"></select>
+      </label>
+      <label>Codici di riposo (separati da virgola)
+        <input type="text" id="restCodes" value="RD,R,FER,MAL,PERM,ROL,L104" />
+      </label>
+      <button id="btnUploadShifts" class="primary-btn">Carica turni condivisi</button>
+    </div>
+    <div id="uploadStatus" class="status-line"></div>
+  </div>
+</aside>
+
+<!-- Modale generico (conflitto / dettaglio giorno / conferma) -->
+<div id="modalOverlay" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="modalTitle"></h3>
+      <button id="btnCloseModal" class="icon-btn">&times;</button>
+    </div>
+    <div id="modalBody" class="modal-body"></div>
+    <div id="modalFooter" class="modal-footer"></div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="vendor/xlsx.full.min.js"></script>
+<script src="firebase-config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
