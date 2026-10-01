@@ -226,3 +226,12 @@ input[type=search]::-webkit-search-cancel-button,input[type=search]::-webkit-sea
 .news-i+.news-i{border-top:1px solid var(--line)}
 .news-i b{display:block;font-size:.92rem;line-height:1.35}
 .news-i small{color:var(--mut);font-size:.74rem}
+
+/* The visible placeholder/label texts are drawn with CSS so that phone browsers
+   do not read the word "name" from the page and offer to autofill contact data. */
+.search .ph{position:relative;flex:1;min-width:0;display:block}
+.search .ph input[type=search]{width:100%}
+.fph{font-style:normal;position:absolute;left:0;top:50%;transform:translateY(-50%);color:var(--mut);font-size:1.05rem;pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.fph::before{content:"Enter Vessel Name"}
+.ph input:not(:placeholder-shown)+.fph{display:none}
+label.l[data-t]::before{content:attr(data-t)}

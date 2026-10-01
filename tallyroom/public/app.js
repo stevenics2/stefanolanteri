@@ -156,7 +156,7 @@ async function home() {
       <svg class="wave" viewBox="0 0 1200 34" preserveAspectRatio="none" aria-hidden="true"><path d="M0 34V14c150 20 300 20 450 6s300-20 450-6 200 16 300 6v14z"/></svg>
     </section>
     <div class="searchbox">
-      <label class="search" role="search">${icon('search')}<input id="q" type="search" name="vsl-q" placeholder="Enter Vessel Name" aria-label="Vessel name" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" enterkeyhint="search" inputmode="search" data-lpignore="true" data-1p-ignore data-form-type="other"></label>
+      <div class="search" role="search">${icon('search')}<span class="ph"><input id="q" type="search" name="vsl-q" placeholder=" " aria-label="Search vessels" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" enterkeyhint="search" inputmode="search" aria-autocomplete="list" data-lpignore="true" data-1p-ignore data-form-type="other"><i class="fph" aria-hidden="true"></i></span></div>
       <div class="card results" id="results" hidden></div>
     </div>
     <div class="card" id="wx-card" hidden>
@@ -273,7 +273,7 @@ async function form({ shipId, name }) {
     <form class="card" id="f" novalidate autocomplete="off">
       <h1 class="t">${shipId ? 'Update this Tally Room' : 'Add a vessel'}</h1>
       ${shipId ? `<p class="muted">Check how the Tally Room of <b>${esc(name)}</b> is today. The boxes are pre-filled with the current status: change whatever is different.</p>` :
-        `<label class="l" for="sn">Vessel name</label><input id="sn" type="search" name="vsl-name" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done" data-lpignore="true" data-1p-ignore data-form-type="other" value="${esc((name || '').toUpperCase())}" maxlength="60" autocapitalize="characters" required>`}
+        `<label class="l" for="sn" data-t="Vessel name"></label><input id="sn" type="search" name="vsl-name" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done" data-lpignore="true" data-1p-ignore data-form-type="other" value="${esc((name || '').toUpperCase())}" maxlength="60" autocapitalize="characters" required>`}
       <label class="l">Is there a Tally Room on board?</label>
       <div class="yn" id="yn" role="radiogroup" aria-label="Tally Room present">
         <button type="button" class="yes" data-v="1" role="radio" aria-checked="false">${icon('check')} YES</button>
