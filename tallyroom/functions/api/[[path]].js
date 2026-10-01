@@ -83,6 +83,37 @@ const SHIP_STATS = `
   (SELECT COUNT(*) FROM reviews r WHERE r.ship_id = s.id AND r.status='approved') AS review_count`;
 const withFlag = (rows) => rows.map((r) => ({ ...r, name: up(r.name), not_present: r.recent_n > 0 && r.recent_n - r.present_n > r.present_n }));
 
+// ---- email all'amministratore (Resend). Se non configurata, non fa nulla. ----
+async function sendEmail(env, { subject, text }) {
+  if (!env.RESEND_API_KEY || !env.ADMIN_EMAIL) return;
+  try {
+    await fetch(env.RESEND_API_URL || 'https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        from: env.MAIL_FROM || 'Tally Rooms <notifications@tallyrooms.com>',
+        to: [env.ADMIN_EMAIL],
+        subject,
+        text,
+      }),
+    });
+  } catch { /* l'invio dell'email non deve mai bloccare una recensione */ }
+}
+
+async function notifyPending(env, origin, { shipName, isNewShip, hasTally, rating, comment }) {
+  const verdict = hasTally ? `${rating}/5 stars` : 'Tally Room NOT PRESENT';
+  await sendEmail(env, {
+    subject: `${isNewShip ? '[NEW VESSEL] ' : ''}${shipName}: review waiting for approval`,
+    text: [
+      `${isNewShip ? 'New vessel' : 'New review'}: ${shipName}`,
+      `Result: ${verdict}`,
+      ...(comment ? [`Notes: ${comment.slice(0, 300)}`] : []),
+      '',
+      `Approve or reject it here: ${origin}/admin`,
+    ].join('\n'),
+  });
+}
+
 // ---- handlers pubblici ----
 async function searchShips(env, url) {
   const q = normName(url.searchParams.get('q') || '');
@@ -110,7 +141,7 @@ async function topShips(env) {
   return json({ ships: withFlag(results) });
 }
 
-async function submitReview(env, request) {
+async function submitReview(env, request, ctx) {
   const ip = request.headers.get('cf-connecting-ip') || 'unknown';
   const ipHash = await sha(ip + (env.SALT || ''));
   const since = Date.now() - 3600_000;
@@ -142,6 +173,7 @@ async function submitReview(env, request) {
   // nave esistente o nuova
   let shipId = parseInt(form.get('ship_id'), 10);
   const now = Date.now();
+  let isNewShip = false;
   if (shipId) {
     const s = await env.DB.prepare(`SELECT id FROM ships WHERE id=? AND status='approved'`).bind(shipId).first();
     if (!s) return err('Ship not found', 404);
@@ -156,6 +188,7 @@ async function submitReview(env, request) {
         `INSERT INTO ships (name, name_norm, status, created_at) VALUES (?,?, 'pending', ?)`
       ).bind(name, norm, now).run();
       shipId = r.meta.last_row_id;
+      isNewShip = true;
     }
   }
 
@@ -179,6 +212,10 @@ async function submitReview(env, request) {
       `INSERT INTO photos (review_id, ship_id, r2_key, content_type, created_at) VALUES (?,?,?,?,?)`
     ).bind(reviewId, shipId, key, f.type, now).run();
   }
+  const shipRow = await env.DB.prepare('SELECT name FROM ships WHERE id=?').bind(shipId).first();
+  ctx.waitUntil(notifyPending(env, new URL(request.url).origin, {
+    shipName: up(shipRow?.name), isNewShip, hasTally, rating, comment,
+  }));
   return json({ ok: true, pending: true });
 }
 
@@ -297,7 +334,8 @@ async function ensureSchema(env) {
 }
 
 // ---- router ----
-export async function onRequest({ request, env, params }) {
+export async function onRequest({ request, env, params, waitUntil }) {
+  const ctx = { waitUntil: (p) => (waitUntil ? waitUntil(p) : p) };
   const url = new URL(request.url);
   const path = '/' + [].concat(params.path || []).join('/');
   const m = request.method;
@@ -307,7 +345,7 @@ export async function onRequest({ request, env, params }) {
     if (path === '/top' && m === 'GET') return await topShips(env);
     let x;
     if ((x = path.match(/^\/ships\/(\d+)$/)) && m === 'GET') return await getShip(env, +x[1]);
-    if (path === '/reviews' && m === 'POST') return await submitReview(env, request);
+    if (path === '/reviews' && m === 'POST') return await submitReview(env, request, ctx);
     if ((x = path.match(/^\/photos\/(\d+)$/)) && m === 'GET') return await servePhoto(env, request, +x[1]);
     if ((x = path.match(/^\/reviews\/(\d+)\/report$/)) && m === 'POST') return await reportReview(env, request, +x[1]);
 
