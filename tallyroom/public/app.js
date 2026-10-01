@@ -46,10 +46,50 @@ const api = async (path, opts) => {
 const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
 const pill = (r) => (r ? `<span class="pill">${star}${Number(r).toFixed(1)}</span>` : '<span class="pill none">No rating</span>');
 
+
+// ---------- Hero artwork: container ship (generated, no external assets) ----------
+function wave(y, amp) {
+  let d = `M-400 ${y}`;
+  for (let x = -400; x < 800; x += 100) d += `c25 0 25 ${amp} 50 ${amp}s25-${amp} 50-${amp}`;
+  return d + 'V400H-400z';
+}
+function shipArt() {
+  const tones = ['#ffffff', '#e4f2ff', '#cdebff', '#a9d4fa', '#7fb8f2', '#ffffff', '#d7ecff', '#ffd166'];
+  let boxes = '', seed = 7;
+  const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+  const cw = 13, ch = 7.2, x0 = 112, x1 = 330;
+  for (let x = x0, i = 0; x + cw <= x1; x += cw + 1, i++) {
+    const mid = 1 - Math.abs((x - (x0 + x1) / 2) / ((x1 - x0) / 2));
+    const levels = 3 + Math.round(mid * 2 + rnd());
+    for (let l = 0; l < levels; l++) {
+      const t = tones[Math.floor(rnd() * tones.length)];
+      boxes += `<rect x="${x}" y="${72 - (l + 1) * (ch + .8)}" width="${cw}" height="${ch}" rx="1" fill="${t}" opacity="${t === '#ffd166' ? 0.95 : 0.92}"/>`;
+    }
+  }
+  return `
+  <svg class="art" viewBox="0 0 380 150" role="img" aria-label="Container ship at sea">
+    <defs><linearGradient id="wf" gradientUnits="userSpaceOnUse" x1="0" y1="104" x2="0" y2="150"><stop offset="0" stop-color="#fff" stop-opacity=".3"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient><linearGradient id="wf2" gradientUnits="userSpaceOnUse" x1="0" y1="116" x2="0" y2="150"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+    <g class="ship">
+      <g>${boxes}</g>
+      <path d="M28 72h318l-12 20q-3 6-10 6H46q-12 0-16-10z" fill="#ffffff"/>
+      <path d="M32 90h310l-8 8H48q-10 0-16-8z" fill="#083a78" opacity=".55"/>
+      <rect x="40" y="38" width="48" height="34" rx="2" fill="#f4f9ff"/>
+      <rect x="36" y="28" width="56" height="11" rx="2" fill="#ffffff"/>
+      <rect x="40" y="31" width="48" height="4" rx="1" fill="#126FD5" opacity=".75"/>
+      <g fill="#126FD5" opacity=".55"><rect x="44" y="46" width="40" height="3"/><rect x="44" y="54" width="40" height="3"/><rect x="44" y="62" width="40" height="3"/></g>
+      <rect x="96" y="22" width="12" height="50" rx="2" fill="#cdebff"/><rect x="96" y="22" width="12" height="7" rx="2" fill="#126FD5" opacity=".7"/>
+      <path d="M62 28V14M54 18h16" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+    </g>
+    <path class="w1" d="${wave(104, 8)}" fill="url(#wf)"/>
+    <path class="w2" d="${wave(116, 8)}" fill="url(#wf2)"/>
+  </svg>`;
+}
+
 // ---------- Home ----------
 async function home() {
   $app.innerHTML = `
     <section class="hero">
+      ${shipArt()}
       <h1>Find your <b>tally room</b></h1>
       <p>Real reviews from port workers: ratings, photos and what you will find on board.</p>
       <svg class="wave" viewBox="0 0 1200 34" preserveAspectRatio="none" aria-hidden="true"><path d="M0 34V14c150 20 300 20 450 6s300-20 450-6 200 16 300 6v14z"/></svg>
