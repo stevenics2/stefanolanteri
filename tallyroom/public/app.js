@@ -44,6 +44,7 @@ const api = async (path, opts) => {
   return d;
 };
 const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+const pillNP = '<span class="pill np">' + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg>NOT PRESENT</span>';
 const pill = (r) => (r ? `<span class="pill">${star}${Number(r).toFixed(1)}</span>` : '<span class="pill none">No rating</span>');
 
 
@@ -105,7 +106,7 @@ async function home() {
       ${i != null ? `<span class="rank">${i + 1}</span>` : ''}
       <span class="ship-ico">${icon('ship')}</span>
       <span class="nm"><b>${esc(s.name)}</b><small>${s.review_count} ${s.review_count === 1 ? 'review' : 'reviews'}</small></span>
-      ${pill(s.avg_rating ?? s.seed_rating)}
+      ${s.not_present ? pillNP : pill(s.avg_rating ?? s.seed_rating)}
     </a>`;
   const search = debounce(async () => {
     const v = q.value.trim();
@@ -137,19 +138,23 @@ async function ship(id) {
     <div class="card shiphead">
       <h1>${esc(s.name)}</h1>
       <div class="score">
-        ${s.rating ? `<span class="big">${s.rating.toFixed(1)}</span><div>${stars(s.rating)}<br><span class="badge">${s.review_count} ${s.review_count === 1 ? 'review' : 'reviews'}</span></div>` : '<span class="muted">No rating yet</span>'}
+        ${!s.tally_present
+          ? `<span class="big x">${icon('x')}</span><div><b class="npt">NOT PRESENT</b><br><span class="badge">${s.review_count} ${s.review_count === 1 ? 'review' : 'reviews'}</span></div>`
+          : s.rating ? `<span class="big">${s.rating.toFixed(1)}</span><div>${stars(s.rating)}<br><span class="badge">${s.review_count} ${s.review_count === 1 ? 'review' : 'reviews'}</span></div>` : '<span class="muted">No rating yet</span>'}
       </div>
       <p class="muted" style="margin:12px 0 0">${s.last_update ? `${icon('clock')} Last updated ${fmtDate(s.last_update)}` : (s.seed_rating ? 'Initial rating only, no details yet.' : '')}
-      ${s.review_count ? '<br>Rating and amenities are based on the latest 5 reviews.' : ''}</p>
+      ${s.review_count ? '<br>Based on the latest 5 reviews.' : ''}</p>
       <a class="btn block" href="#/ship/${s.id}/update">${icon('edit')} Update this tally room</a>
     </div>
-    <div class="card"><h2>${icon('check')} Amenities</h2><div class="amen">${amen}</div></div>
+    ${s.tally_present
+      ? `<div class="card"><h2>${icon('check')} Amenities</h2><div class="amen">${amen}</div></div>`
+      : `<div class="card"><h2>${icon('x')} No tally room</h2><p class="muted" style="margin:0">Most recent reports say this vessel does not have a tally room. If that has changed, use <b>Update this tally room</b> above.</p></div>`}
     ${s.photos.length ? `<div class="card"><h2>${icon('image')} Photos</h2><div class="photos">${s.photos.map((p) => `<img loading="lazy" src="/api/photos/${p.id}" data-full="/api/photos/${p.id}" alt="Tally room photo">`).join('')}</div></div>` : ''}
     <div class="card"><h2>${icon('history')} Update history</h2>
       ${s.reviews.length ? s.reviews.map((r) => `
         <div class="rev">
-          <div class="row">${stars(r.rating)}<span class="muted">${fmtDate(r.created_at)}</span></div>
-          <div class="mini">${AMEN.filter(([k]) => r.amenities[k]).map(([k, l]) => `<span>${icon(k)}${l}</span>`).join('') || '<span style="background:var(--bg);color:var(--mut)">No amenities reported</span>'}</div>
+          <div class="row">${r.has_tally ? stars(r.rating) : `<span class="npchip">${icon('x')} Tally room not present</span>`}<span class="muted">${fmtDate(r.created_at)}</span></div>
+          ${r.has_tally ? `<div class="mini">${AMEN.filter(([k]) => r.amenities[k]).map(([k, l]) => `<span>${icon(k)}${l}</span>`).join('') || '<span style="background:var(--bg);color:var(--mut)">No amenities reported</span>'}</div>` : ''}
           ${r.comment ? `<p>${esc(r.comment)}</p>` : ''}
           <button class="linkbtn" data-report="${r.id}">Report</button>
         </div>`).join('') : '<p class="empty">No detailed reviews yet. Be the first!</p>'}
@@ -185,32 +190,50 @@ async function form({ shipId, name }) {
     try { const s = await api('/ships/' + shipId); name = s.name; AMEN.forEach(([k]) => { prev[k] = s.amenities[k] != null && s.amenities[k] >= 0.5; }); }
     catch (e) { $app.innerHTML = `<a class="back" href="#/">${icon('back')} Back</a><div class="card">${esc(e.message)}</div>`; return; }
   }
-  let rating = 0; const photos = [];
+  let rating = 0, hasTally = null; const photos = [];
   $app.innerHTML = `
     <a href="#/${shipId ? 'ship/' + shipId : ''}" class="back">${icon('back')} Back</a>
     <form class="card" id="f" novalidate>
       <h1 class="t">${shipId ? 'Update this tally room' : 'Add a vessel'}</h1>
       ${shipId ? `<p class="muted">Check how the tally room of <b>${esc(name)}</b> is today. The boxes are pre-filled with the current status: change whatever is different.</p>` :
         `<label class="l" for="sn">Vessel name</label><input id="sn" type="text" value="${esc(name || '')}" maxlength="60" required>`}
+      <label class="l">Is there a tally room on board?</label>
+      <div class="yn" id="yn" role="radiogroup" aria-label="Tally room present">
+        <button type="button" class="yes" data-v="1" role="radio" aria-checked="false">${icon('check')} YES</button>
+        <button type="button" class="no" data-v="0" role="radio" aria-checked="false">${icon('x')} NO</button>
+      </div>
+      <div id="details" hidden>
       <label class="l">Overall rating</label>
       <div class="rate-in" id="rate">${[1, 2, 3, 4, 5].map((n) => `<button type="button" data-n="${n}" aria-label="${n} stars">★</button>`).join('')}</div>
       <div class="rate-lbl" id="rl"></div>
       <label class="l">What is there / how is it</label>
       <div class="tiles">${AMEN.map(([k, l]) => `<label class="tile"><input type="checkbox" name="${k}" ${prev[k] ? 'checked' : ''}><span class="face"><span class="ic">${icon(k)}</span>${l}</span></label>`).join('')}</div>
+      </div>
+      <div id="notes" hidden>
       <label class="l" for="cm">Notes (optional)</label>
       <textarea id="cm" rows="3" maxlength="800" placeholder="E.g. dirty, AC not working, key from the second officer…"></textarea>
       <label class="l">${icon('camera')} Photos (max 3)</label>
       <input id="ph" type="file" accept="image/*" multiple>
       <div class="thumbs" id="th"></div>
+      </div>
       <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off">
       <div id="msg" style="margin-top:14px"></div>
-      <button class="btn block" id="go" style="margin-top:8px" type="submit">Submit review</button>
+      <button class="btn block" id="go" style="margin-top:8px" type="submit" hidden>Submit review</button>
       <p class="muted" style="text-align:center">Your review is anonymous and will appear after approval.</p>
     </form>`;
   const rateBtns = [...document.querySelectorAll('#rate button')], rl = document.getElementById('rl');
   rateBtns.forEach((b) => b.addEventListener('click', () => {
     rating = +b.dataset.n; rl.textContent = RATE_TXT[rating];
     rateBtns.forEach((x) => x.classList.toggle('on', +x.dataset.n <= rating));
+  }));
+  // step 1: is there a tally room? Details only appear after answering.
+  const ynBtns = [...document.querySelectorAll('#yn button')];
+  const details = document.getElementById('details'), notes = document.getElementById('notes'), goBtn = document.getElementById('go');
+  ynBtns.forEach((b) => b.addEventListener('click', () => {
+    hasTally = b.dataset.v === '1';
+    ynBtns.forEach((x) => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-checked', on); });
+    details.hidden = !hasTally; notes.hidden = false; goBtn.hidden = false;
+    document.getElementById('msg').innerHTML = '';
   }));
   const th = document.getElementById('th');
   document.getElementById('ph').addEventListener('change', async (e) => {
@@ -224,15 +247,19 @@ async function form({ shipId, name }) {
     e.preventDefault();
     const msg = document.getElementById('msg'), go = document.getElementById('go');
     const fail = (t) => { msg.innerHTML = `<div class="msg err">${esc(t)}</div>`; };
-    if (!rating) return fail('Please choose a rating from 1 to 5 stars.');
+    if (hasTally === null) return fail('Please answer: is there a tally room on board?');
+    if (hasTally && !rating) return fail('Please choose a rating from 1 to 5 stars.');
     const fd = new FormData();
     if (shipId) fd.append('ship_id', shipId);
     else { const n = document.getElementById('sn').value.trim(); if (n.length < 2) return fail('Please enter the vessel name.'); fd.append('ship_name', n); }
-    fd.append('rating', rating);
-    fd.append('amenities', JSON.stringify(Object.fromEntries(AMEN.map(([k]) => [k, e.target.elements[k].checked]))));
+    fd.append('has_tally', hasTally ? '1' : '0');
+    if (hasTally) {
+      fd.append('rating', rating);
+      fd.append('amenities', JSON.stringify(Object.fromEntries(AMEN.map(([k]) => [k, e.target.elements[k].checked]))));
+    }
     fd.append('comment', document.getElementById('cm').value);
     fd.append('website', e.target.elements.website.value);
-    photos.forEach((b, i) => fd.append('photos', b, `photo${i}.${b.type === 'image/webp' ? 'webp' : 'jpg'}`));
+    if (hasTally) photos.forEach((b, i) => fd.append('photos', b, `photo${i}.${b.type === 'image/webp' ? 'webp' : 'jpg'}`));
     go.disabled = true; go.textContent = 'Sending…';
     try {
       await api('/reviews', { method: 'POST', body: fd });

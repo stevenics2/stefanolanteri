@@ -32,20 +32,24 @@ function isAdmin(request, env) {
 // ---- scheda nave: media sulle ultime recensioni approvate + stato comfort ----
 async function buildSheet(env, ship) {
   const { results: revs } = await env.DB.prepare(
-    `SELECT id, rating, amenities, comment, created_at FROM reviews
+    `SELECT id, rating, has_tally, amenities, comment, created_at FROM reviews
      WHERE ship_id = ? AND status = 'approved' ORDER BY created_at DESC, id DESC`
   ).bind(ship.id).all();
   const parsed = revs.map((r) => ({ ...r, amenities: safeJson(r.amenities) }));
   const recent = parsed.slice(0, RECENT);
 
-  // voto = media delle ultime recensioni; il voto iniziale importato vale solo se non ce ne sono
-  const ratings = recent.map((r) => r.rating);
-  const rating = ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : ship.seed_rating;
+  // la tally room è "non presente" se nelle ultime recensioni la maggioranza lo dice
+  const withTally = recent.filter((r) => r.has_tally);
+  const tally_present = !(recent.length && recent.length - withTally.length > withTally.length);
+
+  // voto = media delle ultime recensioni con tally room; il voto iniziale importato vale solo se non ce ne sono
+  const ratings = withTally.map((r) => r.rating);
+  const rating = ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length
+    : (recent.length ? null : ship.seed_rating);
 
   const amenities = {};
   for (const a of AMENITIES) {
-    if (!recent.length) { amenities[a] = null; continue; }
-    amenities[a] = recent.filter((r) => r.amenities[a]).length / recent.length;
+    amenities[a] = withTally.length ? withTally.filter((r) => r.amenities[a]).length / withTally.length : null;
   }
 
   const { results: photos } = await env.DB.prepare(
@@ -58,6 +62,7 @@ async function buildSheet(env, ship) {
     id: ship.id,
     name: ship.name,
     rating,
+    tally_present,
     seed_rating: ship.seed_rating,
     review_count: parsed.length,
     last_update: parsed[0]?.created_at ?? null,
@@ -68,18 +73,24 @@ async function buildSheet(env, ship) {
 }
 function safeJson(s) { try { return JSON.parse(s) || {}; } catch { return {}; } }
 
+const RECENT_SQL = `(SELECT rating, has_tally FROM reviews r WHERE r.ship_id = s.id AND r.status='approved' ORDER BY r.created_at DESC, r.id DESC LIMIT 5)`;
+const SHIP_STATS = `
+  (SELECT ROUND(AVG(CASE WHEN has_tally = 1 THEN rating END), 1) FROM ${RECENT_SQL}) AS avg_rating,
+  (SELECT COALESCE(SUM(has_tally), 0) FROM ${RECENT_SQL}) AS present_n,
+  (SELECT COUNT(*) FROM ${RECENT_SQL}) AS recent_n,
+  (SELECT COUNT(*) FROM reviews r WHERE r.ship_id = s.id AND r.status='approved') AS review_count`;
+const withFlag = (rows) => rows.map((r) => ({ ...r, not_present: r.recent_n > 0 && r.recent_n - r.present_n > r.present_n }));
+
 // ---- handlers pubblici ----
 async function searchShips(env, url) {
   const q = normName(url.searchParams.get('q') || '');
   if (q.length < 2) return json({ ships: [] });
   const { results } = await env.DB.prepare(
-    `SELECT s.id, s.name, s.seed_rating,
-       (SELECT ROUND(AVG(rating),1) FROM (SELECT rating FROM reviews r WHERE r.ship_id = s.id AND r.status='approved' ORDER BY r.created_at DESC, r.id DESC LIMIT 5)) AS avg_rating,
-       (SELECT COUNT(*) FROM reviews r WHERE r.ship_id = s.id AND r.status='approved') AS review_count
+    `SELECT s.id, s.name, s.seed_rating, ${SHIP_STATS}
      FROM ships s WHERE s.status = 'approved' AND s.name_norm LIKE ?
      ORDER BY (s.name_norm LIKE ?) DESC, s.name LIMIT 15`
   ).bind(`%${q}%`, `${q}%`).all();
-  return json({ ships: results });
+  return json({ ships: withFlag(results) });
 }
 
 async function getShip(env, id) {
@@ -90,13 +101,11 @@ async function getShip(env, id) {
 
 async function topShips(env) {
   const { results } = await env.DB.prepare(
-    `SELECT s.id, s.name, s.seed_rating,
-       (SELECT ROUND(AVG(rating),1) FROM (SELECT rating FROM reviews r WHERE r.ship_id = s.id AND r.status='approved' ORDER BY r.created_at DESC, r.id DESC LIMIT 5)) AS avg_rating,
-       (SELECT COUNT(*) FROM reviews r WHERE r.ship_id = s.id AND r.status='approved') AS review_count
-     FROM ships s WHERE s.status='approved'
-     ORDER BY COALESCE(avg_rating, s.seed_rating, 0) DESC, review_count DESC LIMIT 10`
+    `SELECT * FROM (SELECT s.id, s.name, s.seed_rating, ${SHIP_STATS} FROM ships s WHERE s.status='approved')
+     WHERE NOT (recent_n > 0 AND recent_n - present_n > present_n)
+     ORDER BY COALESCE(avg_rating, seed_rating, 0) DESC, review_count DESC LIMIT 10`
   ).all();
-  return json({ ships: results });
+  return json({ ships: withFlag(results) });
 }
 
 async function submitReview(env, request) {
@@ -112,12 +121,20 @@ async function submitReview(env, request) {
   try { form = await request.formData(); } catch { return err('Invalid request'); }
   if (form.get('website')) return json({ ok: true });           // honeypot
 
-  const rating = parseInt(form.get('rating'), 10);
-  if (!(rating >= 1 && rating <= 5)) return err('Invalid rating');
+  const ht = String(form.get('has_tally'));
+  if (ht !== '0' && ht !== '1') return err('Please say whether a tally room is present');
+  const hasTally = ht === '1' ? 1 : 0;
 
-  const amenitiesIn = safeJson(form.get('amenities'));
+  let rating = 0;
   const amenities = {};
-  for (const a of AMENITIES) amenities[a] = !!amenitiesIn[a];
+  if (hasTally) {
+    rating = parseInt(form.get('rating'), 10);
+    if (!(rating >= 1 && rating <= 5)) return err('Invalid rating');
+    const amenitiesIn = safeJson(form.get('amenities'));
+    for (const a of AMENITIES) amenities[a] = !!amenitiesIn[a];
+  } else {
+    for (const a of AMENITIES) amenities[a] = false;
+  }
   const comment = String(form.get('comment') || '').trim().slice(0, 800) || null;
 
   // nave esistente o nuova
@@ -140,16 +157,16 @@ async function submitReview(env, request) {
     }
   }
 
-  const files = form.getAll('photos').filter((f) => f && typeof f === 'object' && f.size > 0).slice(0, MAX_PHOTOS);
+  const files = !hasTally ? [] : form.getAll('photos').filter((f) => f && typeof f === 'object' && f.size > 0).slice(0, MAX_PHOTOS);
   for (const f of files) {
     if (!/^image\/(jpeg|png|webp)$/.test(f.type)) return err('Unsupported photo format');
     if (f.size > MAX_PHOTO_BYTES) return err('Photo too large');
   }
 
   const rev = await env.DB.prepare(
-    `INSERT INTO reviews (ship_id, rating, amenities, comment, status, ip_hash, created_at)
-     VALUES (?,?,?,?, 'pending', ?, ?)`
-  ).bind(shipId, rating, JSON.stringify(amenities), comment, ipHash, now).run();
+    `INSERT INTO reviews (ship_id, rating, has_tally, amenities, comment, status, ip_hash, created_at)
+     VALUES (?,?,?,?,?, 'pending', ?, ?)`
+  ).bind(shipId, rating, hasTally, JSON.stringify(amenities), comment, ipHash, now).run();
   const reviewId = rev.meta.last_row_id;
 
   for (const f of files) {
@@ -192,7 +209,7 @@ async function reportReview(env, request, id) {
 // ---- handlers admin ----
 async function adminQueue(env) {
   const { results: reviews } = await env.DB.prepare(
-    `SELECT r.id, r.rating, r.amenities, r.comment, r.created_at, s.id AS ship_id, s.name AS ship_name, s.status AS ship_status,
+    `SELECT r.id, r.rating, r.has_tally, r.amenities, r.comment, r.created_at, s.id AS ship_id, s.name AS ship_name, s.status AS ship_status,
        (SELECT group_concat(id) FROM photos WHERE review_id = r.id) AS photo_ids
      FROM reviews r JOIN ships s ON s.id = r.ship_id
      WHERE r.status='pending' ORDER BY r.created_at`
@@ -259,12 +276,25 @@ async function adminImport(env, request) {
   return json({ ok: true, imported: stmts.length, skipped });
 }
 
+// ---- migrazione automatica (database creati prima della colonna has_tally) ----
+let schemaChecked = false;
+async function ensureSchema(env) {
+  if (schemaChecked) return;
+  try {
+    await env.DB.prepare('SELECT has_tally FROM reviews LIMIT 1').first();
+  } catch {
+    await env.DB.prepare('ALTER TABLE reviews ADD COLUMN has_tally INTEGER NOT NULL DEFAULT 1').run();
+  }
+  schemaChecked = true;
+}
+
 // ---- router ----
 export async function onRequest({ request, env, params }) {
   const url = new URL(request.url);
   const path = '/' + [].concat(params.path || []).join('/');
   const m = request.method;
   try {
+    await ensureSchema(env);
     if (path === '/ships' && m === 'GET') return await searchShips(env, url);
     if (path === '/top' && m === 'GET') return await topShips(env);
     let x;

@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS ships (
 CREATE TABLE IF NOT EXISTS reviews (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   ship_id     INTEGER NOT NULL REFERENCES ships(id) ON DELETE CASCADE,
-  rating      INTEGER NOT NULL,           -- 1..5
+  rating      INTEGER NOT NULL,           -- 1..5, 0 se la tally room non è presente
+  has_tally   INTEGER NOT NULL DEFAULT 1, -- 1 = tally room presente, 0 = assente
   amenities   TEXT NOT NULL,              -- JSON: {"power220":true,...}
   comment     TEXT,
   status      TEXT NOT NULL DEFAULT 'pending', -- pending | approved | rejected
