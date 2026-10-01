@@ -47,6 +47,10 @@ async function load() {
         <div class="row"><button class="btn bad" data-a="delete">Delete review</button><button class="btn sec" data-a="dismiss">Dismiss</button></div>
       </div>`).join('') || '<p class="muted">No reports.</p>'}
     </div>
+    <div class="card"><h2>Backup</h2>
+      <p class="muted">A full backup of the database is emailed to you every 7 days. You can also download one now (photos are not included).</p>
+      <button class="btn block" id="bk" type="button">Download backup now</button>
+    </div>
     <div class="card"><h2>Manage vessels</h2>
       <p class="muted">Search a vessel to delete it together with all its reviews and photos. This cannot be undone.</p>
       <input id="vq" type="text" placeholder="Search vessel (2+ letters), or leave empty for the newest" autocomplete="off" style="width:100%;padding:13px;border:1.5px solid var(--line);border-radius:12px;font:inherit;background:var(--card);color:var(--ink)">
@@ -72,6 +76,15 @@ async function load() {
     const r = await fetch('/api/photos/' + img.dataset.photo, { headers: { authorization: 'Bearer ' + pw } });
     if (r.ok) img.src = URL.createObjectURL(await r.blob());
   });
+  document.getElementById('bk').onclick = async () => {
+    const b = document.getElementById('bk'); b.disabled = true;
+    try {
+      const r = await fetch('/api/admin/backup', { headers: { authorization: 'Bearer ' + pw } });
+      if (!r.ok) throw new Error('Backup failed');
+      const a = document.createElement('a'); a.href = URL.createObjectURL(await r.blob());
+      a.download = 'tallyrooms-backup-' + new Date().toISOString().slice(0, 10) + '.sql'; document.body.append(a); a.click(); a.remove();
+    } catch (e) { alert(e.message); } finally { b.disabled = false; }
+  };
   const vq = document.getElementById('vq'), vlist = document.getElementById('vlist');
   async function loadShips() {
     try {

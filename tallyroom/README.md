@@ -56,6 +56,17 @@ When a new vessel or review is submitted you get an email right away. While anyt
 
 If the secrets are missing, nothing breaks: no emails are sent. The email address never appears in the code.
 
+## Backups
+- **Weekly email**: the reminder Worker emails a full SQL backup of the database (vessels, reviews, photo records, reports) every 7 days (`BACKUP_EVERY_DAYS` in `reminder/wrangler.toml`). It needs the same secrets as the reminders (`RESEND_API_KEY`, `ADMIN_EMAIL`). The anonymous `ip_hash` values are left out on purpose.
+- **Download now**: `/admin`, card "Backup".
+- **Built-in safety net**: Cloudflare D1 Time Travel can roll the database back to any minute of the last 7 days (30 on paid plans): `npx wrangler d1 time-travel restore tallyroom --timestamp=<unix or ISO time>`.
+- **Photos** live in the R2 bucket and are not in the email. R2 is durable, but a deleted photo (for example by deleting a vessel in `/admin`) cannot be recovered.
+- **Restore from a backup file**: on an empty database run `schema.sql`, then the backup:
+  ```bash
+  npx wrangler d1 execute tallyroom --remote --file=schema.sql
+  npx wrangler d1 execute tallyroom --remote --file=tallyrooms-backup-YYYY-MM-DD.sql
+  ```
+
 ## Local development
 ```bash
 npm install

@@ -444,6 +444,44 @@ async function adminDeleteShip(env, id) {
   return json({ ok: true, photos_deleted: photos.length });
 }
 
+
+// ---- Backup: SQL dump of all data (ip_hash is deliberately left out). Same logic lives in reminder/worker.js ----
+const BACKUP_TABLES = [
+  ['ships', ['id', 'name', 'name_norm', 'seed_rating', 'status', 'created_at']],
+  ['reviews', ['id', 'ship_id', 'rating', 'has_tally', 'capacity', 'amenities', 'comment', 'status', 'created_at']],
+  ['photos', ['id', 'review_id', 'ship_id', 'r2_key', 'content_type', 'created_at']],
+  ['reports', ['id', 'review_id', 'reason', 'created_at']],
+];
+const sqlValue = (v) => (v == null ? 'NULL' : typeof v === 'number' ? String(v) : `'${String(v).replace(/'/g, "''")}'`);
+
+async function buildBackup(env) {
+  const counts = {};
+  let sql = `-- Tally Rooms backup, ${new Date().toISOString()}\n-- Restore: first run schema.sql on an empty database, then run this file.\n`;
+  for (const [table, cols] of BACKUP_TABLES) {
+    let rows;
+    try { rows = (await env.DB.prepare(`SELECT ${cols.join(', ')} FROM ${table} ORDER BY id`).all()).results; }
+    catch { rows = []; }   // a column that does not exist yet in an old database
+    counts[table] = rows.length;
+    for (const r of rows) {
+      sql += `INSERT OR REPLACE INTO ${table} (${cols.join(', ')}) VALUES (${cols.map((c) => sqlValue(r[c])).join(', ')});\n`;
+    }
+  }
+  return { sql, counts };
+}
+
+
+async function adminBackup(env) {
+  const { sql } = await buildBackup(env);
+  const day = new Date().toISOString().slice(0, 10);
+  return new Response(sql, {
+    headers: {
+      'content-type': 'application/sql; charset=utf-8',
+      'content-disposition': `attachment; filename="tallyrooms-backup-${day}.sql"`,
+      'cache-control': 'no-store',
+    },
+  });
+}
+
 async function adminDismissReport(env, id) {
   await env.DB.prepare(`DELETE FROM reports WHERE id=?`).bind(id).run();
   return json({ ok: true });
@@ -517,6 +555,7 @@ export async function onRequest({ request, env, params, waitUntil }) {
       if (path === '/admin/queue' && m === 'GET') return await adminQueue(env);
       if (path === '/admin/import' && m === 'POST') return await adminImport(env, request);
       if (path === '/admin/ships' && m === 'GET') return await adminShips(env, url);
+      if (path === '/admin/backup' && m === 'GET') return await adminBackup(env);
       if ((x = path.match(/^\/admin\/ships\/(\d+)\/delete$/)) && m === 'POST') return await adminDeleteShip(env, +x[1]);
       if ((x = path.match(/^\/admin\/reviews\/(\d+)\/(approve|reject|delete)$/)) && m === 'POST')
         return await adminReview(env, +x[1], x[2]);
