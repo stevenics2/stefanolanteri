@@ -24,8 +24,9 @@ async function sha(text) {
 }
 
 function isAdmin(request, env) {
-  const h = request.headers.get('authorization') || '';
-  return !!env.ADMIN_PASSWORD && h === `Bearer ${env.ADMIN_PASSWORD}`;
+  const h = (request.headers.get('authorization') || '').replace(/^Bearer\s+/, '').trim();
+  const pw = String(env.ADMIN_PASSWORD || '').trim();
+  return !!pw && h === pw;
 }
 
 // ---- scheda nave: media sulle ultime recensioni approvate + stato comfort ----
@@ -273,6 +274,7 @@ export async function onRequest({ request, env, params }) {
     if ((x = path.match(/^\/reviews\/(\d+)\/report$/)) && m === 'POST') return await reportReview(env, request, +x[1]);
 
     if (path.startsWith('/admin/')) {
+      if (!env.ADMIN_PASSWORD) return err('ADMIN_PASSWORD non configurata sul server', 503);
       if (!isAdmin(request, env)) return err('Non autorizzato', 401);
       if (path === '/admin/queue' && m === 'GET') return await adminQueue(env);
       if (path === '/admin/import' && m === 'POST') return await adminImport(env, request);

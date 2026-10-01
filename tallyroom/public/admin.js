@@ -11,6 +11,7 @@ async function api(path, method = 'GET', body) {
     body: body ? JSON.stringify(body) : undefined,
   });
   const d = await r.json().catch(() => ({}));
+  if (r.status === 503) { login(d.error); throw new Error('503'); }
   if (r.status === 401) { sessionStorage.removeItem('tr_admin'); pw = ''; login('Password errata'); throw new Error('401'); }
   if (!r.ok) throw new Error(d.error || 'Errore');
   return d;
