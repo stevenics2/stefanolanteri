@@ -137,6 +137,120 @@ async function searchShips(env, url) {
   return json({ ships: withFlag(results) });
 }
 
+// ---- porti: meteo (MET Norway, uso commerciale ammesso con User-Agent descrittivo) ----
+const PORTS = [
+  ['rotterdam', 'Rotterdam', 'NL', 51.95, 4.14], ['singapore', 'Singapore', 'SG', 1.26, 103.82],
+  ['shanghai', 'Shanghai', 'CN', 31.23, 121.5], ['losangeles', 'Los Angeles', 'US', 33.73, -118.26],
+  ['hamburg', 'Hamburg', 'DE', 53.54, 9.97], ['antwerp', 'Antwerp', 'BE', 51.26, 4.4],
+  ['genoa', 'Genoa', 'IT', 44.41, 8.93], ['piraeus', 'Piraeus', 'GR', 37.94, 23.63],
+  ['jebelali', 'Jebel Ali', 'AE', 25.01, 55.06], ['busan', 'Busan', 'KR', 35.1, 129.04],
+  ['ningbo', 'Ningbo', 'CN', 29.87, 121.55], ['hongkong', 'Hong Kong', 'HK', 22.3, 114.17],
+  ['tangermed', 'Tanger Med', 'MA', 35.89, -5.5], ['algeciras', 'Algeciras', 'ES', 36.13, -5.43],
+  ['valencia', 'Valencia', 'ES', 39.45, -0.32], ['barcelona', 'Barcelona', 'ES', 41.35, 2.17],
+  ['laspezia', 'La Spezia', 'IT', 44.1, 9.83], ['livorno', 'Livorno', 'IT', 43.55, 10.3],
+  ['trieste', 'Trieste', 'IT', 45.65, 13.77], ['civitavecchia', 'Civitavecchia', 'IT', 42.09, 11.79],
+  ['gioiatauro', 'Gioia Tauro', 'IT', 38.43, 15.9], ['felixstowe', 'Felixstowe', 'GB', 51.95, 1.31],
+  ['bremerhaven', 'Bremerhaven', 'DE', 53.55, 8.55], ['lehavre', 'Le Havre', 'FR', 49.48, 0.1],
+  ['santos', 'Santos', 'BR', -23.98, -46.3], ['newyork', 'New York / NJ', 'US', 40.67, -74.04],
+  ['savannah', 'Savannah', 'US', 32.08, -81.09], ['vancouver', 'Vancouver', 'CA', 49.29, -123.11],
+  ['durban', 'Durban', 'ZA', -29.87, 31.03], ['colombo', 'Colombo', 'LK', 6.95, 79.85],
+  ['mumbai', 'Mumbai (JNPT)', 'IN', 18.95, 72.95], ['tokyo', 'Tokyo', 'JP', 35.62, 139.78],
+  ['portsaid', 'Port Said', 'EG', 31.26, 32.3], ['cartagena', 'Cartagena', 'CO', 10.4, -75.53],
+];
+const SITE_UA = 'TallyRooms/1.0 (+https://tallyrooms.com)';
+const WEATHER_TTL = 1800;   // 30 minuti
+const NEWS_TTL = 1200;      // 20 minuti
+
+// piccola cache condivisa (Cache API di Cloudflare); se non disponibile, si va diretti alla fonte
+async function cachedJson(key, ttl, ctx, producer) {
+  let cache = null;
+  try { cache = caches.default; } catch { /* nessuna cache disponibile */ }
+  const req = new Request(`https://cache.tallyrooms.internal/${key}`);
+  if (cache) { const hit = await cache.match(req); if (hit) return hit.json(); }
+  const data = await producer();
+  if (cache && data != null) {
+    ctx.waitUntil(cache.put(req, new Response(JSON.stringify(data), {
+      headers: { 'content-type': 'application/json', 'cache-control': `public, max-age=${ttl}` },
+    })));
+  }
+  return data;
+}
+
+async function portWeather(env, port, ctx) {
+  const [id, name, cc, lat, lon] = port;
+  return cachedJson(`weather/${id}`, WEATHER_TTL, ctx, async () => {
+    try {
+      const base = env.MET_BASE || 'https://api.met.no/weatherapi/locationforecast/2.0/compact';
+      const r = await fetch(`${base}?lat=${lat}&lon=${lon}`, { headers: { 'user-agent': SITE_UA }, signal: AbortSignal.timeout(6000) });
+      if (!r.ok) return null;
+      const t = (await r.json()).properties?.timeseries?.[0]?.data;
+      const d = t?.instant?.details;
+      if (!d || typeof d.air_temperature !== 'number') return null;
+      return {
+        id, name, cc,
+        temp: Math.round(d.air_temperature),
+        wind_kn: Math.round((d.wind_speed || 0) * 1.94384),
+        wind_dir: typeof d.wind_from_direction === 'number' ? Math.round(d.wind_from_direction) : null,
+        symbol: t.next_1_hours?.summary?.symbol_code || t.next_6_hours?.summary?.symbol_code || null,
+        rain_mm: t.next_1_hours?.details?.precipitation_amount ?? null,
+      };
+    } catch { return null; }
+  });
+}
+
+async function weather(env, url, ctx) {
+  const n = Math.min(8, Math.max(1, parseInt(url.searchParams.get('n') || '6', 10) || 6));
+  const pool = [...PORTS];
+  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  const rows = await Promise.all(pool.slice(0, n).map((p) => portWeather(env, p, ctx)));
+  return json({ ports: rows.filter(Boolean) });
+}
+
+// ---- notizie dai porti (feed RSS pubblici; si mostrano solo titolo, link e fonte) ----
+const NEWS_FEEDS = [{ url: 'https://www.porttechnology.org/feed/', source: 'Port Technology International' }];
+
+const decodeEntities = (s) => s
+  .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+  .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(parseInt(d, 10)))
+  .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&');
+const xmlText = (block, tag) => {
+  const m = block.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, 'i'));
+  return m ? decodeEntities(m[1].replace(/^\s*<!\[CDATA\[([\s\S]*?)\]\]>\s*$/, '$1')).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim() : '';
+};
+
+async function readFeed(feed) {
+  try {
+    const r = await fetch(feed.url, { headers: { 'user-agent': SITE_UA, accept: 'application/rss+xml, application/xml, text/xml' }, signal: AbortSignal.timeout(6000) });
+    if (!r.ok) return [];
+    const xml = await r.text();
+    return (xml.match(/<item[\s>][\s\S]*?<\/item>/gi) || []).slice(0, 15).map((it) => {
+      const link = xmlText(it, 'link');
+      const date = Date.parse(xmlText(it, 'pubDate'));
+      return { title: xmlText(it, 'title').slice(0, 170), link, source: feed.source, date: Number.isNaN(date) ? 0 : date };
+    }).filter((x) => x.title && /^https?:\/\//i.test(x.link));
+  } catch { return []; }
+}
+
+async function news(env, ctx) {
+  const feeds = env.NEWS_FEEDS ? env.NEWS_FEEDS.split(',').map((u) => ({ url: u.trim(), source: new URL(u.trim()).hostname.replace(/^www\./, '') })) : NEWS_FEEDS;
+  const items = await cachedJson('news', NEWS_TTL, ctx, async () => {
+    const all = (await Promise.all(feeds.map(readFeed))).flat().sort((a, b) => b.date - a.date);
+    return all.length ? all.slice(0, 3) : null;
+  });
+  return json({ items: items || [] });
+}
+
+async function recent(env) {
+  const { results } = await env.DB.prepare(
+    `SELECT * FROM (
+       SELECT s.id, s.name, s.seed_rating, ${SHIP_STATS},
+         (SELECT MAX(created_at) FROM reviews r WHERE r.ship_id = s.id AND r.status='approved') AS last_update
+       FROM ships s WHERE s.status='approved')
+     WHERE last_update IS NOT NULL ORDER BY last_update DESC LIMIT 6`
+  ).all();
+  return json({ ships: withFlag(results) });
+}
+
 async function getShip(env, id) {
   const ship = await env.DB.prepare(`SELECT * FROM ships WHERE id = ? AND status='approved'`).bind(id).first();
   if (!ship) return err('Ship not found', 404);
@@ -360,6 +474,9 @@ export async function onRequest({ request, env, params, waitUntil }) {
     await ensureSchema(env);
     if (path === '/ships' && m === 'GET') return await searchShips(env, url);
     if (path === '/top' && m === 'GET') return await topShips(env);
+    if (path === '/recent' && m === 'GET') return await recent(env);
+    if (path === '/weather' && m === 'GET') return await weather(env, url, ctx);
+    if (path === '/news' && m === 'GET') return await news(env, ctx);
     let x;
     if ((x = path.match(/^\/ships\/(\d+)$/)) && m === 'GET') return await getShip(env, +x[1]);
     if (path === '/reviews' && m === 'POST') return await submitReview(env, request, ctx);

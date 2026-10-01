@@ -12,6 +12,10 @@ const P = {
   wifi: '<path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/>',
   wc: '<path d="M13 4.56v16.16a1 1 0 0 1-1.24.97L5 20V5.56a2 2 0 0 1 1.5-1.94l4-1A2 2 0 0 1 13 4.56z"/><path d="M13 4h3a2 2 0 0 1 2 2v14M2 20h3M13 20h9M10 12v.01"/>',
   hardhat: '<path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5"/><path d="M14 6a6 6 0 0 1 6 6v3"/><path d="M4 15v-3a6 6 0 0 1 6-6"/><rect x="2" y="15" width="20" height="4" rx="1"/>',
+  cloud: '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/>',
+  news: '<path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8v4h-8z"/>',
+  shuffle: '<path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>',
+  wind: '<path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2M9.6 4.6A2 2 0 1 1 11 8H2M12.6 19.4A2 2 0 1 0 14 16H2"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
   ship: '<path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1 .6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M19.4 14.9 21 9l-9-3-9 3 1.6 5.9"/><path d="M12 6V2M8 8.5V12M16 8.5V12"/>',
   anchor: '<circle cx="12" cy="5" r="2.5"/><path d="M12 7.5V21M7 11h10M4 15a8 8 0 0 0 16 0"/>',
@@ -91,6 +95,57 @@ function shipArt() {
   </svg>`;
 }
 
+const ago = (t) => {
+  const m = Math.max(1, Math.round((Date.now() - t) / 60000));
+  if (m < 60) return `${m} min ago`;
+  const h = Math.round(m / 60); if (h < 24) return `${h} h ago`;
+  const d = Math.round(h / 24); return d === 1 ? 'yesterday' : `${d} days ago`;
+};
+const COMPASS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+const wxEmoji = (sym) => {
+  const s = String(sym || '').replace(/_(day|night|polartwilight)$/, '');
+  if (s.includes('thunder')) return '⛈️';
+  if (s.includes('snow')) return '❄️';
+  if (s.includes('sleet')) return '🌨️';
+  if (s.includes('rain')) return '🌧️';
+  if (s.includes('fog')) return '🌫️';
+  if (s === 'clearsky') return '☀️';
+  if (s === 'fair') return '🌤️';
+  if (s === 'partlycloudy') return '⛅';
+  return s ? '☁️' : '🌡️';
+};
+
+async function loadWeather() {
+  const card = document.getElementById('wx-card'), box = document.getElementById('wx');
+  try {
+    const { ports } = await api('/weather?n=6');
+    if (!ports.length) { card.hidden = true; return; }
+    box.innerHTML = ports.map((p) => {
+      const lvl = p.wind_kn >= 25 ? 'hi' : p.wind_kn >= 15 ? 'mid' : '';
+      const dir = p.wind_dir == null ? '' : COMPASS[Math.round(p.wind_dir / 45) % 8];
+      return `<div class="wx-t ${lvl}">
+        <div class="wx-n"><b>${esc(p.name)}</b><small>${esc(p.cc)}</small></div>
+        <div class="wx-m"><span class="wx-i">${wxEmoji(p.symbol)}</span><span class="wx-d">${p.temp}°C</span></div>
+        <div class="wx-w">${icon('wind')}${p.wind_kn} kn ${dir}${lvl === 'hi' ? ' · strong' : ''}</div>
+      </div>`;
+    }).join('');
+    card.hidden = false;
+  } catch { card.hidden = true; }
+}
+
+async function loadNews() {
+  const card = document.getElementById('news-card'), box = document.getElementById('news');
+  try {
+    const { items } = await api('/news');
+    if (!items.length) { card.hidden = true; return; }
+    box.innerHTML = items.map((n) => `
+      <a class="news-i" href="${esc(n.link)}" target="_blank" rel="noopener noreferrer">
+        <b>${esc(n.title)}</b><small>${esc(n.source)}${n.date ? ' · ' + ago(n.date) : ''}</small>
+      </a>`).join('');
+    card.hidden = false;
+  } catch { card.hidden = true; }
+}
+
 // ---------- Home ----------
 async function home() {
   $app.innerHTML = `
@@ -104,14 +159,24 @@ async function home() {
       <label class="search" role="search">${icon('search')}<input id="q" type="search" name="vsl-q" placeholder="Enter Vessel Name" aria-label="Vessel name" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" enterkeyhint="search" inputmode="search" data-lpignore="true" data-1p-ignore data-form-type="other"></label>
       <div class="card results" id="results" hidden></div>
     </div>
-    <div class="card"><h2>${icon('trophy')} Top rated Tally Rooms</h2><div id="top" class="muted">Loading…</div></div>
+    <div class="card" id="wx-card" hidden>
+      <h2>${icon('cloud')} Ports weather <button class="mini-btn" id="wx-shuffle" type="button" aria-label="Show other ports">${icon('shuffle')} Other ports</button></h2>
+      <div class="wx" id="wx"></div>
+      <p class="attrib">Weather data: <a href="https://www.met.no/en" target="_blank" rel="noopener noreferrer">MET Norway</a></p>
+    </div>
+    <div class="card" id="news-card" hidden>
+      <h2>${icon('news')} Port news</h2>
+      <div id="news"></div>
+      <p class="attrib">Headlines link to the original publisher.</p>
+    </div>
+    <div class="card"><h2>${icon('history')} Recently updated Tally Rooms</h2><div id="recent" class="muted">Loading…</div></div>
     <div class="safety" role="note">${icon('hardhat')}<span>SAFETY FIRST</span>${icon('hardhat')}</div>`;
   const q = document.getElementById('q'), res = document.getElementById('results');
   const item = (s, i) => `
     <a class="ship-item" href="#/ship/${s.id}">
       ${i != null ? `<span class="rank">${i + 1}</span>` : ''}
       <span class="ship-ico">${icon('ship')}</span>
-      <span class="nm"><b>${esc(s.name)}</b><small>${s.review_count} ${s.review_count === 1 ? 'review' : 'reviews'}</small></span>
+      <span class="nm"><b>${esc(s.name)}</b><small>${s.last_update ? 'Updated ' + ago(s.last_update) + ' · ' : ''}${s.review_count} ${s.review_count === 1 ? 'review' : 'reviews'}</small></span>
       ${s.not_present ? pillNP : pill(s.avg_rating ?? s.seed_rating)}
     </a>`;
   const search = debounce(async () => {
@@ -123,9 +188,12 @@ async function home() {
       `<a class="btn sec block" style="margin-top:12px" href="#/new?name=${encodeURIComponent(v)}">${icon('plus')} Add "${esc(v.toUpperCase())}"</a>`;
   }, 250);
   q.addEventListener('input', search);
-  api('/top').then(({ ships }) => {
-    document.getElementById('top').innerHTML = ships.length ? ships.map((s, i) => item(s, i)).join('') : '<p class="empty">No ships yet.</p>';
-  }).catch(() => { document.getElementById('top').textContent = ''; });
+  loadWeather();
+  loadNews();
+  document.getElementById('wx-shuffle').addEventListener('click', loadWeather);
+  api('/recent').then(({ ships }) => {
+    document.getElementById('recent').innerHTML = ships.length ? ships.map((s) => item(s)).join('') : '<p class="empty">No reviews yet. Be the first to update a Tally Room!</p>';
+  }).catch(() => { document.getElementById('recent').textContent = ''; });
 }
 
 // ---------- Ship page ----------

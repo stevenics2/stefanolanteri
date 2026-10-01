@@ -204,3 +204,25 @@ input[type=search]::-webkit-search-cancel-button,input[type=search]::-webkit-sea
   border:6px solid transparent;background-clip:padding-box;position:relative}
 .safety::before{content:"";position:absolute;inset:-6px;border-radius:22px;z-index:-1;background:repeating-linear-gradient(-45deg,#1a1a1a 0 12px,var(--acc) 12px 24px)}
 .safety svg{width:1.5em;height:1.5em;stroke-width:2.2;flex:none}
+
+/* ports weather + news + recent */
+.card h2 .mini-btn{margin-left:auto;display:inline-flex;align-items:center;gap:5px;background:var(--bg);border:1px solid var(--line);color:var(--pri);border-radius:99px;padding:4px 10px;font:inherit;font-size:.72rem;font-weight:700;letter-spacing:0;text-transform:none;cursor:pointer}
+.card h2 .mini-btn svg{width:13px;height:13px}
+.wx{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.wx-t{background:var(--bg);border-radius:14px;padding:10px 12px;border:1.5px solid transparent;min-width:0}
+.wx-n{display:flex;justify-content:space-between;align-items:baseline;gap:6px}
+.wx-n b{font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wx-n small{color:var(--mut);font-size:.68rem;font-weight:700}
+.wx-m{display:flex;align-items:center;gap:8px;margin:2px 0}
+.wx-i{font-size:1.5rem;line-height:1}
+.wx-d{font-size:1.35rem;font-weight:800}
+.wx-w{display:flex;align-items:center;gap:6px;color:var(--mut);font-size:.8rem;font-weight:600}
+.wx-w svg{width:15px;height:15px}
+.wx-t.mid{border-color:var(--acc)}.wx-t.mid .wx-w{color:#9a6a00;font-weight:800}
+.wx-t.hi{border-color:var(--bad);background:var(--badbg)}.wx-t.hi .wx-w{color:var(--bad);font-weight:800}
+@media (prefers-color-scheme:dark){.wx-t.mid .wx-w{color:var(--acc)}}
+.attrib{margin:10px 0 0;font-size:.7rem;color:var(--mut)}.attrib a{color:var(--mut)}
+.news-i{display:block;text-decoration:none;color:inherit;padding:10px 4px}
+.news-i+.news-i{border-top:1px solid var(--line)}
+.news-i b{display:block;font-size:.92rem;line-height:1.35}
+.news-i small{color:var(--mut);font-size:.74rem}
