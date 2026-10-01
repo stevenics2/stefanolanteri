@@ -32,6 +32,24 @@ npx wrangler pages secret put ADMIN_PASSWORD --project-name tally-room
 npx wrangler pages secret put SALT --project-name tally-room
 ```
 
+## Email notifications for the admin
+When a new vessel or review is submitted you get an email right away. While anything stays unapproved for
+3 days or more, you also get a summary email every 3 days. Emails are sent with [Resend](https://resend.com)
+(free: 3,000 emails per month).
+
+1. Create a free Resend account and an **API key**.
+2. Sending address:
+   - quick start: set `MAIL_FROM` to `Tally Rooms <onboarding@resend.dev>`. Resend lets this address write to the email of your own Resend account, which is enough here.
+   - recommended once `tallyrooms.com` is active: add the domain in Resend (it shows DNS records to add on Cloudflare) and use `Tally Rooms <notifications@tallyrooms.com>`, which is the default.
+3. In the Pages project, add these **secrets** (Production and Preview) and redeploy:
+   `RESEND_API_KEY`, `ADMIN_EMAIL` (where you want to receive the emails) and, only for the quick start, `MAIL_FROM`.
+4. Reminders run from a small separate Worker in `reminder/` (Cron Trigger, free):
+   - Create a Worker from this repository with **root directory** `tallyroom/reminder` (deploy command `npx wrangler deploy`), or from the terminal: `cd reminder && npx wrangler deploy`.
+   - Add the same secrets to that Worker: `RESEND_API_KEY`, `ADMIN_EMAIL` and optionally `MAIL_FROM`.
+   - In `reminder/wrangler.toml` you can change the interval (`REMIND_EVERY_DAYS`) and the run time (`crons`).
+
+If the secrets are missing, nothing breaks: no emails are sent. The email address never appears in the code.
+
 ## Local development
 ```bash
 npm install
@@ -46,4 +64,5 @@ D1 5 GB, R2 10 GB with no egress fees, 100,000 function requests per day.
 ## Structure
 - `public/` static frontend (`index.html`, `app.js`, `admin.html`, `admin.js`)
 - `functions/api/[[path]].js` API
+- `reminder/` daily Worker that sends the approval reminders
 - `schema.sql` database tables
