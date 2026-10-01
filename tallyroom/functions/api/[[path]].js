@@ -84,7 +84,7 @@ async function searchShips(env, url) {
 
 async function getShip(env, id) {
   const ship = await env.DB.prepare(`SELECT * FROM ships WHERE id = ? AND status='approved'`).bind(id).first();
-  if (!ship) return err('Nave non trovata', 404);
+  if (!ship) return err('Ship not found', 404);
   return json(await buildSheet(env, ship));
 }
 
@@ -106,14 +106,14 @@ async function submitReview(env, request) {
   const { n } = await env.DB.prepare(
     `SELECT COUNT(*) AS n FROM reviews WHERE ip_hash = ? AND created_at > ?`
   ).bind(ipHash, since).first();
-  if (n >= RATE_LIMIT_PER_HOUR) return err('Troppi invii, riprova più tardi', 429);
+  if (n >= RATE_LIMIT_PER_HOUR) return err('Too many submissions, please try again later', 429);
 
   let form;
-  try { form = await request.formData(); } catch { return err('Richiesta non valida'); }
+  try { form = await request.formData(); } catch { return err('Invalid request'); }
   if (form.get('website')) return json({ ok: true });           // honeypot
 
   const rating = parseInt(form.get('rating'), 10);
-  if (!(rating >= 1 && rating <= 5)) return err('Voto non valido');
+  if (!(rating >= 1 && rating <= 5)) return err('Invalid rating');
 
   const amenitiesIn = safeJson(form.get('amenities'));
   const amenities = {};
@@ -125,11 +125,11 @@ async function submitReview(env, request) {
   const now = Date.now();
   if (shipId) {
     const s = await env.DB.prepare(`SELECT id FROM ships WHERE id=? AND status='approved'`).bind(shipId).first();
-    if (!s) return err('Nave non trovata', 404);
+    if (!s) return err('Ship not found', 404);
   } else {
     const name = cleanName(form.get('ship_name'));
     const norm = normName(name);
-    if (norm.length < 2) return err('Nome nave non valido');
+    if (norm.length < 2) return err('Invalid ship name');
     const ex = await env.DB.prepare(`SELECT id FROM ships WHERE name_norm=?`).bind(norm).first();
     if (ex) shipId = ex.id;
     else {
@@ -142,8 +142,8 @@ async function submitReview(env, request) {
 
   const files = form.getAll('photos').filter((f) => f && typeof f === 'object' && f.size > 0).slice(0, MAX_PHOTOS);
   for (const f of files) {
-    if (!/^image\/(jpeg|png|webp)$/.test(f.type)) return err('Formato foto non supportato');
-    if (f.size > MAX_PHOTO_BYTES) return err('Foto troppo pesante');
+    if (!/^image\/(jpeg|png|webp)$/.test(f.type)) return err('Unsupported photo format');
+    if (f.size > MAX_PHOTO_BYTES) return err('Photo too large');
   }
 
   const rev = await env.DB.prepare(
@@ -167,11 +167,11 @@ async function servePhoto(env, request, id) {
   const p = await env.DB.prepare(
     `SELECT p.r2_key, p.content_type, r.status FROM photos p JOIN reviews r ON r.id=p.review_id WHERE p.id=?`
   ).bind(id).first();
-  if (!p) return err('Non trovata', 404);
+  if (!p) return err('Not found', 404);
   if (p.status !== 'approved' && !isAdmin(request, env))
-    return err('Non trovata', 404);
+    return err('Not found', 404);
   const obj = await env.PHOTOS.get(p.r2_key);
-  if (!obj) return err('Non trovata', 404);
+  if (!obj) return err('Not found', 404);
   return new Response(obj.body, {
     headers: {
       'content-type': p.content_type,
@@ -183,7 +183,7 @@ async function servePhoto(env, request, id) {
 async function reportReview(env, request, id) {
   const body = await request.json().catch(() => ({}));
   const exists = await env.DB.prepare(`SELECT id FROM reviews WHERE id=?`).bind(id).first();
-  if (!exists) return err('Non trovata', 404);
+  if (!exists) return err('Not found', 404);
   await env.DB.prepare(`INSERT INTO reports (review_id, reason, created_at) VALUES (?,?,?)`)
     .bind(id, String(body.reason || '').slice(0, 300), Date.now()).run();
   return json({ ok: true });
@@ -208,7 +208,7 @@ async function adminQueue(env) {
 
 async function adminReview(env, id, action) {
   const rev = await env.DB.prepare(`SELECT ship_id FROM reviews WHERE id=?`).bind(id).first();
-  if (!rev) return err('Non trovata', 404);
+  if (!rev) return err('Not found', 404);
   if (action === 'approve') {
     await env.DB.batch([
       env.DB.prepare(`UPDATE reviews SET status='approved' WHERE id=?`).bind(id),
@@ -226,7 +226,7 @@ async function adminReview(env, id, action) {
         `DELETE FROM ships WHERE id=? AND status='pending' AND NOT EXISTS (SELECT 1 FROM reviews WHERE ship_id=?)`
       ).bind(rev.ship_id, rev.ship_id),
     ]);
-  } else return err('Azione non valida');
+  } else return err('Invalid action');
   return json({ ok: true });
 }
 
@@ -238,7 +238,7 @@ async function adminDismissReport(env, id) {
 // CSV: nome,voto  (separatore , o ; — prima riga intestazione opzionale)
 async function adminImport(env, request) {
   const { csv } = await request.json().catch(() => ({}));
-  if (!csv) return err('CSV mancante');
+  if (!csv) return err('Missing CSV');
   const now = Date.now();
   const stmts = [];
   let skipped = 0;
@@ -274,8 +274,8 @@ export async function onRequest({ request, env, params }) {
     if ((x = path.match(/^\/reviews\/(\d+)\/report$/)) && m === 'POST') return await reportReview(env, request, +x[1]);
 
     if (path.startsWith('/admin/')) {
-      if (!env.ADMIN_PASSWORD) return err('ADMIN_PASSWORD non configurata sul server', 503);
-      if (!isAdmin(request, env)) return err('Non autorizzato', 401);
+      if (!env.ADMIN_PASSWORD) return err('ADMIN_PASSWORD is not configured on the server', 503);
+      if (!isAdmin(request, env)) return err('Unauthorized', 401);
       if (path === '/admin/queue' && m === 'GET') return await adminQueue(env);
       if (path === '/admin/import' && m === 'POST') return await adminImport(env, request);
       if ((x = path.match(/^\/admin\/reviews\/(\d+)\/(approve|reject|delete)$/)) && m === 'POST')
@@ -285,6 +285,6 @@ export async function onRequest({ request, env, params }) {
     }
     return err('Not found', 404);
   } catch (e) {
-    return err('Errore del server', 500);
+    return err('Server error', 500);
   }
 }

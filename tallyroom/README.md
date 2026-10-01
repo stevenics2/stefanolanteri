@@ -1,58 +1,49 @@
 # Tally Room Reviews
 
-Web app in stile booking per recensire le **tally room** delle navi.
-Gira interamente sul piano gratuito di Cloudflare (Pages + D1 + R2).
+A Booking-style web app to review the **tally rooms** found on ships, built for port workers worldwide.
+Runs entirely on Cloudflare's free tier (Pages + D1 + R2).
 
-## Cosa fa
-- Cerca una nave per nome; se non c'è, la aggiungi.
-- Voto a stelle, spunte comfort (220V, clima, sedie, tavolo, pulizia, luci, Wi-Fi, bagno), note e fino a 3 foto.
-- **Aggiorna la scheda**: ogni nuovo invio è un aggiornamento con data. La scheda mostra voto e comfort calcolati sulle **ultime 5 recensioni**, quindi una stanza che peggiora si vede subito. Lo storico resta consultabile.
-- Recensioni **anonime**, pubblicate solo dopo **approvazione manuale** in `/admin`.
-- Le navi della tua lista (nome + voto) si importano da `/admin`. Il voto importato vale finché non arriva la prima recensione.
-- Anti-spam: campo nascosto per i bot e massimo 5 invii all'ora per connessione. Pulsante "Segnala" su ogni recensione.
-- Le foto vengono ridotte sul telefono (circa 200-300 KB) prima dell'invio, così lo spazio gratuito dura a lungo.
+## Features
+- Type a ship name; if it is not in the database yet, add it.
+- Star rating, amenity checklist (power outlets, air conditioning, chairs, desk, cleanliness, lighting, Wi-Fi, toilet nearby), notes and up to 3 photos.
+- **Update this tally room**: every new submission is a dated update. The sheet shows rating and amenities based on the **latest 5 reviews**, so a room that gets dirty or loses its AC shows up quickly. The full history stays visible.
+- Reviews are **anonymous** and published only after **manual approval** in `/admin`.
+- An existing list of ships (name + rating) can be imported from `/admin`. The imported rating is used until the first real review arrives.
+- Anti-spam: hidden honeypot field and at most 5 submissions per hour per connection. Every review has a "Report" button.
+- Photos are resized on the phone (about 200-300 KB) before upload, so the free storage lasts a long time.
 
-## Pubblicazione (una tantum, circa 15 minuti)
-Serve un account Cloudflare gratuito e Node.js.
+## Deploy
+Create a free Cloudflare account, then:
+1. Create a D1 database named `tallyroom`, run the contents of `schema.sql` in its console and put its ID in `wrangler.toml`.
+2. Create an R2 bucket named `tallyroom-photos`.
+3. Create a **Pages** project from this Git repository: root directory `tallyroom`, build output directory `public`, no build command.
+4. Add two **secrets** to the Pages project (Production and Preview): `ADMIN_PASSWORD` and `SALT` (any random phrase), then redeploy.
+5. Open `/admin`, log in, and import your ship list (`name;rating`, see `ships-example.csv`).
 
+CLI alternative:
 ```bash
-cd tallyroom
 npm install
 npx wrangler login
-
-# 1. database
-npx wrangler d1 create tallyroom          # copia il database_id in wrangler.toml
-npm run db:remote                         # crea le tabelle
-
-# 2. spazio foto
+npx wrangler d1 create tallyroom        # copy database_id into wrangler.toml
+npm run db:remote
 npx wrangler r2 bucket create tallyroom-photos
-
-# 3. pubblica il sito
-npx wrangler pages project create tally-room --production-branch main
 npx wrangler pages deploy public --project-name tally-room
-
-# 4. segreti (password admin e sale per l'hash degli IP)
 npx wrangler pages secret put ADMIN_PASSWORD --project-name tally-room
 npx wrangler pages secret put SALT --project-name tally-room
 ```
 
-Il sito sarà su `https://tally-room.pages.dev`. Gli stessi binding D1 e R2 sono letti da `wrangler.toml`.
-Se il deploy non li collega, aggiungili da dashboard: Pages > tally-room > Settings > Bindings (DB = tallyroom, PHOTOS = tallyroom-photos).
-
-Poi apri `/admin`, entra con la password e incolla la tua lista navi (`nome;voto`, vedi `ships-example.csv`).
-
-## Sviluppo in locale
+## Local development
 ```bash
 npm install
 npm run db:local
-npm run dev        # http://localhost:8788  (admin: password "admin", da .dev.vars)
+npm run dev        # http://localhost:8788
 ```
-Crea un file `.dev.vars` con `ADMIN_PASSWORD=...` e `SALT=...`. Non viene committato.
+Create a `.dev.vars` file with `ADMIN_PASSWORD=...` and `SALT=...` (not committed).
 
-## Limiti del piano gratuito (indicativi)
-D1 5 GB, R2 10 GB senza costi di traffico, 100.000 richieste al giorno alle funzioni. Largamente sufficienti per uso di categoria.
+## Free tier limits (approximate)
+D1 5 GB, R2 10 GB with no egress fees, 100,000 function requests per day.
 
-## Struttura
-- `public/` frontend statico (`index.html`, `app.js`, `admin.html`, `admin.js`)
+## Structure
+- `public/` static frontend (`index.html`, `app.js`, `admin.html`, `admin.js`)
 - `functions/api/[[path]].js` API
-- `schema.sql` tabelle del database
+- `schema.sql` database tables
