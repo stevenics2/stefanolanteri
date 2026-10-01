@@ -1,8 +1,38 @@
 'use strict';
+
+// ---------- Icons (inline SVG, Lucide-style) ----------
+const P = {
+  power220: '<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/>',
+  ac: '<path d="M12 2v20M2 12h20M4.9 4.9l14.2 14.2M19.1 4.9 4.9 19.1"/><path d="m9.5 3.5 2.5 2 2.5-2M9.5 20.5l2.5-2 2.5 2M3.5 9.5l2 2.5-2 2.5M20.5 9.5l-2 2.5 2 2.5"/>',
+  chairs: '<path d="M19 9V6a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v3"/><path d="M3 16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v2a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-2a2 2 0 0 0-4 0z"/><path d="M5 18v2M19 18v2"/>',
+  desk: '<rect x="2" y="6" width="20" height="4" rx="1.5"/><path d="M5 10v10M19 10v10M9 14h6"/>',
+  clean: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 3v4M21 5h-4M5 17v4M7 19H3"/>',
+  light: '<path d="M9 18h6M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/>',
+  wifi: '<path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/>',
+  wc: '<path d="M13 4.56v16.16a1 1 0 0 1-1.24.97L5 20V5.56a2 2 0 0 1 1.5-1.94l4-1A2 2 0 0 1 13 4.56z"/><path d="M13 4h3a2 2 0 0 1 2 2v14M2 20h3M13 20h9M10 12v.01"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
+  ship: '<path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1 .6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M19.4 14.9 21 9l-9-3-9 3 1.6 5.9"/><path d="M12 6V2M8 8.5V12M16 8.5V12"/>',
+  anchor: '<circle cx="12" cy="5" r="2.5"/><path d="M12 7.5V21M7 11h10M4 15a8 8 0 0 0 16 0"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+  back: '<path d="m15 18-6-6 6-6"/>',
+  camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0z"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  x: '<path d="M18 6 6 18M6 6l12 12"/>',
+  history: '<path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/>',
+  image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>',
+};
+const icon = (k) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${P[k] || ''}</svg>`;
+const star = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>';
+
 const AMEN = [
-  ['power220', 'Power outlets'], ['ac', 'Air conditioning'], ['chairs', 'Chairs'], ['desk', 'Desk / table'],
+  ['power220', '220V power'], ['ac', 'Air conditioning'], ['chairs', 'Chairs'], ['desk', 'Desk / table'],
   ['clean', 'Cleanliness'], ['light', 'Good lighting'], ['wifi', 'Wi-Fi'], ['wc', 'Toilet nearby'],
 ];
+
+document.getElementById('brand').innerHTML = `${icon('anchor')}Tally Room <span>Reviews</span>`;
 const $app = document.getElementById('app');
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const stars = (v) => { const n = Math.round(v || 0); return `<span class="stars">${'★'.repeat(n)}<span class="off">${'★'.repeat(5 - n)}</span></span>`; };
@@ -14,66 +44,75 @@ const api = async (path, opts) => {
   return d;
 };
 const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+const pill = (r) => (r ? `<span class="pill">${star}${Number(r).toFixed(1)}</span>` : '<span class="pill none">No rating</span>');
 
 // ---------- Home ----------
 async function home() {
   $app.innerHTML = `
-    <div class="card">
-      <h1>Enter ship name</h1>
-      <input id="q" type="text" placeholder="Ship name…" autocomplete="off" autofocus>
-      <div id="results"></div>
+    <section class="hero">
+      <h1>Find your <b>tally room</b></h1>
+      <p>Real reviews from port workers: ratings, photos and what you will find on board.</p>
+      <svg class="wave" viewBox="0 0 1200 34" preserveAspectRatio="none" aria-hidden="true"><path d="M0 34V14c150 20 300 20 450 6s300-20 450-6 200 16 300 6v14z"/></svg>
+    </section>
+    <div class="searchbox">
+      <label class="search">${icon('search')}<input id="q" type="text" placeholder="Enter Vessel Name" autocomplete="off" aria-label="Vessel name"></label>
+      <div class="card results" id="results" hidden></div>
     </div>
-    <div class="card"><h2>Top rated tally rooms</h2><div id="top" class="muted">Loading…</div></div>`;
+    <div class="card"><h2>${icon('trophy')} Top rated tally rooms</h2><div id="top" class="muted">Loading…</div></div>`;
   const q = document.getElementById('q'), res = document.getElementById('results');
-  const item = (s) => {
-    const r = s.avg_rating ?? s.seed_rating;
-    return `<a class="ship-item" href="#/ship/${s.id}"><span>${esc(s.name)}<br><small>${s.review_count} reviews</small></span>${r ? stars(r) : '<small>no rating</small>'}</a>`;
-  };
+  const item = (s, i) => `
+    <a class="ship-item" href="#/ship/${s.id}">
+      ${i != null ? `<span class="rank">${i + 1}</span>` : ''}
+      <span class="ship-ico">${icon('ship')}</span>
+      <span class="nm"><b>${esc(s.name)}</b><small>${s.review_count} ${s.review_count === 1 ? 'review' : 'reviews'}</small></span>
+      ${pill(s.avg_rating ?? s.seed_rating)}
+    </a>`;
   const search = debounce(async () => {
     const v = q.value.trim();
-    if (v.length < 2) { res.innerHTML = ''; return; }
+    if (v.length < 2) { res.hidden = true; res.innerHTML = ''; return; }
     const { ships } = await api('/ships?q=' + encodeURIComponent(v)).catch(() => ({ ships: [] }));
-    res.innerHTML = (ships.map(item).join('') || '<p class="muted">No ship found with this name.</p>') +
-      `<a class="btn sec block" style="margin-top:12px" href="#/new?name=${encodeURIComponent(v)}">➕ Add "${esc(v)}"</a>`;
+    res.hidden = false;
+    res.innerHTML = (ships.map((s) => item(s)).join('') || '<p class="empty">No vessel found with this name.</p>') +
+      `<a class="btn sec block" style="margin-top:12px" href="#/new?name=${encodeURIComponent(v)}">${icon('plus')} Add "${esc(v)}"</a>`;
   }, 250);
   q.addEventListener('input', search);
   api('/top').then(({ ships }) => {
-    document.getElementById('top').innerHTML = ships.length ? ships.map(item).join('') : 'No ships yet.';
-  }).catch(() => {});
+    document.getElementById('top').innerHTML = ships.length ? ships.map((s, i) => item(s, i)).join('') : '<p class="empty">No ships yet.</p>';
+  }).catch(() => { document.getElementById('top').textContent = ''; });
 }
 
-// ---------- Scheda nave ----------
+// ---------- Ship page ----------
 async function ship(id) {
-  $app.innerHTML = '<p class="muted">Loading…</p>';
+  $app.innerHTML = '<p class="muted" style="padding-top:20px">Loading…</p>';
   let s;
-  try { s = await api('/ships/' + id); } catch (e) { $app.innerHTML = `<div class="card">${esc(e.message)}</div>`; return; }
+  try { s = await api('/ships/' + id); } catch (e) { $app.innerHTML = `<a class="back" href="#/">${icon('back')} Back</a><div class="card">${esc(e.message)}</div>`; return; }
   const amen = AMEN.map(([k, label]) => {
     const p = s.amenities[k];
     const cls = p == null ? 'u' : p >= 0.5 ? 'y' : 'n';
-    return `<div class="${cls}">${label}${p == null ? '' : `<span class="pct">${Math.round(p * 100)}%</span>`}</div>`;
+    const sub = p == null ? 'No data' : p >= 0.5 ? `${Math.round(p * 100)}% confirm` : 'Not available';
+    return `<div class="am ${cls}"><span class="ic">${icon(k)}</span><span class="tx"><span>${label}</span><small>${sub}</small></span></div>`;
   }).join('');
   $app.innerHTML = `
-    <a href="#/" class="link">← Search another ship</a>
-    <div class="card" style="margin-top:10px">
+    <a class="back" href="#/">${icon('back')} Search another vessel</a>
+    <div class="card shiphead">
       <h1>${esc(s.name)}</h1>
-      <div class="row">
-        <div>${s.rating ? `<span class="big">${s.rating.toFixed(1)}</span> ${stars(s.rating)}` : '<span class="muted">No rating</span>'}</div>
-        <span class="badge">${s.review_count} reviews</span>
+      <div class="score">
+        ${s.rating ? `<span class="big">${s.rating.toFixed(1)}</span><div>${stars(s.rating)}<br><span class="badge">${s.review_count} ${s.review_count === 1 ? 'review' : 'reviews'}</span></div>` : '<span class="muted">No rating yet</span>'}
       </div>
-      <p class="muted">${s.last_update ? `Last updated: ${fmtDate(s.last_update)}` : (s.seed_rating ? 'Initial rating only, no details yet.' : '')}
+      <p class="muted" style="margin:12px 0 0">${s.last_update ? `${icon('clock')} Last updated ${fmtDate(s.last_update)}` : (s.seed_rating ? 'Initial rating only, no details yet.' : '')}
       ${s.review_count ? '<br>Rating and amenities are based on the latest 5 reviews.' : ''}</p>
-      <a class="btn block" href="#/ship/${s.id}/update">✏️ Update this tally room</a>
+      <a class="btn block" href="#/ship/${s.id}/update">${icon('edit')} Update this tally room</a>
     </div>
-    <div class="card"><h2>Amenities</h2><div class="amen">${amen}</div></div>
-    ${s.photos.length ? `<div class="card"><h2>Photos</h2><div class="photos">${s.photos.map((p) => `<img loading="lazy" src="/api/photos/${p.id}" data-full="/api/photos/${p.id}" alt="Tally room photo">`).join('')}</div></div>` : ''}
-    <div class="card"><h2>Update history</h2>
+    <div class="card"><h2>${icon('check')} Amenities</h2><div class="amen">${amen}</div></div>
+    ${s.photos.length ? `<div class="card"><h2>${icon('image')} Photos</h2><div class="photos">${s.photos.map((p) => `<img loading="lazy" src="/api/photos/${p.id}" data-full="/api/photos/${p.id}" alt="Tally room photo">`).join('')}</div></div>` : ''}
+    <div class="card"><h2>${icon('history')} Update history</h2>
       ${s.reviews.length ? s.reviews.map((r) => `
         <div class="rev">
           <div class="row">${stars(r.rating)}<span class="muted">${fmtDate(r.created_at)}</span></div>
-          <div class="muted">${AMEN.filter(([k]) => r.amenities[k]).map(([, l]) => '✔ ' + l).join(' · ') || 'No amenities reported'}</div>
+          <div class="mini">${AMEN.filter(([k]) => r.amenities[k]).map(([k, l]) => `<span>${icon(k)}${l}</span>`).join('') || '<span style="background:var(--bg);color:var(--mut)">No amenities reported</span>'}</div>
           ${r.comment ? `<p>${esc(r.comment)}</p>` : ''}
-          <button class="link" data-report="${r.id}" style="background:none;border:0;color:var(--mut);font-size:.78rem;padding:0;cursor:pointer">Report</button>
-        </div>`).join('') : '<p class="muted">No detailed reviews yet. Be the first!</p>'}
+          <button class="linkbtn" data-report="${r.id}">Report</button>
+        </div>`).join('') : '<p class="empty">No detailed reviews yet. Be the first!</p>'}
     </div>`;
   $app.querySelectorAll('[data-full]').forEach((img) => img.addEventListener('click', () => {
     const lb = document.createElement('div'); lb.className = 'lightbox';
@@ -86,7 +125,7 @@ async function ship(id) {
   }));
 }
 
-// ---------- Form recensione (nuova nave o aggiornamento) ----------
+// ---------- Review form (new vessel or update) ----------
 async function compress(file, max = 1280) {
   const bmp = await createImageBitmap(file).catch(() => null);
   if (!bmp) throw new Error('Unreadable image');
@@ -98,41 +137,47 @@ async function compress(file, max = 1280) {
   return blob;
 }
 
+const RATE_TXT = ['', 'Poor', 'Below average', 'Okay', 'Good', 'Excellent'];
+
 async function form({ shipId, name }) {
-  let prev = {};
+  const prev = {};
   if (shipId) {
     try { const s = await api('/ships/' + shipId); name = s.name; AMEN.forEach(([k]) => { prev[k] = s.amenities[k] != null && s.amenities[k] >= 0.5; }); }
-    catch (e) { $app.innerHTML = `<div class="card">${esc(e.message)}</div>`; return; }
+    catch (e) { $app.innerHTML = `<a class="back" href="#/">${icon('back')} Back</a><div class="card">${esc(e.message)}</div>`; return; }
   }
   let rating = 0; const photos = [];
   $app.innerHTML = `
-    <a href="#/${shipId ? 'ship/' + shipId : ''}" class="link">← Back</a>
-    <form class="card" id="f" style="margin-top:10px" novalidate>
-      <h1>${shipId ? 'Update this tally room' : 'Add a ship'}</h1>
+    <a href="#/${shipId ? 'ship/' + shipId : ''}" class="back">${icon('back')} Back</a>
+    <form class="card" id="f" novalidate>
+      <h1 class="t">${shipId ? 'Update this tally room' : 'Add a vessel'}</h1>
       ${shipId ? `<p class="muted">Check how the tally room of <b>${esc(name)}</b> is today. The boxes are pre-filled with the current status: change whatever is different.</p>` :
-        `<label class="l" for="sn">Ship name</label><input id="sn" type="text" value="${esc(name || '')}" maxlength="60" required>`}
+        `<label class="l" for="sn">Vessel name</label><input id="sn" type="text" value="${esc(name || '')}" maxlength="60" required>`}
       <label class="l">Overall rating</label>
       <div class="rate-in" id="rate">${[1, 2, 3, 4, 5].map((n) => `<button type="button" data-n="${n}" aria-label="${n} stars">★</button>`).join('')}</div>
+      <div class="rate-lbl" id="rl"></div>
       <label class="l">What is there / how is it</label>
-      ${AMEN.map(([k, l]) => `<label class="chk"><input type="checkbox" name="${k}" ${prev[k] ? 'checked' : ''}> ${l}</label>`).join('')}
+      <div class="tiles">${AMEN.map(([k, l]) => `<label class="tile"><input type="checkbox" name="${k}" ${prev[k] ? 'checked' : ''}><span class="face"><span class="ic">${icon(k)}</span>${l}</span></label>`).join('')}</div>
       <label class="l" for="cm">Notes (optional)</label>
       <textarea id="cm" rows="3" maxlength="800" placeholder="E.g. dirty, AC not working, key from the second officer…"></textarea>
-      <label class="l">Photos (max 3)</label>
+      <label class="l">${icon('camera')} Photos (max 3)</label>
       <input id="ph" type="file" accept="image/*" multiple>
       <div class="thumbs" id="th"></div>
       <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off">
-      <div id="msg"></div>
-      <button class="btn block" id="go" style="margin-top:16px" type="submit">Submit review</button>
-      <p class="muted">Your review is anonymous and will appear after approval.</p>
+      <div id="msg" style="margin-top:14px"></div>
+      <button class="btn block" id="go" style="margin-top:8px" type="submit">Submit review</button>
+      <p class="muted" style="text-align:center">Your review is anonymous and will appear after approval.</p>
     </form>`;
-  const rateBtns = [...document.querySelectorAll('#rate button')];
-  rateBtns.forEach((b) => b.addEventListener('click', () => { rating = +b.dataset.n; rateBtns.forEach((x) => x.classList.toggle('on', +x.dataset.n <= rating)); }));
+  const rateBtns = [...document.querySelectorAll('#rate button')], rl = document.getElementById('rl');
+  rateBtns.forEach((b) => b.addEventListener('click', () => {
+    rating = +b.dataset.n; rl.textContent = RATE_TXT[rating];
+    rateBtns.forEach((x) => x.classList.toggle('on', +x.dataset.n <= rating));
+  }));
   const th = document.getElementById('th');
   document.getElementById('ph').addEventListener('change', async (e) => {
     photos.length = 0; th.innerHTML = '';
     for (const f of [...e.target.files].slice(0, 3)) {
       try { const b = await compress(f); photos.push(b); const i = new Image(); i.src = URL.createObjectURL(b); th.append(i); }
-      catch { /* ignora file non leggibili */ }
+      catch { /* skip unreadable files */ }
     }
   });
   document.getElementById('f').addEventListener('submit', async (e) => {
@@ -142,16 +187,16 @@ async function form({ shipId, name }) {
     if (!rating) return fail('Please choose a rating from 1 to 5 stars.');
     const fd = new FormData();
     if (shipId) fd.append('ship_id', shipId);
-    else { const n = document.getElementById('sn').value.trim(); if (n.length < 2) return fail('Please enter the ship name.'); fd.append('ship_name', n); }
+    else { const n = document.getElementById('sn').value.trim(); if (n.length < 2) return fail('Please enter the vessel name.'); fd.append('ship_name', n); }
     fd.append('rating', rating);
     fd.append('amenities', JSON.stringify(Object.fromEntries(AMEN.map(([k]) => [k, e.target.elements[k].checked]))));
     fd.append('comment', document.getElementById('cm').value);
     fd.append('website', e.target.elements.website.value);
-    photos.forEach((b, i) => fd.append('photos', b, `foto${i}.${b.type === 'image/webp' ? 'webp' : 'jpg'}`));
+    photos.forEach((b, i) => fd.append('photos', b, `photo${i}.${b.type === 'image/webp' ? 'webp' : 'jpg'}`));
     go.disabled = true; go.textContent = 'Sending…';
     try {
       await api('/reviews', { method: 'POST', body: fd });
-      $app.innerHTML = `<div class="card"><div class="msg">✅ Thank you! Your review has been sent and will appear after approval.</div><a class="btn block" href="#/">Back to search</a></div>`;
+      $app.innerHTML = `<div class="card" style="margin-top:20px"><div class="msg">✅ Thank you! Your review has been sent and will appear after approval.</div><a class="btn block" href="#/">Back to search</a></div>`;
     } catch (er) { fail(er.message); go.disabled = false; go.textContent = 'Submit review'; }
   });
 }
@@ -163,7 +208,7 @@ function route() {
   window.scrollTo(0, 0);
   if ((m = h.match(/^\/ship\/(\d+)\/update$/))) return form({ shipId: +m[1] });
   if ((m = h.match(/^\/ship\/(\d+)$/))) return ship(+m[1]);
-  if (h.startsWith("/new")) return form({ name: new URLSearchParams(h.split('?')[1] || '').get("name") || '' });
+  if (h.startsWith('/new')) return form({ name: new URLSearchParams(h.split('?')[1] || '').get('name') || '' });
   return home();
 }
 addEventListener('hashchange', route);

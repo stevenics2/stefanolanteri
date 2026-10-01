@@ -1,5 +1,5 @@
 'use strict';
-const AMEN = { power220: 'Power', ac: 'AC', chairs: 'Chairs', desk: 'Desk', clean: 'Clean', light: 'Light', wifi: 'Wi-Fi', wc: 'WC' };
+const AMEN = { power220: '220V', ac: 'AC', chairs: 'Chairs', desk: 'Desk', clean: 'Clean', light: 'Light', wifi: 'Wi-Fi', wc: 'WC' };
 const $app = document.getElementById('app');
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 let pw = sessionStorage.getItem('tr_admin') || '';
@@ -18,7 +18,7 @@ async function api(path, method = 'GET', body) {
 }
 
 function login(msg = '') {
-  $app.innerHTML = `<form class="card" id="lf"><h1>Admin login</h1>${msg ? `<div class="msg err">${esc(msg)}</div>` : ''}
+  $app.innerHTML = `<form class="card" id="lf"><h1 class="t">Admin login</h1>${msg ? `<div class="msg err">${esc(msg)}</div>` : ''}
     <input id="pw" type="password" placeholder="Password" autocomplete="current-password" style="width:100%;padding:13px;border:1px solid var(--line);border-radius:10px;font:inherit">
     <button class="btn block" style="margin-top:12px">Log in</button></form>`;
   document.getElementById('lf').onsubmit = (e) => { e.preventDefault(); pw = document.getElementById('pw').value; sessionStorage.setItem('tr_admin', pw); load(); };
