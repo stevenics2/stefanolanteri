@@ -130,7 +130,7 @@ async function ship(id) {
   const amen = AMEN.map(([k, label]) => {
     const p = s.amenities[k];
     const cls = p == null ? 'u' : p >= 0.5 ? 'y' : 'n';
-    const sub = p == null ? 'No data' : p >= 0.5 ? `${Math.round(p * 100)}% confirm` : 'Not available';
+    const sub = p == null ? 'Unknown or not available' : p >= 0.5 ? `${Math.round(p * 100)}% confirm` : 'Not available';
     return `<div class="am ${cls}"><span class="ic">${icon(k)}</span><span class="tx"><span>${label}</span><small>${sub}</small></span></div>`;
   }).join('');
   $app.innerHTML = `
