@@ -91,7 +91,7 @@ async function home() {
   $app.innerHTML = `
     <section class="hero">
       ${shipArt()}
-      <h1>Find your <b>tally room</b></h1>
+      <h1>Find your <b>Tally Room</b></h1>
       <p>Real reviews from port workers: ratings, photos and what you will find on board.</p>
       <svg class="wave" viewBox="0 0 1200 34" preserveAspectRatio="none" aria-hidden="true"><path d="M0 34V14c150 20 300 20 450 6s300-20 450-6 200 16 300 6v14z"/></svg>
     </section>
@@ -99,7 +99,7 @@ async function home() {
       <label class="search">${icon('search')}<input id="q" type="text" placeholder="Enter Vessel Name" autocomplete="off" aria-label="Vessel name"></label>
       <div class="card results" id="results" hidden></div>
     </div>
-    <div class="card"><h2>${icon('trophy')} Top rated tally rooms</h2><div id="top" class="muted">Loading…</div></div>`;
+    <div class="card"><h2>${icon('trophy')} Top rated Tally Rooms</h2><div id="top" class="muted">Loading…</div></div>`;
   const q = document.getElementById('q'), res = document.getElementById('results');
   const item = (s, i) => `
     <a class="ship-item" href="#/ship/${s.id}">
@@ -114,7 +114,7 @@ async function home() {
     const { ships } = await api('/ships?q=' + encodeURIComponent(v)).catch(() => ({ ships: [] }));
     res.hidden = false;
     res.innerHTML = (ships.map((s) => item(s)).join('') || '<p class="empty">No vessel found with this name.</p>') +
-      `<a class="btn sec block" style="margin-top:12px" href="#/new?name=${encodeURIComponent(v)}">${icon('plus')} Add "${esc(v)}"</a>`;
+      `<a class="btn sec block" style="margin-top:12px" href="#/new?name=${encodeURIComponent(v)}">${icon('plus')} Add "${esc(v.toUpperCase())}"</a>`;
   }, 250);
   q.addEventListener('input', search);
   api('/top').then(({ ships }) => {
@@ -145,16 +145,16 @@ async function ship(id) {
       </div>
       <p class="muted" style="margin:12px 0 0">${s.last_update ? `${icon('clock')} Last updated ${fmtDate(s.last_update)}` : (s.seed_rating ? 'Initial rating only, no details yet.' : '')}
       ${s.review_count ? '<br>Based on the latest 5 reviews.' : ''}</p>
-      <a class="btn block" href="#/ship/${s.id}/update">${icon('edit')} Update this tally room</a>
+      <a class="btn block" href="#/ship/${s.id}/update">${icon('edit')} Update this Tally Room</a>
     </div>
     ${s.tally_present
       ? `<div class="card"><h2>${icon('check')} Amenities</h2><div class="amen">${amen}</div></div>`
-      : `<div class="card"><h2>${icon('x')} No tally room</h2><p class="muted" style="margin:0">Most recent reports say this vessel does not have a tally room. If that has changed, use <b>Update this tally room</b> above.</p></div>`}
-    ${s.photos.length ? `<div class="card"><h2>${icon('image')} Photos</h2><div class="photos">${s.photos.map((p) => `<img loading="lazy" src="/api/photos/${p.id}" data-full="/api/photos/${p.id}" alt="Tally room photo">`).join('')}</div></div>` : ''}
+      : `<div class="card"><h2>${icon('x')} No Tally Room</h2><p class="muted" style="margin:0">Most recent reports say this vessel does not have a Tally Room. If that has changed, use <b>Update this Tally Room</b> above.</p></div>`}
+    ${s.photos.length ? `<div class="card"><h2>${icon('image')} Photos</h2><div class="photos">${s.photos.map((p) => `<img loading="lazy" src="/api/photos/${p.id}" data-full="/api/photos/${p.id}" alt="Tally Room photo">`).join('')}</div></div>` : ''}
     <div class="card"><h2>${icon('history')} Update history</h2>
       ${s.reviews.length ? s.reviews.map((r) => `
         <div class="rev">
-          <div class="row">${r.has_tally ? stars(r.rating) : `<span class="npchip">${icon('x')} Tally room not present</span>`}<span class="muted">${fmtDate(r.created_at)}</span></div>
+          <div class="row">${r.has_tally ? stars(r.rating) : `<span class="npchip">${icon('x')} Tally Room not present</span>`}<span class="muted">${fmtDate(r.created_at)}</span></div>
           ${r.has_tally ? `<div class="mini">${AMEN.filter(([k]) => r.amenities[k]).map(([k, l]) => `<span>${icon(k)}${l}</span>`).join('') || '<span style="background:var(--bg);color:var(--mut)">No amenities reported</span>'}</div>` : ''}
           ${r.comment ? `<p>${esc(r.comment)}</p>` : ''}
           <button class="linkbtn" data-report="${r.id}">Report</button>
@@ -195,11 +195,11 @@ async function form({ shipId, name }) {
   $app.innerHTML = `
     <a href="#/${shipId ? 'ship/' + shipId : ''}" class="back">${icon('back')} Back</a>
     <form class="card" id="f" novalidate>
-      <h1 class="t">${shipId ? 'Update this tally room' : 'Add a vessel'}</h1>
-      ${shipId ? `<p class="muted">Check how the tally room of <b>${esc(name)}</b> is today. The boxes are pre-filled with the current status: change whatever is different.</p>` :
-        `<label class="l" for="sn">Vessel name</label><input id="sn" type="text" value="${esc(name || '')}" maxlength="60" required>`}
-      <label class="l">Is there a tally room on board?</label>
-      <div class="yn" id="yn" role="radiogroup" aria-label="Tally room present">
+      <h1 class="t">${shipId ? 'Update this Tally Room' : 'Add a vessel'}</h1>
+      ${shipId ? `<p class="muted">Check how the Tally Room of <b>${esc(name)}</b> is today. The boxes are pre-filled with the current status: change whatever is different.</p>` :
+        `<label class="l" for="sn">Vessel name</label><input id="sn" type="text" value="${esc((name || '').toUpperCase())}" maxlength="60" autocapitalize="characters" required>`}
+      <label class="l">Is there a Tally Room on board?</label>
+      <div class="yn" id="yn" role="radiogroup" aria-label="Tally Room present">
         <button type="button" class="yes" data-v="1" role="radio" aria-checked="false">${icon('check')} YES</button>
         <button type="button" class="no" data-v="0" role="radio" aria-checked="false">${icon('x')} NO</button>
       </div>
@@ -227,7 +227,7 @@ async function form({ shipId, name }) {
     rating = +b.dataset.n; rl.textContent = RATE_TXT[rating];
     rateBtns.forEach((x) => x.classList.toggle('on', +x.dataset.n <= rating));
   }));
-  // step 1: is there a tally room? Details only appear after answering.
+  // step 1: is there a Tally Room? Details only appear after answering.
   const ynBtns = [...document.querySelectorAll('#yn button')];
   const details = document.getElementById('details'), notes = document.getElementById('notes'), goBtn = document.getElementById('go');
   ynBtns.forEach((b) => b.addEventListener('click', () => {
@@ -248,11 +248,11 @@ async function form({ shipId, name }) {
     e.preventDefault();
     const msg = document.getElementById('msg'), go = document.getElementById('go');
     const fail = (t) => { msg.innerHTML = `<div class="msg err">${esc(t)}</div>`; };
-    if (hasTally === null) return fail('Please answer: is there a tally room on board?');
+    if (hasTally === null) return fail('Please answer: is there a Tally Room on board?');
     if (hasTally && !rating) return fail('Please choose a rating from 1 to 5 stars.');
     const fd = new FormData();
     if (shipId) fd.append('ship_id', shipId);
-    else { const n = document.getElementById('sn').value.trim(); if (n.length < 2) return fail('Please enter the vessel name.'); fd.append('ship_name', n); }
+    else { const n = document.getElementById('sn').value.trim().toUpperCase(); if (n.length < 2) return fail('Please enter the vessel name.'); fd.append('ship_name', n); }
     fd.append('has_tally', hasTally ? '1' : '0');
     if (hasTally) {
       fd.append('rating', rating);

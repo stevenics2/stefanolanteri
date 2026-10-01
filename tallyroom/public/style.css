@@ -152,3 +152,6 @@ input[type=file]{width:100%;padding:12px;border:1.5px dashed var(--line);border-
 .shiphead h1{padding-right:84px}
 .shipbadge{position:absolute;top:16px;right:16px;width:68px;height:68px;border-radius:20px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);display:grid;place-items:center;color:#fff}
 .shipbadge svg{width:42px;height:42px;stroke-width:1.5}
+
+/* vessel names are always shown in capitals */
+.ship-item .nm b,.shiphead h1,#sn,#q:not(:placeholder-shown){text-transform:uppercase}

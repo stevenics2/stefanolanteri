@@ -14,9 +14,11 @@ const json = (data, status = 200) =>
 const err = (msg, status = 400) => json({ error: msg }, status);
 
 const normName = (s) =>
-  String(s || '').toUpperCase().replace(/^(M\/?[NVT]|MS|MV|SS)\.?\s+/, '')
-    .replace(/[^A-Z0-9]+/g, ' ').trim();
-const cleanName = (s) => String(s || '').replace(/\s+/g, ' ').trim().slice(0, 60);
+  String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()   // accenti ignorati
+    .replace(/^(M\/?[NVT]|MS|MV|SS)\.?\s+/, '')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ').trim();                                      // qualsiasi alfabeto
+const cleanName = (s) => String(s || '').replace(/\s+/g, ' ').trim().slice(0, 60).toUpperCase();
+const up = (s) => String(s || '').toUpperCase();
 
 async function sha(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -38,11 +40,11 @@ async function buildSheet(env, ship) {
   const parsed = revs.map((r) => ({ ...r, amenities: safeJson(r.amenities) }));
   const recent = parsed.slice(0, RECENT);
 
-  // la tally room è "non presente" se nelle ultime recensioni la maggioranza lo dice
+  // la Tally Room è "non presente" se nelle ultime recensioni la maggioranza lo dice
   const withTally = recent.filter((r) => r.has_tally);
   const tally_present = !(recent.length && recent.length - withTally.length > withTally.length);
 
-  // voto = media delle ultime recensioni con tally room; il voto iniziale importato vale solo se non ce ne sono
+  // voto = media delle ultime recensioni con Tally Room; il voto iniziale importato vale solo se non ce ne sono
   const ratings = withTally.map((r) => r.rating);
   const rating = ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length
     : (recent.length ? null : ship.seed_rating);
@@ -60,7 +62,7 @@ async function buildSheet(env, ship) {
 
   return {
     id: ship.id,
-    name: ship.name,
+    name: up(ship.name),
     rating,
     tally_present,
     seed_rating: ship.seed_rating,
@@ -79,7 +81,7 @@ const SHIP_STATS = `
   (SELECT COALESCE(SUM(has_tally), 0) FROM ${RECENT_SQL}) AS present_n,
   (SELECT COUNT(*) FROM ${RECENT_SQL}) AS recent_n,
   (SELECT COUNT(*) FROM reviews r WHERE r.ship_id = s.id AND r.status='approved') AS review_count`;
-const withFlag = (rows) => rows.map((r) => ({ ...r, not_present: r.recent_n > 0 && r.recent_n - r.present_n > r.present_n }));
+const withFlag = (rows) => rows.map((r) => ({ ...r, name: up(r.name), not_present: r.recent_n > 0 && r.recent_n - r.present_n > r.present_n }));
 
 // ---- handlers pubblici ----
 async function searchShips(env, url) {
@@ -122,7 +124,7 @@ async function submitReview(env, request) {
   if (form.get('website')) return json({ ok: true });           // honeypot
 
   const ht = String(form.get('has_tally'));
-  if (ht !== '0' && ht !== '1') return err('Please say whether a tally room is present');
+  if (ht !== '0' && ht !== '1') return err('Please say whether a Tally Room is present');
   const hasTally = ht === '1' ? 1 : 0;
 
   let rating = 0;
@@ -220,7 +222,11 @@ async function adminQueue(env) {
      ORDER BY rp.created_at DESC LIMIT 50`
   ).all();
   const { n: ships } = await env.DB.prepare(`SELECT COUNT(*) AS n FROM ships WHERE status='approved'`).first();
-  return json({ reviews: reviews.map((r) => ({ ...r, amenities: safeJson(r.amenities) })), reports, ships });
+  return json({
+    reviews: reviews.map((r) => ({ ...r, ship_name: up(r.ship_name), amenities: safeJson(r.amenities) })),
+    reports: reports.map((r) => ({ ...r, ship_name: up(r.ship_name) })),
+    ships,
+  });
 }
 
 async function adminReview(env, id, action) {
@@ -285,6 +291,8 @@ async function ensureSchema(env) {
   } catch {
     await env.DB.prepare('ALTER TABLE reviews ADD COLUMN has_tally INTEGER NOT NULL DEFAULT 1').run();
   }
+  // nomi nave sempre in maiuscolo (anche quelli salvati prima di questa regola)
+  await env.DB.prepare('UPDATE ships SET name = UPPER(name) WHERE name != UPPER(name)').run();
   schemaChecked = true;
 }
 
