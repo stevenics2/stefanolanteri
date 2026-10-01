@@ -44,7 +44,7 @@ When a new vessel or review is submitted you get an email right away. While anyt
 3. In the Pages project, add these **secrets** (Production and Preview) and redeploy:
    `RESEND_API_KEY`, `ADMIN_EMAIL` (where you want to receive the emails) and, only for the quick start, `MAIL_FROM`.
 4. Reminders run from a small separate Worker in `reminder/` (Cron Trigger, free):
-   - Create a Worker from this repository with **root directory** `tallyroom/reminder` (deploy command `npx wrangler deploy`), or from the terminal: `cd reminder && npx wrangler deploy`.
+   - Create a Worker from this repository with **root directory** `tallyroom/reminder` (deploy command `npx wrangler deploy`) and set **Branch control** to the branch that contains this folder. Or from the terminal: `cd reminder && npx wrangler deploy`.
    - Add the same secrets to that Worker: `RESEND_API_KEY`, `ADMIN_EMAIL` and optionally `MAIL_FROM`.
    - In `reminder/wrangler.toml` you can change the interval (`REMIND_EVERY_DAYS`) and the run time (`crons`).
 
