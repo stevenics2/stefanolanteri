@@ -51,6 +51,11 @@ async function load() {
       <p class="muted">A full backup of the database is emailed to you every 7 days. You can also download one now (photos are not included).</p>
       <button class="btn block" id="bk" type="button">Download backup now</button>
     </div>
+    <div class="card"><h2>Home page news</h2>
+      <p class="muted">Checks every news source used on the home page and shows which ones respond.</p>
+      <button class="btn block" id="nw" type="button">Check news sources</button>
+      <div id="nwr" style="margin-top:10px"></div>
+    </div>
     <div class="card"><h2>Manage vessels</h2>
       <p class="muted">Search a vessel to delete it together with all its reviews and photos. This cannot be undone.</p>
       <input id="vq" type="text" placeholder="Search vessel (2+ letters), or leave empty for the newest" autocomplete="off" style="width:100%;padding:13px;border:1.5px solid var(--line);border-radius:12px;font:inherit;background:var(--card);color:var(--ink)">
@@ -76,6 +81,15 @@ async function load() {
     const r = await fetch('/api/photos/' + img.dataset.photo, { headers: { authorization: 'Bearer ' + pw } });
     if (r.ok) img.src = URL.createObjectURL(await r.blob());
   });
+  document.getElementById('nw').onclick = async () => {
+    const b = document.getElementById('nw'), out = document.getElementById('nwr'); b.disabled = true; out.textContent = 'Checking…';
+    try {
+      const d = await api('/news-check');
+      out.innerHTML = d.feeds.map((f) => `<div class="nrow ${f.error ? 'bad' : 'ok'}"><b>${esc(f.source)}</b><small>${f.error ? esc(f.error) + (f.preview ? ' · ' + esc(f.preview) : '') : f.items + ' headlines'}</small></div>`).join('')
+        + `<p class="muted" style="margin-top:8px">${d.picked.length ? 'Shown on the home page:' : 'Nothing to show on the home page right now.'}</p>`
+        + d.picked.map((n) => `<div class="nrow ok"><b>${esc(n.title)}</b><small>${esc(n.source)}</small></div>`).join('');
+    } catch (e) { out.textContent = e.message; } finally { b.disabled = false; }
+  };
   document.getElementById('bk').onclick = async () => {
     const b = document.getElementById('bk'); b.disabled = true;
     try {

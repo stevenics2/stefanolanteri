@@ -246,3 +246,14 @@ label.l[data-t]::before{content:attr(data-t)}
 .vn{min-width:0}.vn b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .vn small{display:block;color:var(--mut);font-size:.78rem}
 .btn.sm{padding:9px 14px;font-size:.85rem;flex:none}
+
+/* admin: news check */
+.nrow{padding:8px 10px;border-radius:10px;margin-bottom:6px;background:var(--okbg)}
+.nrow.bad{background:var(--badbg)}
+.nrow b{display:block;font-size:.88rem}.nrow small{display:block;color:var(--mut);font-size:.76rem;overflow-wrap:anywhere}
+.nrow.bad small{color:var(--bad)}
+
+/* smaller SAFETY FIRST banner (overrides the earlier size) */
+.safety{gap:10px;margin:2px 0 4px;padding:9px 10px;font-size:.92rem;letter-spacing:.14em;border-width:4px;border-radius:14px;box-shadow:none}
+.safety::before{inset:-4px;border-radius:18px;background:repeating-linear-gradient(-45deg,#1a1a1a 0 8px,var(--acc) 8px 16px)}
+.safety svg{width:1.4em;height:1.4em}

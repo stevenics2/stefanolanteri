@@ -207,7 +207,15 @@ async function weather(env, url, ctx) {
 }
 
 // ---- notizie dai porti (feed RSS pubblici; si mostrano solo titolo, link e fonte) ----
-const NEWS_FEEDS = [{ url: 'https://www.porttechnology.org/feed/', source: 'Port Technology International' }];
+// Ogni fonte che non risponde viene semplicemente saltata. Il filtro per parole chiave tiene solo
+// le notizie su porti e terminal dai feed generalisti; Port Technology International e' gia' tutta sui porti.
+const NEWS_FEEDS = [
+  { url: 'https://www.porttechnology.org/feed/', source: 'Port Technology International', all: true },
+  { url: 'https://container-news.com/feed/', source: 'Container News' },
+  { url: 'https://splash247.com/feed/', source: 'Splash247' },
+  { url: 'https://gcaptain.com/feed/', source: 'gCaptain' },
+];
+const PORT_WORDS = /\b(ports?|terminals?|harbou?rs?|berths?|containers?|docks?|cranes?|strikes?|congestion|canal|pilots?|quays?|stevedor\w*|longshore\w*)\b/i;
 
 const decodeEntities = (s) => s
   .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
@@ -218,26 +226,63 @@ const xmlText = (block, tag) => {
   return m ? decodeEntities(m[1].replace(/^\s*<!\[CDATA\[([\s\S]*?)\]\]>\s*$/, '$1')).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim() : '';
 };
 
+// Legge un feed RSS o Atom. Restituisce sempre { items, info } e non lancia mai errori.
 async function readFeed(feed) {
+  const info = { source: feed.source, url: feed.url, status: null, bytes: 0, items: 0, error: null, preview: null };
   try {
-    const r = await fetch(feed.url, { headers: { 'user-agent': SITE_UA, accept: 'application/rss+xml, application/xml, text/xml' }, signal: AbortSignal.timeout(6000) });
-    if (!r.ok) return [];
+    const r = await fetch(feed.url, {
+      headers: { 'user-agent': SITE_UA, accept: 'application/rss+xml, application/atom+xml, application/xml;q=0.9, text/xml;q=0.8, */*;q=0.5', 'accept-language': 'en' },
+      signal: AbortSignal.timeout(7000),
+      redirect: 'follow',
+    });
+    info.status = r.status;
     const xml = await r.text();
-    return (xml.match(/<item[\s>][\s\S]*?<\/item>/gi) || []).slice(0, 15).map((it) => {
-      const link = xmlText(it, 'link');
-      const date = Date.parse(xmlText(it, 'pubDate'));
-      return { title: xmlText(it, 'title').slice(0, 170), link, source: feed.source, date: Number.isNaN(date) ? 0 : date };
+    info.bytes = xml.length;
+    if (!r.ok) { info.error = `HTTP ${r.status}`; info.preview = xml.slice(0, 140).replace(/\s+/g, ' '); return { items: [], info }; }
+    const blocks = xml.match(/<(item|entry)[\s>][\s\S]*?<\/(item|entry)>/gi) || [];
+    const items = blocks.slice(0, 20).map((it) => {
+      let link = xmlText(it, 'link');
+      if (!link) link = (it.match(/<link[^>]+href=["']([^"']+)["']/i) || [])[1] || '';     // Atom
+      const date = Date.parse(xmlText(it, 'pubDate') || xmlText(it, 'published') || xmlText(it, 'updated') || xmlText(it, 'dc:date'));
+      return { title: xmlText(it, 'title').slice(0, 170), link: decodeEntities(link), source: feed.source, date: Number.isNaN(date) ? 0 : date, all: !!feed.all };
     }).filter((x) => x.title && /^https?:\/\//i.test(x.link));
-  } catch { return []; }
+    info.items = items.length;
+    if (!items.length) { info.error = 'no readable items'; info.preview = xml.slice(0, 140).replace(/\s+/g, ' '); }
+    return { items, info };
+  } catch (e) {
+    info.error = String(e && e.message ? e.message : e).slice(0, 120);
+    return { items: [], info };
+  }
+}
+
+const feedList = (env) => (env.NEWS_FEEDS
+  ? env.NEWS_FEEDS.split(',').map((u) => u.trim()).filter(Boolean).map((u) => ({ url: u, source: new URL(u).hostname.replace(/^www\./, ''), all: true }))
+  : NEWS_FEEDS);
+
+// Le 3 notizie piu' recenti: al massimo 2 per fonte, senza doppioni.
+function pickNews(lists) {
+  const seen = new Set(); const perSource = {};
+  return lists.flat()
+    .filter((n) => n.all || PORT_WORDS.test(n.title))
+    .sort((a, b) => b.date - a.date)
+    .filter((n) => { if (seen.has(n.link)) return false; seen.add(n.link); perSource[n.source] = (perSource[n.source] || 0) + 1; return perSource[n.source] <= 2; })
+    .slice(0, 3)
+    .map(({ title, link, source, date }) => ({ title, link, source, date }));
 }
 
 async function news(env, ctx) {
-  const feeds = env.NEWS_FEEDS ? env.NEWS_FEEDS.split(',').map((u) => ({ url: u.trim(), source: new URL(u.trim()).hostname.replace(/^www\./, '') })) : NEWS_FEEDS;
-  const items = await cachedJson('news', NEWS_TTL, ctx, async () => {
-    const all = (await Promise.all(feeds.map(readFeed))).flat().sort((a, b) => b.date - a.date);
-    return all.length ? all.slice(0, 3) : null;
+  const items = await cachedJson('news-v2', NEWS_TTL, ctx, async () => {
+    const results = await Promise.all(feedList(env).map(readFeed));
+    const picked = pickNews(results.map((r) => r.items));
+    return picked.length ? picked : null;
   });
   return json({ items: items || [] });
+}
+
+// Controllo per l'admin: stato di ogni fonte, senza cache.
+async function adminNewsCheck(env) {
+  const results = await Promise.all(feedList(env).map(readFeed));
+  return json({ feeds: results.map((r) => r.info), picked: pickNews(results.map((r) => r.items)) });
 }
 
 async function recent(env) {
@@ -556,6 +601,7 @@ export async function onRequest({ request, env, params, waitUntil }) {
       if (path === '/admin/import' && m === 'POST') return await adminImport(env, request);
       if (path === '/admin/ships' && m === 'GET') return await adminShips(env, url);
       if (path === '/admin/backup' && m === 'GET') return await adminBackup(env);
+      if (path === '/admin/news-check' && m === 'GET') return await adminNewsCheck(env);
       if ((x = path.match(/^\/admin\/ships\/(\d+)\/delete$/)) && m === 'POST') return await adminDeleteShip(env, +x[1]);
       if ((x = path.match(/^\/admin\/reviews\/(\d+)\/(approve|reject|delete)$/)) && m === 'POST')
         return await adminReview(env, +x[1], x[2]);
