@@ -96,7 +96,7 @@ async function home() {
       <svg class="wave" viewBox="0 0 1200 34" preserveAspectRatio="none" aria-hidden="true"><path d="M0 34V14c150 20 300 20 450 6s300-20 450-6 200 16 300 6v14z"/></svg>
     </section>
     <div class="searchbox">
-      <label class="search">${icon('search')}<input id="q" type="text" placeholder="Enter Vessel Name" autocomplete="off" aria-label="Vessel name"></label>
+      <label class="search" role="search">${icon('search')}<input id="q" type="search" name="vsl-q" placeholder="Enter Vessel Name" aria-label="Vessel name" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" enterkeyhint="search" inputmode="search" data-lpignore="true" data-1p-ignore data-form-type="other"></label>
       <div class="card results" id="results" hidden></div>
     </div>
     <div class="card"><h2>${icon('trophy')} Top rated Tally Rooms</h2><div id="top" class="muted">Loading…</div></div>`;
@@ -194,10 +194,10 @@ async function form({ shipId, name }) {
   let rating = 0, hasTally = null; const photos = [];
   $app.innerHTML = `
     <a href="#/${shipId ? 'ship/' + shipId : ''}" class="back">${icon('back')} Back</a>
-    <form class="card" id="f" novalidate>
+    <form class="card" id="f" novalidate autocomplete="off">
       <h1 class="t">${shipId ? 'Update this Tally Room' : 'Add a vessel'}</h1>
       ${shipId ? `<p class="muted">Check how the Tally Room of <b>${esc(name)}</b> is today. The boxes are pre-filled with the current status: change whatever is different.</p>` :
-        `<label class="l" for="sn">Vessel name</label><input id="sn" type="text" value="${esc((name || '').toUpperCase())}" maxlength="60" autocapitalize="characters" required>`}
+        `<label class="l" for="sn">Vessel name</label><input id="sn" type="search" name="vsl-name" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done" data-lpignore="true" data-1p-ignore data-form-type="other" value="${esc((name || '').toUpperCase())}" maxlength="60" autocapitalize="characters" required>`}
       <label class="l">Is there a Tally Room on board?</label>
       <div class="yn" id="yn" role="radiogroup" aria-label="Tally Room present">
         <button type="button" class="yes" data-v="1" role="radio" aria-checked="false">${icon('check')} YES</button>
@@ -212,12 +212,12 @@ async function form({ shipId, name }) {
       </div>
       <div id="notes" hidden>
       <label class="l" for="cm">Notes (optional)</label>
-      <textarea id="cm" rows="3" maxlength="800" placeholder="E.g. dirty, AC not working, key from the second officer…"></textarea>
+      <textarea id="cm" name="vsl-notes" autocomplete="off" rows="3" maxlength="800" placeholder="E.g. dirty, AC not working, key from the second officer…"></textarea>
       <label class="l">${icon('camera')} Photos (max 3)</label>
       <input id="ph" type="file" accept="image/*" multiple>
       <div class="thumbs" id="th"></div>
       </div>
-      <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off">
+      <input class="hp" type="text" name="hp-x7" tabindex="-1" autocomplete="off" aria-hidden="true" data-lpignore="true" data-1p-ignore data-form-type="other">
       <div id="msg" style="margin-top:14px"></div>
       <button class="btn block" id="go" style="margin-top:8px" type="submit" hidden>Submit review</button>
       <p class="muted" style="text-align:center">Your review is anonymous and will appear after approval.</p>
@@ -259,7 +259,7 @@ async function form({ shipId, name }) {
       fd.append('amenities', JSON.stringify(Object.fromEntries(AMEN.map(([k]) => [k, e.target.elements[k].checked]))));
     }
     fd.append('comment', document.getElementById('cm').value);
-    fd.append('website', e.target.elements.website.value);
+    fd.append('website', e.target.elements['hp-x7'].value);
     if (hasTally) photos.forEach((b, i) => fd.append('photos', b, `photo${i}.${b.type === 'image/webp' ? 'webp' : 'jpg'}`));
     go.disabled = true; go.textContent = 'Sending…';
     try {
