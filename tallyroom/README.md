@@ -14,7 +14,6 @@ Runs entirely on Cloudflare's free tier (Pages + D1 + R2).
   - Weather: [MET Norway](https://api.met.no/doc/TermsOfService) (free, commercial use allowed with a descriptive User-Agent; credit shown on the page). Cached 30 minutes per port. The port list is in `functions/api/[[path]].js` (`PORTS`).
   - News: public RSS feed of [Port Technology International](https://www.porttechnology.org/rss-feeds/). Only the headline, source and link are shown. Cached 20 minutes. Feeds are listed in `NEWS_FEEDS` in the same file.
   - If a source is unreachable the card simply disappears.
-- The search box, vessel name and notes are editable text areas instead of `<input>` fields on purpose: Chrome on iPhone shows an autofill bar (passwords, cards, addresses) above the keyboard on every input, but not on editable text areas.
 - Anti-spam: hidden honeypot field and at most 5 submissions per hour per connection. Every review has a "Report" button.
 - Photos are resized on the phone (about 200-300 KB) before upload, so the free storage lasts a long time.
 
