@@ -5,7 +5,7 @@ compatibility_date = "2025-01-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "tallyroom"
-database_id = "00000000-0000-0000-0000-000000000000"   # sostituisci col tuo ID, vedi README
+database_id = "fb4be4bf-3fdb-49aa-a2c9-804576112798"
 
 [[r2_buckets]]
 binding = "PHOTOS"
