@@ -63,7 +63,15 @@ export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil(run(env).then((m) => console.log(m)));
   },
-  async fetch() {
-    return new Response('tally-room-reminder: runs on a daily schedule', { status: 200 });
+  // Pagina di controllo: mostra solo se i segreti sono visibili, mai i loro valori.
+  async fetch(request, env) {
+    const flag = (v) => (v ? 'configured' : 'MISSING');
+    return new Response([
+      'tally-room-reminder: runs on a daily schedule',
+      `RESEND_API_KEY: ${flag(env.RESEND_API_KEY)}`,
+      `ADMIN_EMAIL: ${flag(env.ADMIN_EMAIL)}`,
+      `MAIL_FROM: ${env.MAIL_FROM ? 'configured' : 'default (notifications@tallyrooms.com)'}`,
+      `Database: ${env.DB ? 'connected' : 'MISSING'}`,
+    ].join('\n'), { status: 200, headers: { 'content-type': 'text/plain; charset=utf-8' } });
   },
 };
