@@ -136,6 +136,7 @@ async function ship(id) {
   $app.innerHTML = `
     <a class="back" href="#/">${icon('back')} Search another vessel</a>
     <div class="card shiphead">
+      <span class="shipbadge" aria-hidden="true">${icon('ship')}</span>
       <h1>${esc(s.name)}</h1>
       <div class="score">
         ${!s.tally_present
