@@ -8,6 +8,7 @@ const P = {
   desk: '<rect x="2" y="6" width="20" height="4" rx="1.5"/><path d="M5 10v10M19 10v10M9 14h6"/>',
   clean: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 3v4M21 5h-4M5 17v4M7 19H3"/>',
   light: '<path d="M9 18h6M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
   wifi: '<path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/>',
   wc: '<path d="M13 4.56v16.16a1 1 0 0 1-1.24.97L5 20V5.56a2 2 0 0 1 1.5-1.94l4-1A2 2 0 0 1 13 4.56z"/><path d="M13 4h3a2 2 0 0 1 2 2v14M2 20h3M13 20h9M10 12v.01"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
@@ -29,8 +30,11 @@ const star = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 3.1 6.3
 
 const AMEN = [
   ['power220', '220V power'], ['ac', 'Air conditioning'], ['chairs', 'Chairs'], ['desk', 'Desk / table'],
-  ['clean', 'Cleanliness'], ['light', 'Good lighting'], ['wifi', 'Wi-Fi'], ['wc', 'Toilet nearby'],
+  ['clean', 'Cleanliness'], ['light', 'Good lighting'], ['wc', 'Toilet nearby'],
 ];
+// approximate capacity buckets (people that fit inside)
+const CAP = [null, '1-2', '3-5', '6-10', '10+'];
+const CAP_NAME = [null, 'Tiny', 'Small', 'Medium', 'Large'];
 
 document.getElementById('brand').innerHTML = `${icon('anchor')}Tally Room <span>Reviews</span>`;
 const $app = document.getElementById('app');
@@ -129,10 +133,10 @@ async function ship(id) {
   try { s = await api('/ships/' + id); } catch (e) { $app.innerHTML = `<a class="back" href="#/">${icon('back')} Back</a><div class="card">${esc(e.message)}</div>`; return; }
   const amen = AMEN.map(([k, label]) => {
     const p = s.amenities[k];
-    const cls = p == null ? 'u' : p >= 0.5 ? 'y' : 'n';
-    const sub = p == null ? 'Unknown or not available' : p >= 0.5 ? `${Math.round(p * 100)}% confirm` : 'Not available';
-    return `<div class="am ${cls}"><span class="ic">${icon(k)}</span><span class="tx"><span>${label}</span><small>${sub}</small></span></div>`;
-  }).join('');
+    const known = p != null && p >= 0.5;          // anything not confirmed stays grey: never shown as "no"
+    const sub = known ? `${Math.round(p * 100)}% confirm` : 'Unknown or not available';
+    return `<div class="am ${known ? 'y' : 'u'}"><span class="ic">${icon(k)}</span><span class="tx"><span>${label}</span><small>${sub}</small></span></div>`;
+  }).join('') + `<div class="am ${s.capacity ? 'y' : 'u'}"><span class="ic">${icon('users')}</span><span class="tx"><span>Capacity</span><small>${s.capacity ? `${CAP_NAME[s.capacity]}: about ${CAP[s.capacity]} people` : 'Unknown or not available'}</small></span></div>`;
   $app.innerHTML = `
     <a class="back" href="#/">${icon('back')} Search another vessel</a>
     <div class="card shiphead">
@@ -155,7 +159,7 @@ async function ship(id) {
       ${s.reviews.length ? s.reviews.map((r) => `
         <div class="rev">
           <div class="row">${r.has_tally ? stars(r.rating) : `<span class="npchip">${icon('x')} Tally Room not present</span>`}<span class="muted">${fmtDate(r.created_at)}</span></div>
-          ${r.has_tally ? `<div class="mini">${AMEN.filter(([k]) => r.amenities[k]).map(([k, l]) => `<span>${icon(k)}${l}</span>`).join('') || '<span style="background:var(--bg);color:var(--mut)">No amenities reported</span>'}</div>` : ''}
+          ${r.has_tally ? `<div class="mini">${AMEN.filter(([k]) => r.amenities[k]).map(([k, l]) => `<span>${icon(k)}${l}</span>`).join('')}${r.capacity ? `<span>${icon('users')}${CAP[r.capacity]} people</span>` : ''}${!AMEN.some(([k]) => r.amenities[k]) && !r.capacity ? '<span style="background:var(--bg);color:var(--mut)">No amenities reported</span>' : ''}</div>` : ''}
           ${r.comment ? `<p>${esc(r.comment)}</p>` : ''}
           <button class="linkbtn" data-report="${r.id}">Report</button>
         </div>`).join('') : '<p class="empty">No detailed reviews yet. Be the first!</p>'}
@@ -191,7 +195,7 @@ async function form({ shipId, name }) {
     try { const s = await api('/ships/' + shipId); name = s.name; AMEN.forEach(([k]) => { prev[k] = s.amenities[k] != null && s.amenities[k] >= 0.5; }); }
     catch (e) { $app.innerHTML = `<a class="back" href="#/">${icon('back')} Back</a><div class="card">${esc(e.message)}</div>`; return; }
   }
-  let rating = 0, hasTally = null; const photos = [];
+  let rating = 0, hasTally = null, capacity = 0; const photos = [];
   $app.innerHTML = `
     <a href="#/${shipId ? 'ship/' + shipId : ''}" class="back">${icon('back')} Back</a>
     <form class="card" id="f" novalidate autocomplete="off">
@@ -211,6 +215,8 @@ async function form({ shipId, name }) {
       <div class="tiles">${AMEN.map(([k, l]) => `<label class="tile"><input type="checkbox" name="${k}" ${prev[k] ? 'checked' : ''}><span class="face"><span class="ic">${icon(k)}</span>${l}</span></label>`).join('')}</div>
       </div>
       <div id="notes" hidden>
+      <label class="l">How many people fit inside? <span class="muted">(optional)</span></label>
+      <div class="caps" id="caps">${[1, 2, 3, 4].map((n) => `<button type="button" data-c="${n}" aria-pressed="false">${icon('users')}<b>${CAP[n]}</b><small>${CAP_NAME[n]}</small></button>`).join('')}</div>
       <label class="l" for="cm">Notes (optional)</label>
       <textarea id="cm" name="vsl-notes" autocomplete="off" rows="3" maxlength="800" placeholder="E.g. dirty, AC not working, key from the second officer…"></textarea>
       <label class="l">${icon('camera')} Photos (max 3)</label>
@@ -236,6 +242,11 @@ async function form({ shipId, name }) {
     details.hidden = !hasTally; notes.hidden = false; goBtn.hidden = false;
     document.getElementById('msg').innerHTML = '';
   }));
+  const capBtns = [...document.querySelectorAll('#caps button')];
+  capBtns.forEach((b) => b.addEventListener('click', () => {
+    capacity = capacity === +b.dataset.c ? 0 : +b.dataset.c;           // tap again to clear
+    capBtns.forEach((x) => { const on = +x.dataset.c === capacity; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); });
+  }));
   const th = document.getElementById('th');
   document.getElementById('ph').addEventListener('change', async (e) => {
     photos.length = 0; th.innerHTML = '';
@@ -256,6 +267,7 @@ async function form({ shipId, name }) {
     fd.append('has_tally', hasTally ? '1' : '0');
     if (hasTally) {
       fd.append('rating', rating);
+      if (capacity) fd.append('capacity', capacity);
       fd.append('amenities', JSON.stringify(Object.fromEntries(AMEN.map(([k]) => [k, e.target.elements[k].checked]))));
     }
     fd.append('comment', document.getElementById('cm').value);

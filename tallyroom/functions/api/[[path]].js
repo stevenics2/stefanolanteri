@@ -1,6 +1,6 @@
 // API unica per Tally Room Reviews (Cloudflare Pages Functions + D1 + R2)
 
-const AMENITIES = ['power220', 'ac', 'chairs', 'desk', 'clean', 'light', 'wifi', 'wc'];
+const AMENITIES = ['power220', 'ac', 'chairs', 'desk', 'clean', 'light', 'wc'];
 const RECENT = 5;             // numero di recensioni recenti usate per la scheda
 const MAX_PHOTOS = 3;
 const MAX_PHOTO_BYTES = 1_500_000;
@@ -34,7 +34,7 @@ function isAdmin(request, env) {
 // ---- scheda nave: media sulle ultime recensioni approvate + stato comfort ----
 async function buildSheet(env, ship) {
   const { results: revs } = await env.DB.prepare(
-    `SELECT id, rating, has_tally, amenities, comment, created_at FROM reviews
+    `SELECT id, rating, has_tally, capacity, amenities, comment, created_at FROM reviews
      WHERE ship_id = ? AND status = 'approved' ORDER BY created_at DESC, id DESC`
   ).bind(ship.id).all();
   const parsed = revs.map((r) => ({ ...r, amenities: safeJson(r.amenities) }));
@@ -48,6 +48,10 @@ async function buildSheet(env, ship) {
   const ratings = withTally.map((r) => r.rating);
   const rating = ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length
     : (recent.length ? null : ship.seed_rating);
+
+  // capienza: valore mediano tra quelle indicate nelle ultime recensioni
+  const caps = withTally.map((r) => r.capacity).filter((c) => c >= 1 && c <= 4).sort((a, b) => a - b);
+  const capacity = caps.length ? caps[Math.floor((caps.length - 1) / 2)] : null;
 
   const amenities = {};
   for (const a of AMENITIES) {
@@ -65,6 +69,7 @@ async function buildSheet(env, ship) {
     name: up(ship.name),
     rating,
     tally_present,
+    capacity,
     seed_rating: ship.seed_rating,
     review_count: parsed.length,
     last_update: parsed[0]?.created_at ?? null,
@@ -159,8 +164,11 @@ async function submitReview(env, request, ctx) {
   const hasTally = ht === '1' ? 1 : 0;
 
   let rating = 0;
+  let capacity = null;
   const amenities = {};
   if (hasTally) {
+    const c = parseInt(form.get('capacity'), 10);
+    capacity = c >= 1 && c <= 4 ? c : null;
     rating = parseInt(form.get('rating'), 10);
     if (!(rating >= 1 && rating <= 5)) return err('Invalid rating');
     const amenitiesIn = safeJson(form.get('amenities'));
@@ -199,9 +207,9 @@ async function submitReview(env, request, ctx) {
   }
 
   const rev = await env.DB.prepare(
-    `INSERT INTO reviews (ship_id, rating, has_tally, amenities, comment, status, ip_hash, created_at)
-     VALUES (?,?,?,?,?, 'pending', ?, ?)`
-  ).bind(shipId, rating, hasTally, JSON.stringify(amenities), comment, ipHash, now).run();
+    `INSERT INTO reviews (ship_id, rating, has_tally, capacity, amenities, comment, status, ip_hash, created_at)
+     VALUES (?,?,?,?,?,?, 'pending', ?, ?)`
+  ).bind(shipId, rating, hasTally, capacity, JSON.stringify(amenities), comment, ipHash, now).run();
   const reviewId = rev.meta.last_row_id;
 
   for (const f of files) {
@@ -248,7 +256,7 @@ async function reportReview(env, request, id) {
 // ---- handlers admin ----
 async function adminQueue(env) {
   const { results: reviews } = await env.DB.prepare(
-    `SELECT r.id, r.rating, r.has_tally, r.amenities, r.comment, r.created_at, s.id AS ship_id, s.name AS ship_name, s.status AS ship_status,
+    `SELECT r.id, r.rating, r.has_tally, r.capacity, r.amenities, r.comment, r.created_at, s.id AS ship_id, s.name AS ship_name, s.status AS ship_status,
        (SELECT group_concat(id) FROM photos WHERE review_id = r.id) AS photo_ids
      FROM reviews r JOIN ships s ON s.id = r.ship_id
      WHERE r.status='pending' ORDER BY r.created_at`
@@ -327,6 +335,11 @@ async function ensureSchema(env) {
     await env.DB.prepare('SELECT has_tally FROM reviews LIMIT 1').first();
   } catch {
     await env.DB.prepare('ALTER TABLE reviews ADD COLUMN has_tally INTEGER NOT NULL DEFAULT 1').run();
+  }
+  try {
+    await env.DB.prepare('SELECT capacity FROM reviews LIMIT 1').first();
+  } catch {
+    await env.DB.prepare('ALTER TABLE reviews ADD COLUMN capacity INTEGER').run();
   }
   // nomi nave sempre in maiuscolo (anche quelli salvati prima di questa regola)
   await env.DB.prepare('UPDATE ships SET name = UPPER(name) WHERE name != UPPER(name)').run();

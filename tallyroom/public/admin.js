@@ -1,5 +1,5 @@
 'use strict';
-const AMEN = { power220: '220V', ac: 'AC', chairs: 'Chairs', desk: 'Desk', clean: 'Clean', light: 'Light', wifi: 'Wi-Fi', wc: 'WC' };
+const AMEN = { power220: '220V', ac: 'AC', chairs: 'Chairs', desk: 'Desk', clean: 'Clean', light: 'Light', wc: 'WC' };
 const $app = document.getElementById('app');
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 let pw = sessionStorage.getItem('tr_admin') || '';
@@ -33,7 +33,7 @@ async function load() {
       <div class="rev" data-id="${r.id}">
         <b>${esc(r.ship_name)}</b> ${r.ship_status === 'pending' ? '<span class="badge">NEW SHIP</span>' : ''}
         ${r.has_tally === 0 ? '<div class="npchip">✕ TALLY ROOM NOT PRESENT</div>' : `<div class="stars">${'★'.repeat(r.rating)}</div>
-        <div class="muted">${Object.entries(AMEN).map(([k, l]) => (r.amenities[k] ? '✔ ' : '✘ ') + l).join(' · ')}</div>`}
+        <div class="muted">${Object.entries(AMEN).map(([k, l]) => (r.amenities[k] ? '✔ ' : '✘ ') + l).join(' · ')}${r.capacity ? ' · Capacity: ' + ['', '1-2', '3-5', '6-10', '10+'][r.capacity] + ' people' : ''}</div>`}
         ${r.comment ? `<p>${esc(r.comment)}</p>` : ''}
         ${r.photo_ids ? `<div class="thumbs">${r.photo_ids.split(',').map((p) => `<img data-photo="${p}" alt="">`).join('')}</div>` : ''}
         <div class="row" style="margin-top:10px"><button class="btn ok" data-a="approve">Approve</button><button class="btn bad" data-a="reject">Reject</button></div>
