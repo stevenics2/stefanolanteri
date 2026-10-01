@@ -294,7 +294,7 @@ async function submitReview(env, request, ctx) {
     const amenitiesIn = safeJson(form.get('amenities'));
     for (const a of AMENITIES) { const v = ans(amenitiesIn[a]); if (v) amenities[a] = v; }   // salva solo le risposte date
   }
-  const comment = String(form.get('comment') || '').trim().slice(0, 800) || null;
+  const comment = String(form.get('comment') || '').replace(/\r\n?/g, '\n').replace(/\n{3,}/g, '\n\n').trim().slice(0, 800) || null;
 
   // nave esistente o nuova
   let shipId = parseInt(form.get('ship_id'), 10);

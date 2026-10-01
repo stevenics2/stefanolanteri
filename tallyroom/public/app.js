@@ -95,6 +95,30 @@ function shipArt() {
   </svg>`;
 }
 
+// ---------- Plain-text editable field ----------
+// iPhone Chrome shows its autofill bar (passwords, cards, addresses) on every <input>.
+// A contenteditable element is not a form control, so the bar does not appear.
+function textField(el, { maxLen = 60, onChange, multiline = false } = {}) {
+  const clean = () => { if (!el.textContent) el.innerHTML = ''; };           // keep :empty true
+  el.addEventListener('input', () => {
+    if (el.textContent.length > maxLen) { el.textContent = el.textContent.slice(0, maxLen); placeCaretAtEnd(el); }
+    clean(); if (onChange) onChange();
+  });
+  if (!multiline) el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } });
+  el.addEventListener('paste', (e) => {
+    e.preventDefault();
+    const raw = (e.clipboardData || window.clipboardData).getData('text') || '';
+    const t = multiline ? raw.replace(/\r/g, '') : raw.replace(/\s+/g, ' ');
+    document.execCommand('insertText', false, t);
+  });
+  el.addEventListener('drop', (e) => e.preventDefault());
+  return () => (multiline ? el.innerText : el.textContent.replace(/\s+/g, ' ')).trim();
+}
+function placeCaretAtEnd(el) {
+  const r = document.createRange(); r.selectNodeContents(el); r.collapse(false);
+  const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+}
+
 const ago = (t) => {
   const m = Math.max(1, Math.round((Date.now() - t) / 60000));
   if (m < 60) return `${m} min ago`;
@@ -156,7 +180,7 @@ async function home() {
       <svg class="wave" viewBox="0 0 1200 34" preserveAspectRatio="none" aria-hidden="true"><path d="M0 34V14c150 20 300 20 450 6s300-20 450-6 200 16 300 6v14z"/></svg>
     </section>
     <div class="searchbox">
-      <div class="search" role="search">${icon('search')}<span class="ph"><input id="q" type="search" name="vsl-q" placeholder=" " aria-label="Search vessels" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" enterkeyhint="search" inputmode="search" aria-autocomplete="list" data-lpignore="true" data-1p-ignore data-form-type="other"><i class="fph" aria-hidden="true"></i></span></div>
+      <div class="search" role="search">${icon('search')}<span class="ph"><div id="q" class="ce" contenteditable="true" role="searchbox" aria-label="Search vessels" aria-multiline="false" inputmode="search" enterkeyhint="search" autocapitalize="characters" autocorrect="off" spellcheck="false"></div><i class="fph" aria-hidden="true"></i></span></div>
       <div class="card results" id="results" hidden></div>
     </div>
     <div class="card" id="wx-card" hidden>
@@ -172,6 +196,7 @@ async function home() {
     <div class="card"><h2>${icon('history')} Recently updated Tally Rooms</h2><div id="recent" class="muted">Loading…</div></div>
     <div class="safety" role="note">${icon('hardhat')}<span>SAFETY FIRST</span>${icon('hardhat')}</div>`;
   const q = document.getElementById('q'), res = document.getElementById('results');
+  const qVal = textField(q, { onChange: () => search() });
   const item = (s, i) => `
     <a class="ship-item" href="#/ship/${s.id}">
       ${i != null ? `<span class="rank">${i + 1}</span>` : ''}
@@ -180,14 +205,13 @@ async function home() {
       ${s.not_present ? pillNP : pill(s.avg_rating ?? s.seed_rating)}
     </a>`;
   const search = debounce(async () => {
-    const v = q.value.trim();
+    const v = qVal();
     if (v.length < 2) { res.hidden = true; res.innerHTML = ''; return; }
     const { ships } = await api('/ships?q=' + encodeURIComponent(v)).catch(() => ({ ships: [] }));
     res.hidden = false;
     res.innerHTML = (ships.map((s) => item(s)).join('') || '<p class="empty">No vessel found with this name.</p>') +
       `<a class="btn sec block" style="margin-top:12px" href="#/new?name=${encodeURIComponent(v)}">${icon('plus')} Add "${esc(v.toUpperCase())}"</a>`;
   }, 250);
-  q.addEventListener('input', search);
   loadWeather();
   loadNews();
   document.getElementById('wx-shuffle').addEventListener('click', loadWeather);
@@ -273,7 +297,7 @@ async function form({ shipId, name }) {
     <form class="card" id="f" novalidate autocomplete="off">
       <h1 class="t">${shipId ? 'Update this Tally Room' : 'Add a vessel'}</h1>
       ${shipId ? `<p class="muted">Check how the Tally Room of <b>${esc(name)}</b> is today. The boxes are pre-filled with the current status: change whatever is different.</p>` :
-        `<label class="l" for="sn" data-t="Vessel name"></label><input id="sn" type="search" name="vsl-name" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done" data-lpignore="true" data-1p-ignore data-form-type="other" value="${esc((name || '').toUpperCase())}" maxlength="60" autocapitalize="characters" required>`}
+        `<span class="l" id="snl" data-t="Vessel name"></span><div id="sn" class="ce box" contenteditable="true" role="textbox" aria-labelledby="snl" aria-multiline="false" enterkeyhint="done" autocapitalize="characters" autocorrect="off" spellcheck="false">${esc((name || '').toUpperCase())}</div>`}
       <label class="l">Is there a Tally Room on board?</label>
       <div class="yn" id="yn" role="radiogroup" aria-label="Tally Room present">
         <button type="button" class="yes" data-v="1" role="radio" aria-checked="false">${icon('check')} YES</button>
@@ -290,8 +314,8 @@ async function form({ shipId, name }) {
       <div id="notes" hidden>
       <label class="l">How many people fit inside? <span class="muted">(optional)</span></label>
       <div class="caps" id="caps">${[1, 2, 3, 4].map((n) => `<button type="button" data-c="${n}" aria-pressed="false">${icon('users')}<b>${CAP[n]}</b><small>${CAP_NAME[n]}</small></button>`).join('')}</div>
-      <label class="l" for="cm">Notes (optional)</label>
-      <textarea id="cm" name="vsl-notes" autocomplete="off" rows="3" maxlength="800" placeholder="E.g. dirty, AC not working, key from the second officer…"></textarea>
+      <span class="l" id="cml">Notes (optional)</span>
+      <div id="cm" class="ce box ml" contenteditable="true" role="textbox" aria-labelledby="cml" aria-multiline="true" autocapitalize="sentences" spellcheck="true" data-ph="E.g. dirty, AC not working, key from the second officer…"></div>
       <label class="l">${icon('camera')} Photos (max 3)</label>
       <input id="ph" type="file" accept="image/*" multiple>
       <div class="thumbs" id="th"></div>
@@ -306,6 +330,9 @@ async function form({ shipId, name }) {
     rating = +b.dataset.n; rl.textContent = RATE_TXT[rating];
     rateBtns.forEach((x) => x.classList.toggle('on', +x.dataset.n <= rating));
   }));
+  const cmVal = textField(document.getElementById('cm'), { maxLen: 800, multiline: true });
+  const snEl = document.getElementById('sn');
+  const snVal = snEl ? textField(snEl) : () => '';
   // step 1: is there a Tally Room? Details only appear after answering.
   const ynBtns = [...document.querySelectorAll('#yn button')];
   const details = document.getElementById('details'), notes = document.getElementById('notes'), goBtn = document.getElementById('go');
@@ -348,14 +375,14 @@ async function form({ shipId, name }) {
     if (hasTally && !rating) return fail('Please choose a rating from 1 to 5 stars.');
     const fd = new FormData();
     if (shipId) fd.append('ship_id', shipId);
-    else { const n = document.getElementById('sn').value.trim().toUpperCase(); if (n.length < 2) return fail('Please enter the vessel name.'); fd.append('ship_name', n); }
+    else { const n = snVal().toUpperCase(); if (n.length < 2) return fail('Please enter the vessel name.'); fd.append('ship_name', n); }
     fd.append('has_tally', hasTally ? '1' : '0');
     if (hasTally) {
       fd.append('rating', rating);
       if (capacity) fd.append('capacity', capacity);
       fd.append('amenities', JSON.stringify(amenState));
     }
-    fd.append('comment', document.getElementById('cm').value);
+    fd.append('comment', cmVal());
     fd.append('website', e.target.elements['hp-x7'].value);
     if (hasTally) photos.forEach((b, i) => fd.append('photos', b, `photo${i}.${b.type === 'image/webp' ? 'webp' : 'jpg'}`));
     go.disabled = true; go.textContent = 'Sending…';
