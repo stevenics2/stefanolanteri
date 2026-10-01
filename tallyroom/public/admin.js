@@ -33,7 +33,7 @@ async function load() {
       <div class="rev" data-id="${r.id}">
         <b>${esc(r.ship_name)}</b> ${r.ship_status === 'pending' ? '<span class="badge">NEW SHIP</span>' : ''}
         ${r.has_tally === 0 ? '<div class="npchip">✕ TALLY ROOM NOT PRESENT</div>' : `<div class="stars">${'★'.repeat(r.rating)}</div>
-        <div class="muted">${Object.entries(AMEN).map(([k, l]) => (r.amenities[k] ? '✔ ' : '✘ ') + l).join(' · ')}${r.capacity ? ' · Capacity: ' + ['', '1-2', '3-5', '6-10', '10+'][r.capacity] + ' people' : ''}</div>`}
+        <div class="muted">${Object.entries(AMEN).map(([k, l]) => (r.amenities[k] === 'y' ? '✔ ' : r.amenities[k] === 'n' ? '✘ ' : '? ') + l).join(' · ')}${r.capacity ? ' · Capacity: ' + ['', '1-2', '3-5', '6-10', '10+'][r.capacity] + ' people' : ''}</div>`}
         ${r.comment ? `<p>${esc(r.comment)}</p>` : ''}
         ${r.photo_ids ? `<div class="thumbs">${r.photo_ids.split(',').map((p) => `<img data-photo="${p}" alt="">`).join('')}</div>` : ''}
         <div class="row" style="margin-top:10px"><button class="btn ok" data-a="approve">Approve</button><button class="btn bad" data-a="reject">Reject</button></div>

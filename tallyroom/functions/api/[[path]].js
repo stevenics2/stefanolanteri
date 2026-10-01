@@ -37,7 +37,7 @@ async function buildSheet(env, ship) {
     `SELECT id, rating, has_tally, capacity, amenities, comment, created_at FROM reviews
      WHERE ship_id = ? AND status = 'approved' ORDER BY created_at DESC, id DESC`
   ).bind(ship.id).all();
-  const parsed = revs.map((r) => ({ ...r, amenities: safeJson(r.amenities) }));
+  const parsed = revs.map((r) => ({ ...r, amenities: normAmenities(safeJson(r.amenities)) }));
   const recent = parsed.slice(0, RECENT);
 
   // la Tally Room è "non presente" se nelle ultime recensioni la maggioranza lo dice
@@ -55,7 +55,9 @@ async function buildSheet(env, ship) {
 
   const amenities = {};
   for (const a of AMENITIES) {
-    amenities[a] = withTally.length ? withTally.filter((r) => r.amenities[a]).length / withTally.length : null;
+    const yes = withTally.filter((r) => r.amenities[a] === 'y').length;
+    const no = withTally.filter((r) => r.amenities[a] === 'n').length;
+    amenities[a] = yes + no ? { yes, no } : null;      // null = nessuno ha risposto
   }
 
   const { results: photos } = await env.DB.prepare(
@@ -78,6 +80,10 @@ async function buildSheet(env, ship) {
     photos,
   };
 }
+// Risposta a un comfort: 'y' = sì, 'n' = no, null = non indicato.
+// I dati vecchi usavano true/false: true vale sì, false (casella non spuntata) vale "non indicato".
+const ans = (v) => (v === true || v === 'y' ? 'y' : v === 'n' ? 'n' : null);
+const normAmenities = (raw) => Object.fromEntries(AMENITIES.map((a) => [a, ans(raw[a])]));
 function safeJson(s) { try { return JSON.parse(s) || {}; } catch { return {}; } }
 
 const RECENT_SQL = `(SELECT rating, has_tally FROM reviews r WHERE r.ship_id = s.id AND r.status='approved' ORDER BY r.created_at DESC, r.id DESC LIMIT 5)`;
@@ -172,9 +178,7 @@ async function submitReview(env, request, ctx) {
     rating = parseInt(form.get('rating'), 10);
     if (!(rating >= 1 && rating <= 5)) return err('Invalid rating');
     const amenitiesIn = safeJson(form.get('amenities'));
-    for (const a of AMENITIES) amenities[a] = !!amenitiesIn[a];
-  } else {
-    for (const a of AMENITIES) amenities[a] = false;
+    for (const a of AMENITIES) { const v = ans(amenitiesIn[a]); if (v) amenities[a] = v; }   // salva solo le risposte date
   }
   const comment = String(form.get('comment') || '').trim().slice(0, 800) || null;
 
@@ -268,7 +272,7 @@ async function adminQueue(env) {
   ).all();
   const { n: ships } = await env.DB.prepare(`SELECT COUNT(*) AS n FROM ships WHERE status='approved'`).first();
   return json({
-    reviews: reviews.map((r) => ({ ...r, ship_name: up(r.ship_name), amenities: safeJson(r.amenities) })),
+    reviews: reviews.map((r) => ({ ...r, ship_name: up(r.ship_name), amenities: normAmenities(safeJson(r.amenities)) })),
     reports: reports.map((r) => ({ ...r, ship_name: up(r.ship_name) })),
     ships,
   });

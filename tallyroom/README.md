@@ -5,7 +5,7 @@ Runs entirely on Cloudflare's free tier (Pages + D1 + R2).
 
 ## Features
 - Type a ship name; if it is not in the database yet, add it.
-- Star rating, amenity checklist (220V power, air conditioning, chairs, desk, cleanliness, lighting, toilet nearby), approximate capacity (people that fit inside), notes and up to 3 photos.
+- Star rating, amenity questions with YES / NO / blank (220V power, air conditioning, chairs, desk, cleanliness, lighting, toilet nearby), approximate capacity (people that fit inside), notes and up to 3 photos.
 - **Update this Tally Room**: every new submission is a dated update. The sheet shows rating and amenities based on the **latest 5 reviews**, so a room that gets dirty or loses its AC shows up quickly. The full history stays visible.
 - Reviews are **anonymous** and published only after **manual approval** in `/admin`.
 - An existing list of ships (name + rating) can be imported from `/admin`. The imported rating is used until the first real review arrives.

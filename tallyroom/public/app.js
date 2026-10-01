@@ -132,10 +132,12 @@ async function ship(id) {
   let s;
   try { s = await api('/ships/' + id); } catch (e) { $app.innerHTML = `<a class="back" href="#/">${icon('back')} Back</a><div class="card">${esc(e.message)}</div>`; return; }
   const amen = AMEN.map(([k, label]) => {
-    const p = s.amenities[k];
-    const known = p != null && p >= 0.5;          // anything not confirmed stays grey: never shown as "no"
-    const sub = known ? `${Math.round(p * 100)}% confirm` : 'Unknown or not available';
-    return `<div class="am ${known ? 'y' : 'u'}"><span class="ic">${icon(k)}</span><span class="tx"><span>${label}</span><small>${sub}</small></span></div>`;
+    const v = s.amenities[k];                     // { yes, no } or null when nobody answered
+    let cls = 'u', sub = 'Unknown or not available';
+    if (v && v.yes > v.no) { cls = 'y'; sub = `${Math.round((100 * v.yes) / (v.yes + v.no))}% say yes`; }
+    else if (v && v.no > v.yes) { cls = 'n'; sub = 'Not available'; }          // red only when someone answered NO
+    else if (v) sub = 'Mixed reports';
+    return `<div class="am ${cls}"><span class="ic">${icon(cls === 'n' ? 'x' : k)}</span><span class="tx"><span>${label}</span><small>${sub}</small></span></div>`;
   }).join('') + `<div class="am ${s.capacity ? 'y' : 'u'}"><span class="ic">${icon('users')}</span><span class="tx"><span>Capacity</span><small>${s.capacity ? `${CAP_NAME[s.capacity]}: about ${CAP[s.capacity]} people` : 'Unknown or not available'}</small></span></div>`;
   $app.innerHTML = `
     <a class="back" href="#/">${icon('back')} Search another vessel</a>
@@ -159,7 +161,7 @@ async function ship(id) {
       ${s.reviews.length ? s.reviews.map((r) => `
         <div class="rev">
           <div class="row">${r.has_tally ? stars(r.rating) : `<span class="npchip">${icon('x')} Tally Room not present</span>`}<span class="muted">${fmtDate(r.created_at)}</span></div>
-          ${r.has_tally ? `<div class="mini">${AMEN.filter(([k]) => r.amenities[k]).map(([k, l]) => `<span>${icon(k)}${l}</span>`).join('')}${r.capacity ? `<span>${icon('users')}${CAP[r.capacity]} people</span>` : ''}${!AMEN.some(([k]) => r.amenities[k]) && !r.capacity ? '<span style="background:var(--bg);color:var(--mut)">No amenities reported</span>' : ''}</div>` : ''}
+          ${r.has_tally ? `<div class="mini">${AMEN.filter(([k]) => r.amenities[k] === 'y').map(([k, l]) => `<span>${icon(k)}${l}</span>`).join('')}${AMEN.filter(([k]) => r.amenities[k] === 'n').map(([k, l]) => `<span class="no">${icon('x')}${l}</span>`).join('')}${r.capacity ? `<span>${icon('users')}${CAP[r.capacity]} people</span>` : ''}${!AMEN.some(([k]) => r.amenities[k]) && !r.capacity ? '<span style="background:var(--bg);color:var(--mut)">No amenities reported</span>' : ''}</div>` : ''}
           ${r.comment ? `<p>${esc(r.comment)}</p>` : ''}
           <button class="linkbtn" data-report="${r.id}">Report</button>
         </div>`).join('') : '<p class="empty">No detailed reviews yet. Be the first!</p>'}
@@ -190,12 +192,12 @@ async function compress(file, max = 1280) {
 const RATE_TXT = ['', 'Poor', 'Below average', 'Okay', 'Good', 'Excellent'];
 
 async function form({ shipId, name }) {
-  const prev = {};
+  const prev = {};            // pre-filled answers when updating an existing Tally Room
   if (shipId) {
-    try { const s = await api('/ships/' + shipId); name = s.name; AMEN.forEach(([k]) => { prev[k] = s.amenities[k] != null && s.amenities[k] >= 0.5; }); }
+    try { const s = await api('/ships/' + shipId); name = s.name; AMEN.forEach(([k]) => { const v = s.amenities[k]; if (v && v.yes > v.no) prev[k] = 'y'; else if (v && v.no > v.yes) prev[k] = 'n'; }); }
     catch (e) { $app.innerHTML = `<a class="back" href="#/">${icon('back')} Back</a><div class="card">${esc(e.message)}</div>`; return; }
   }
-  let rating = 0, hasTally = null, capacity = 0; const photos = [];
+  let rating = 0, hasTally = null, capacity = 0; const photos = []; const amenState = { ...prev };
   $app.innerHTML = `
     <a href="#/${shipId ? 'ship/' + shipId : ''}" class="back">${icon('back')} Back</a>
     <form class="card" id="f" novalidate autocomplete="off">
@@ -212,7 +214,8 @@ async function form({ shipId, name }) {
       <div class="rate-in" id="rate">${[1, 2, 3, 4, 5].map((n) => `<button type="button" data-n="${n}" aria-label="${n} stars">★</button>`).join('')}</div>
       <div class="rate-lbl" id="rl"></div>
       <label class="l">What is there / how is it</label>
-      <div class="tiles">${AMEN.map(([k, l]) => `<label class="tile"><input type="checkbox" name="${k}" ${prev[k] ? 'checked' : ''}><span class="face"><span class="ic">${icon(k)}</span>${l}</span></label>`).join('')}</div>
+      <div class="arows">${AMEN.map(([k, l]) => `<div class="arow" data-k="${k}"><span class="ic">${icon(k)}</span><span class="lbl">${l}</span><span class="seg"><button type="button" class="yes" data-v="y" aria-pressed="false">YES</button><button type="button" class="no" data-v="n" aria-pressed="false">NO</button></span></div>`).join('')}</div>
+      <p class="muted" style="margin:6px 0 0">Not sure? Leave it blank: it will show as unknown.</p>
       </div>
       <div id="notes" hidden>
       <label class="l">How many people fit inside? <span class="muted">(optional)</span></label>
@@ -242,6 +245,18 @@ async function form({ shipId, name }) {
     details.hidden = !hasTally; notes.hidden = false; goBtn.hidden = false;
     document.getElementById('msg').innerHTML = '';
   }));
+  // each amenity: YES / NO, tap again to clear (blank = unknown)
+  const paint = (row) => row.querySelectorAll('.seg button').forEach((x) => {
+    const on = amenState[row.dataset.k] === x.dataset.v; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on);
+  });
+  document.querySelectorAll('.arow').forEach((row) => {
+    paint(row);
+    row.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => {
+      const k = row.dataset.k;
+      if (amenState[k] === b.dataset.v) delete amenState[k]; else amenState[k] = b.dataset.v;
+      paint(row);
+    }));
+  });
   const capBtns = [...document.querySelectorAll('#caps button')];
   capBtns.forEach((b) => b.addEventListener('click', () => {
     capacity = capacity === +b.dataset.c ? 0 : +b.dataset.c;           // tap again to clear
@@ -268,7 +283,7 @@ async function form({ shipId, name }) {
     if (hasTally) {
       fd.append('rating', rating);
       if (capacity) fd.append('capacity', capacity);
-      fd.append('amenities', JSON.stringify(Object.fromEntries(AMEN.map(([k]) => [k, e.target.elements[k].checked]))));
+      fd.append('amenities', JSON.stringify(amenState));
     }
     fd.append('comment', document.getElementById('cm').value);
     fd.append('website', e.target.elements['hp-x7'].value);
