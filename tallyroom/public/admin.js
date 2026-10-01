@@ -47,6 +47,11 @@ async function load() {
         <div class="row"><button class="btn bad" data-a="delete">Delete review</button><button class="btn sec" data-a="dismiss">Dismiss</button></div>
       </div>`).join('') || '<p class="muted">No reports.</p>'}
     </div>
+    <div class="card"><h2>Manage vessels</h2>
+      <p class="muted">Search a vessel to delete it together with all its reviews and photos. This cannot be undone.</p>
+      <input id="vq" type="text" placeholder="Search vessel (2+ letters), or leave empty for the newest" autocomplete="off" style="width:100%;padding:13px;border:1.5px solid var(--line);border-radius:12px;font:inherit;background:var(--card);color:var(--ink)">
+      <div id="vlist" style="margin-top:6px"></div>
+    </div>
     <div class="card"><h2>Import ship list</h2>
       <p class="muted">One ship per line: <code>name;rating</code> (rating 1 to 5, decimals allowed). Existing ships are updated. Ships in the database now: ${q.ships}.</p>
       <textarea id="csv" rows="6" placeholder="GRIMALDI EUROPE;4&#10;EXCELSIOR;2.5" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font:inherit"></textarea>
@@ -67,6 +72,25 @@ async function load() {
     const r = await fetch('/api/photos/' + img.dataset.photo, { headers: { authorization: 'Bearer ' + pw } });
     if (r.ok) img.src = URL.createObjectURL(await r.blob());
   });
+  const vq = document.getElementById('vq'), vlist = document.getElementById('vlist');
+  async function loadShips() {
+    try {
+      const { ships } = await api('/ships?q=' + encodeURIComponent(vq.value.trim()));
+      vlist.innerHTML = ships.map((s) => `
+        <div class="vrow">
+          <span class="vn"><b>${esc(s.name)}</b><small>${s.reviews} review${s.reviews === 1 ? '' : 's'}${s.pending ? `, ${s.pending} pending` : ''}${s.status === 'pending' ? ' · not published' : ''}</small></span>
+          <button class="btn bad sm" type="button" data-del="${s.id}" data-name="${esc(s.name)}" data-n="${s.reviews}">Delete</button>
+        </div>`).join('') || '<p class="muted">No vessel found.</p>';
+    } catch { /* 401 is handled by api() */ }
+  }
+  let vt; vq.addEventListener('input', () => { clearTimeout(vt); vt = setTimeout(loadShips, 250); });
+  vlist.addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-del]'); if (!b) return;
+    if (!confirm(`Delete "${b.dataset.name}" and its ${b.dataset.n} review(s), photos included?\n\nThis cannot be undone.`)) return;
+    b.disabled = true;
+    try { await api(`/ships/${b.dataset.del}/delete`, 'POST'); await loadShips(); } catch (er) { alert(er.message); b.disabled = false; }
+  });
+  loadShips();
   document.getElementById('csvf').onchange = async (e) => { document.getElementById('csv').value = await e.target.files[0].text(); };
   document.getElementById('imp').onclick = async () => {
     const m = document.getElementById('impmsg');

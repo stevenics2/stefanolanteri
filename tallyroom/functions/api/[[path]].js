@@ -416,6 +416,34 @@ async function adminReview(env, id, action) {
   return json({ ok: true });
 }
 
+async function adminShips(env, url) {
+  const q = normName(url.searchParams.get('q') || '');
+  const base = `SELECT s.id, s.name, s.status, s.seed_rating,
+      (SELECT COUNT(*) FROM reviews r WHERE r.ship_id = s.id) AS reviews,
+      (SELECT COUNT(*) FROM reviews r WHERE r.ship_id = s.id AND r.status = 'pending') AS pending
+    FROM ships s`;
+  const stmt = q.length >= 2
+    ? env.DB.prepare(`${base} WHERE s.name_norm LIKE ? ORDER BY s.name LIMIT 30`).bind(`%${q}%`)
+    : env.DB.prepare(`${base} ORDER BY s.created_at DESC, s.id DESC LIMIT 10`);   // no search: the 10 newest
+  const { results } = await stmt.all();
+  return json({ ships: results.map((r) => ({ ...r, name: up(r.name) })) });
+}
+
+// Deletes a vessel with all its reviews, photos (files included) and reports. Cannot be undone.
+async function adminDeleteShip(env, id) {
+  const ship = await env.DB.prepare('SELECT id FROM ships WHERE id = ?').bind(id).first();
+  if (!ship) return err('Not found', 404);
+  const { results: photos } = await env.DB.prepare('SELECT r2_key FROM photos WHERE ship_id = ?').bind(id).all();
+  for (const p of photos) { try { await env.PHOTOS.delete(p.r2_key); } catch { /* the file may already be gone */ } }
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM reports WHERE review_id IN (SELECT id FROM reviews WHERE ship_id = ?)').bind(id),
+    env.DB.prepare('DELETE FROM photos WHERE ship_id = ?').bind(id),
+    env.DB.prepare('DELETE FROM reviews WHERE ship_id = ?').bind(id),
+    env.DB.prepare('DELETE FROM ships WHERE id = ?').bind(id),
+  ]);
+  return json({ ok: true, photos_deleted: photos.length });
+}
+
 async function adminDismissReport(env, id) {
   await env.DB.prepare(`DELETE FROM reports WHERE id=?`).bind(id).run();
   return json({ ok: true });
@@ -488,6 +516,8 @@ export async function onRequest({ request, env, params, waitUntil }) {
       if (!isAdmin(request, env)) return err('Unauthorized', 401);
       if (path === '/admin/queue' && m === 'GET') return await adminQueue(env);
       if (path === '/admin/import' && m === 'POST') return await adminImport(env, request);
+      if (path === '/admin/ships' && m === 'GET') return await adminShips(env, url);
+      if ((x = path.match(/^\/admin\/ships\/(\d+)\/delete$/)) && m === 'POST') return await adminDeleteShip(env, +x[1]);
       if ((x = path.match(/^\/admin\/reviews\/(\d+)\/(approve|reject|delete)$/)) && m === 'POST')
         return await adminReview(env, +x[1], x[2]);
       if ((x = path.match(/^\/admin\/reports\/(\d+)\/dismiss$/)) && m === 'POST')
