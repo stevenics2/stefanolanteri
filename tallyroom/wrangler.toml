@@ -1,0 +1,12 @@
+name = "tally-room"
+pages_build_output_dir = "public"
+compatibility_date = "2025-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "tallyroom"
+database_id = "00000000-0000-0000-0000-000000000000"   # sostituisci col tuo ID, vedi README
+
+[[r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "tallyroom-photos"
