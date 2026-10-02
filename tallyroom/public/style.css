@@ -257,3 +257,9 @@ label.l[data-t]::before{content:attr(data-t)}
 .safety{gap:10px;margin:2px 0 4px;padding:9px 10px;font-size:.92rem;letter-spacing:.14em;border-width:4px;border-radius:14px;box-shadow:none}
 .safety::before{inset:-4px;border-radius:18px;background:repeating-linear-gradient(-45deg,#1a1a1a 0 8px,var(--acc) 8px 16px)}
 .safety svg{width:1.4em;height:1.4em}
+
+/* small green check next to the vessel name: Tally Room confirmed by reviews */
+.okmark{display:inline-grid;place-items:center;width:.78em;height:.78em;margin-left:9px;border-radius:50%;background:var(--ok);color:#fff;vertical-align:.1em;box-shadow:0 0 0 2px rgba(255,255,255,.25)}
+.okmark svg{width:62%;height:62%;stroke-width:3.4}
+
+.nw{white-space:nowrap}

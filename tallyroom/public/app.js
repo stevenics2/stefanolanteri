@@ -99,6 +99,15 @@ function shipArt() {
 const normVessel = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
   .replace(/^(M\/?[NVT]|MS|MV|SS)\.?\s+/, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 
+// Vessel name with the green "confirmed" check glued to its last word, so the check never wraps alone.
+function nameWithMark(s) {
+  const mark = s.tally_present && s.review_count > 0
+    ? `<span class="okmark" role="img" aria-label="Tally Room confirmed by reviews" title="Tally Room confirmed by reviews">${icon('check')}</span>` : '';
+  const words = String(s.name).split(' ');
+  const last = words.pop();
+  return `${words.length ? esc(words.join(' ')) + ' ' : ''}<span class="nw">${esc(last)}${mark}</span>`;
+}
+
 const ago = (t) => {
   const m = Math.max(1, Math.round((Date.now() - t) / 60000));
   if (m < 60) return `${m} min ago`;
@@ -223,7 +232,7 @@ async function ship(id) {
     <a class="back" href="#/">${icon('back')} Search another vessel</a>
     <div class="card shiphead">
       <span class="shipbadge" aria-hidden="true">${icon('ship')}</span>
-      <h1>${esc(s.name)}</h1>
+      <h1>${nameWithMark(s)}</h1>
       <div class="score">
         ${!s.tally_present
           ? `<span class="big x">${icon('x')}</span><div><b class="npt">NO TALLY</b><br><span class="badge">${s.review_count} ${s.review_count === 1 ? 'review' : 'reviews'}</span></div>`
