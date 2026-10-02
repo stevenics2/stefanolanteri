@@ -263,3 +263,16 @@ label.l[data-t]::before{content:attr(data-t)}
 .okmark svg{width:62%;height:62%;stroke-width:3.4}
 
 .nw{white-space:nowrap}
+
+/* legal pages */
+.legal h2{font-size:1rem;text-transform:none;letter-spacing:0;color:var(--ink);margin:22px 0 6px;display:block}
+.legal p,.legal li{font-size:.94rem;color:var(--ink)}
+.legal ul{padding-left:20px;margin:6px 0}
+.legal li{margin:6px 0}
+.legal a,footer a{color:var(--pri)}
+footer a{text-decoration:underline}
+
+/* visitor counter under SAFETY FIRST */
+.counter{display:flex;align-items:center;justify-content:center;gap:8px;margin:10px 0 2px;color:var(--mut);font-size:.9rem;font-weight:600}
+.counter svg{width:18px;height:18px;color:var(--pri)}
+.counter b{color:var(--ink);font-size:1rem}

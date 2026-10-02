@@ -83,6 +83,8 @@ async function run(env) {
   const now = Date.now();
 
   await env.DB.prepare('CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)').run();
+  // Privacy: the anti-abuse code stored with a submission is erased after 30 days.
+  await env.DB.prepare('UPDATE reviews SET ip_hash = NULL WHERE ip_hash IS NOT NULL AND created_at < ?').bind(now - 30 * DAY).run();
   const { results: pending } = await env.DB.prepare(
     `SELECT r.id, r.created_at, r.has_tally, s.name, s.status AS ship_status
      FROM reviews r JOIN ships s ON s.id = r.ship_id

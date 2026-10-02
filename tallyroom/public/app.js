@@ -108,6 +108,17 @@ function nameWithMark(s) {
   return `${words.length ? esc(words.join(' ')) + ' ' : ''}<span class="nw">${esc(last)}${mark}</span>`;
 }
 
+// Visitor counter: each browser is counted once (marker in local storage, nothing personal is sent).
+const visitors = (async () => {
+  let canStore = false, counted = false;
+  try { localStorage.setItem('tr_t', '1'); localStorage.removeItem('tr_t'); canStore = true; counted = localStorage.getItem('tr_counted') === '1'; } catch { /* storage blocked */ }
+  try {
+    const r = canStore && !counted ? await api('/visit', { method: 'POST' }) : await api('/stats');
+    if (canStore && !counted) { try { localStorage.setItem('tr_counted', '1'); } catch { /* ignore */ } }
+    return Number(r.visitors) || 0;
+  } catch { return null; }
+})();
+
 const ago = (t) => {
   const m = Math.max(1, Math.round((Date.now() - t) / 60000));
   if (m < 60) return `${m} min ago`;
@@ -173,7 +184,7 @@ async function home() {
       <div class="card results" id="results" hidden></div>
     </div>
     <div class="card" id="wx-card" hidden>
-      <h2>${icon('cloud')} Ports weather <button class="mini-btn" id="wx-shuffle" type="button" aria-label="Show other ports">${icon('shuffle')} Other ports</button></h2>
+      <h2>${icon('cloud')} Port weather <button class="mini-btn" id="wx-shuffle" type="button" aria-label="Show other ports">${icon('shuffle')} Other ports</button></h2>
       <div class="wx" id="wx"></div>
       <p class="attrib">Weather data: <a href="https://www.met.no/en" target="_blank" rel="noopener noreferrer">MET Norway</a></p>
     </div>
@@ -183,7 +194,8 @@ async function home() {
       <p class="attrib">Headlines link to the original publisher.</p>
     </div>
     <div class="card"><h2>${icon('history')} Recently updated Tally Rooms</h2><div id="recent" class="muted">Loading…</div></div>
-    <div class="safety" role="note">${icon('hardhat')}<span>SAFETY FIRST</span>${icon('hardhat')}</div>`;
+    <div class="safety" role="note">${icon('hardhat')}<span>SAFETY FIRST</span>${icon('hardhat')}</div>
+    <p class="counter" id="counter" hidden>${icon('users')}<span>Stevedores use it: <b id="visitors"></b></span></p>`;
   const q = document.getElementById('q'), res = document.getElementById('results');
   const item = (s, i) => `
     <a class="ship-item" href="#/ship/${s.id}">
@@ -207,6 +219,7 @@ async function home() {
     res.innerHTML = (ships.map((s) => item(s)).join('') || '<p class="empty">No vessel found with this name.</p>') + add;
   }, 250);
   q.addEventListener('input', search);
+  visitors.then((n) => { if (n != null) { document.getElementById('visitors').textContent = n.toLocaleString('en-US'); document.getElementById('counter').hidden = false; } });
   loadWeather();
   loadNews();
   document.getElementById('wx-shuffle').addEventListener('click', loadWeather);
@@ -262,7 +275,7 @@ async function ship(id) {
   $app.querySelectorAll('[data-report]').forEach((b) => b.addEventListener('click', async () => {
     const reason = prompt('Why are you reporting this review?'); if (reason === null) return;
     await api(`/reviews/${b.dataset.report}/report`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ reason }) }).catch(() => {});
-    b.textContent = 'Reported, thank you'; b.disabled = true;
+    b.textContent = 'Reported. Thank you.'; b.disabled = true;
   }));
 }
 
@@ -291,7 +304,7 @@ async function form({ shipId, name }) {
     <a href="#/${shipId ? 'ship/' + shipId : ''}" class="back">${icon('back')} Back</a>
     <form class="card" id="f" novalidate autocomplete="off">
       <h1 class="t">${shipId ? 'Update this Tally Room' : 'Add a vessel'}</h1>
-      ${shipId ? `<p class="muted">Check how the Tally Room of <b>${esc(name)}</b> is today. The boxes are pre-filled with the current status: change whatever is different.</p>` :
+      ${shipId ? `<p class="muted">Tell us how the Tally Room on <b>${esc(name)}</b> looks today. The answers are pre-filled with the current status. Change anything that is different.</p>` :
         `<label class="l" for="sn" data-t="Vessel name"></label><input id="sn" type="search" name="vsl-name" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done" data-lpignore="true" data-1p-ignore data-form-type="other" value="${esc((name || '').toUpperCase())}" maxlength="60" autocapitalize="characters" required>`}
       <label class="l">Is there a Tally Room on board?</label>
       <div class="yn" id="yn" role="radiogroup" aria-label="Tally Room present">
@@ -302,7 +315,7 @@ async function form({ shipId, name }) {
       <label class="l">Overall rating</label>
       <div class="rate-in" id="rate">${[1, 2, 3, 4, 5].map((n) => `<button type="button" data-n="${n}" aria-label="${n} stars">★</button>`).join('')}</div>
       <div class="rate-lbl" id="rl"></div>
-      <label class="l">What is there / how is it</label>
+      <label class="l">What does it have?</label>
       <div class="arows">${AMEN.map(([k, l]) => `<div class="arow" data-k="${k}"><span class="ic">${icon(k)}</span><span class="lbl">${l}</span><span class="seg"><button type="button" class="yes" data-v="y" aria-pressed="false">YES</button><button type="button" class="no" data-v="n" aria-pressed="false">NO</button></span></div>`).join('')}</div>
       <p class="muted" style="margin:6px 0 0">Not sure? Leave it blank: it will show as unknown.</p>
       </div>
@@ -318,7 +331,7 @@ async function form({ shipId, name }) {
       <input class="hp" type="text" name="hp-x7" tabindex="-1" autocomplete="off" aria-hidden="true" data-lpignore="true" data-1p-ignore data-form-type="other">
       <div id="msg" style="margin-top:14px"></div>
       <button class="btn block" id="go" style="margin-top:8px" type="submit" hidden>Submit review</button>
-      <p class="muted" style="text-align:center">Your review is anonymous and will appear after approval.</p>
+      <p class="muted" style="text-align:center">Your review is anonymous and will appear after approval. By submitting it you accept the <a href="/terms" target="_blank" rel="noopener">Terms of Use</a> and the <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</p>
     </form>`;
   const rateBtns = [...document.querySelectorAll('#rate button')], rl = document.getElementById('rl');
   rateBtns.forEach((b) => b.addEventListener('click', () => {

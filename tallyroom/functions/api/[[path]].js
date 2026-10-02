@@ -112,7 +112,7 @@ async function sendEmail(env, { subject, text }) {
 }
 
 async function notifyPending(env, origin, { shipName, isNewShip, hasTally, rating, comment }) {
-  const verdict = hasTally ? `${rating}/5 stars` : 'Tally Room NOT PRESENT';
+  const verdict = hasTally ? `${rating}/5 stars` : 'No Tally Room on board';
   await sendEmail(env, {
     subject: `${isNewShip ? '[NEW VESSEL] ' : ''}${shipName}: review waiting for approval`,
     text: [
@@ -298,7 +298,7 @@ async function recent(env) {
 
 async function getShip(env, id) {
   const ship = await env.DB.prepare(`SELECT * FROM ships WHERE id = ? AND status='approved'`).bind(id).first();
-  if (!ship) return err('Ship not found', 404);
+  if (!ship) return err('Vessel not found', 404);
   return json(await buildSheet(env, ship));
 }
 
@@ -318,10 +318,10 @@ async function submitReview(env, request, ctx) {
   const { n } = await env.DB.prepare(
     `SELECT COUNT(*) AS n FROM reviews WHERE ip_hash = ? AND created_at > ?`
   ).bind(ipHash, since).first();
-  if (n >= RATE_LIMIT_PER_HOUR) return err('Too many submissions, please try again later', 429);
+  if (n >= RATE_LIMIT_PER_HOUR) return err('Too many submissions. Please try again later.', 429);
 
   let form;
-  try { form = await request.formData(); } catch { return err('Invalid request'); }
+  try { form = await request.formData(); } catch { return err('The request could not be read'); }
   if (form.get('website')) return json({ ok: true });           // honeypot
 
   const ht = String(form.get('has_tally'));
@@ -335,7 +335,7 @@ async function submitReview(env, request, ctx) {
     const c = parseInt(form.get('capacity'), 10);
     capacity = c >= 1 && c <= 4 ? c : null;
     rating = parseInt(form.get('rating'), 10);
-    if (!(rating >= 1 && rating <= 5)) return err('Invalid rating');
+    if (!(rating >= 1 && rating <= 5)) return err('Please choose a rating from 1 to 5');
     const amenitiesIn = safeJson(form.get('amenities'));
     for (const a of AMENITIES) { const v = ans(amenitiesIn[a]); if (v) amenities[a] = v; }   // salva solo le risposte date
   }
@@ -347,11 +347,11 @@ async function submitReview(env, request, ctx) {
   let isNewShip = false;
   if (shipId) {
     const s = await env.DB.prepare(`SELECT id FROM ships WHERE id=? AND status='approved'`).bind(shipId).first();
-    if (!s) return err('Ship not found', 404);
+    if (!s) return err('Vessel not found', 404);
   } else {
     const name = cleanName(form.get('ship_name'));
     const norm = normName(name);
-    if (norm.length < 2) return err('Invalid ship name');
+    if (norm.length < 2) return err('Please enter a valid vessel name');
     const ex = await env.DB.prepare(`SELECT id FROM ships WHERE name_norm=?`).bind(norm).first();
     if (ex) shipId = ex.id;
     else {
@@ -365,8 +365,8 @@ async function submitReview(env, request, ctx) {
 
   const files = !hasTally ? [] : form.getAll('photos').filter((f) => f && typeof f === 'object' && f.size > 0).slice(0, MAX_PHOTOS);
   for (const f of files) {
-    if (!/^image\/(jpeg|png|webp)$/.test(f.type)) return err('Unsupported photo format');
-    if (f.size > MAX_PHOTO_BYTES) return err('Photo too large');
+    if (!/^image\/(jpeg|png|webp)$/.test(f.type)) return err('Photos must be JPEG, PNG or WebP');
+    if (f.size > MAX_PHOTO_BYTES) return err('One of the photos is too large');
   }
 
   const rev = await env.DB.prepare(
@@ -556,10 +556,28 @@ async function adminImport(env, request) {
   return json({ ok: true, imported: stmts.length, skipped });
 }
 
+// ---- contatore degli accessi: un browser = un accesso (il marcatore sta nel browser, nessun dato personale) ----
+const BOT_UA = /bot|crawl|spider|slurp|headless|lighthouse|preview|monitor|curl|wget|python|node-fetch|axios/i;
+async function readVisitors(env) {
+  const row = await env.DB.prepare(`SELECT value FROM meta WHERE key='visitors'`).first();
+  return row ? parseInt(row.value, 10) || 0 : 0;
+}
+async function countVisit(env, request) {
+  const fromSite = (request.headers.get('sec-fetch-site') || 'same-origin') === 'same-origin';
+  if (fromSite && !BOT_UA.test(request.headers.get('user-agent') || 'bot')) {
+    await env.DB.prepare(
+      `INSERT INTO meta (key, value) VALUES ('visitors', '1')
+       ON CONFLICT(key) DO UPDATE SET value = CAST(value AS INTEGER) + 1`
+    ).run();
+  }
+  return json({ visitors: await readVisitors(env) });
+}
+
 // ---- migrazione automatica (database creati prima della colonna has_tally) ----
 let schemaChecked = false;
 async function ensureSchema(env) {
   if (schemaChecked) return;
+  await env.DB.prepare('CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)').run();
   try {
     await env.DB.prepare('SELECT has_tally FROM reviews LIMIT 1').first();
   } catch {
@@ -586,6 +604,9 @@ export async function onRequest({ request, env, params, waitUntil }) {
     if (path === '/ships' && m === 'GET') return await searchShips(env, url);
     if (path === '/top' && m === 'GET') return await topShips(env);
     if (path === '/recent' && m === 'GET') return await recent(env);
+    if (path === '/contact' && m === 'GET') return json({ email: env.CONTACT_EMAIL || null });
+    if (path === '/stats' && m === 'GET') return json({ visitors: await readVisitors(env) });
+    if (path === '/visit' && m === 'POST') return await countVisit(env, request);
     if (path === '/weather' && m === 'GET') return await weather(env, url, ctx);
     if (path === '/news' && m === 'GET') return await news(env, ctx);
     let x;
@@ -610,6 +631,6 @@ export async function onRequest({ request, env, params, waitUntil }) {
     }
     return err('Not found', 404);
   } catch (e) {
-    return err('Server error', 500);
+    return err('Something went wrong. Please try again.', 500);
   }
 }
