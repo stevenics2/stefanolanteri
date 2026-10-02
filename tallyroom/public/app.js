@@ -53,7 +53,7 @@ const api = async (path, opts) => {
   return d;
 };
 const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
-const pillNP = '<span class="pill np">' + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg>NOT PRESENT</span>';
+const pillNP = '<span class="pill np">' + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg>NO TALLY</span>';
 const pill = (r) => (r ? `<span class="pill">${star}${Number(r).toFixed(1)}</span>` : '<span class="pill none">No rating</span>');
 
 
@@ -226,7 +226,7 @@ async function ship(id) {
       <h1>${esc(s.name)}</h1>
       <div class="score">
         ${!s.tally_present
-          ? `<span class="big x">${icon('x')}</span><div><b class="npt">NOT PRESENT</b><br><span class="badge">${s.review_count} ${s.review_count === 1 ? 'review' : 'reviews'}</span></div>`
+          ? `<span class="big x">${icon('x')}</span><div><b class="npt">NO TALLY</b><br><span class="badge">${s.review_count} ${s.review_count === 1 ? 'review' : 'reviews'}</span></div>`
           : s.rating ? `<span class="big">${s.rating.toFixed(1)}</span><div>${stars(s.rating)}<br><span class="badge">${s.review_count} ${s.review_count === 1 ? 'review' : 'reviews'}</span></div>` : '<span class="muted">No rating yet</span>'}
       </div>
       <p class="muted" style="margin:12px 0 0">${s.last_update ? `${icon('clock')} Last updated ${fmtDate(s.last_update)}` : (s.seed_rating ? 'Initial rating only, no details yet.' : '')}
