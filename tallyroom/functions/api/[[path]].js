@@ -103,10 +103,10 @@ const SHIP_STATS = `
 const withFlag = (rows) => rows.map((r) => ({ ...r, name: up(r.name), not_present: r.recent_n > 0 && r.recent_n - r.present_n > r.present_n }));
 
 // ---- email all'amministratore (Resend). Se non configurata, non fa nulla. ----
-async function sendEmail(env, { subject, text }) {
-  if (!env.RESEND_API_KEY || !env.ADMIN_EMAIL) return;
+async function sendEmail(env, { subject, text, replyTo }) {
+  if (!env.RESEND_API_KEY || !env.ADMIN_EMAIL) return false;
   try {
-    await fetch(env.RESEND_API_URL || 'https://api.resend.com/emails', {
+    const r = await fetch(env.RESEND_API_URL || 'https://api.resend.com/emails', {
       method: 'POST',
       headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
       body: JSON.stringify({
@@ -114,9 +114,11 @@ async function sendEmail(env, { subject, text }) {
         to: [env.ADMIN_EMAIL],
         subject,
         text,
+        ...(replyTo ? { reply_to: replyTo } : {}),
       }),
     });
-  } catch { /* l'invio dell'email non deve mai bloccare una recensione */ }
+    return r.ok;
+  } catch { return false; }   // sending an email must never block a review
 }
 
 async function notifyPending(env, origin, { shipName, isNewShip, hasTally, rating, comment }) {
@@ -582,11 +584,44 @@ async function countVisit(env, request) {
   return json({ visitors: await readVisitors(env) });
 }
 
+// ---- modulo contatti: inviato per email all'amministratore, niente viene conservato sul sito ----
+const CONTACT_TOPICS = { question: 'Question', problem: 'Report a problem', removal: 'Remove content', suggestion: 'Suggestion', other: 'Other' };
+async function submitContact(env, request) {
+  let d;
+  try { d = await request.json(); } catch { return err('The request could not be read'); }
+  if (d.website) return json({ ok: true });                                   // honeypot
+  const topic = CONTACT_TOPICS[d.topic] ? d.topic : 'other';
+  const message = String(d.message || '').replace(/\r\n?/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  if (message.length < 10) return err('Please write a little more (at least 10 characters).');
+  if (message.length > 2000) return err('Please keep your message under 2000 characters.');
+  const email = String(d.email || '').trim().slice(0, 120);
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return err('That email address does not look right.');
+  const name = String(d.name || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+
+  const now = Date.now();
+  const ipHash = await sha((request.headers.get('cf-connecting-ip') || 'unknown') + (env.SALT || ''));
+  await env.DB.prepare('DELETE FROM contact_log WHERE created_at < ?').bind(now - 86_400_000).run();    // kept 24 h only
+  const mine = (await env.DB.prepare('SELECT COUNT(*) AS n FROM contact_log WHERE ip_hash = ? AND created_at > ?').bind(ipHash, now - 3_600_000).first()).n;
+  const all = (await env.DB.prepare('SELECT COUNT(*) AS n FROM contact_log').first()).n;
+  if (mine >= 3) return err('Too many messages. Please try again later.', 429);
+  if (all >= 40) return err('The contact form is busy right now. Please try again tomorrow.', 429);   // protects the email quota
+  await env.DB.prepare('INSERT INTO contact_log (ip_hash, created_at) VALUES (?, ?)').bind(ipHash, now).run();
+
+  const ok = await sendEmail(env, {
+    subject: `[Contact] ${CONTACT_TOPICS[topic]}${name ? ' from ' + name : ''}`.replace(/[\r\n]+/g, ' ').slice(0, 150),
+    text: [`Topic: ${CONTACT_TOPICS[topic]}`, `Name: ${name || '(not given)'}`, `Reply to: ${email || '(no email given, cannot reply)'}`, '', message].join('\n'),
+    replyTo: email || undefined,
+  });
+  if (!ok) return err('Your message could not be sent right now. Please try again later.', 502);
+  return json({ ok: true });
+}
+
 // ---- migrazione automatica (database creati prima della colonna has_tally) ----
 let schemaChecked = false;
 async function ensureSchema(env) {
   if (schemaChecked) return;
   await env.DB.prepare('CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)').run();
+  await env.DB.prepare('CREATE TABLE IF NOT EXISTS contact_log (ip_hash TEXT, created_at INTEGER)').run();
   try {
     await env.DB.prepare('SELECT has_tally FROM reviews LIMIT 1').first();
   } catch {
@@ -614,6 +649,7 @@ export async function onRequest({ request, env, params, waitUntil }) {
     if (path === '/top' && m === 'GET') return await topShips(env);
     if (path === '/recent' && m === 'GET') return await recent(env);
     if (path === '/contact' && m === 'GET') return json({ email: env.CONTACT_EMAIL || null });
+    if (path === '/contact' && m === 'POST') return await submitContact(env, request);
     if (path === '/stats' && m === 'GET') return json({ visitors: await readVisitors(env) });
     if (path === '/visit' && m === 'POST') return await countVisit(env, request);
     if (path === '/weather' && m === 'GET') return await weather(env, url, ctx);

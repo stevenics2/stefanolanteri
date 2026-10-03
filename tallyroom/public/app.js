@@ -16,6 +16,8 @@ const P = {
   news: '<path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8v4h-8z"/>',
   shuffle: '<path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>',
   wind: '<path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2M9.6 4.6A2 2 0 1 1 11 8H2M12.6 19.4A2 2 0 1 0 14 16H2"/>',
+  instagram: '<rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><path d="M17.5 6.5h.01"/>',
+  mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
   ship: '<path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1 .6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M19.4 14.9 21 9l-9-3-9 3 1.6 5.9"/><path d="M12 6V2M8 8.5V12M16 8.5V12"/>',
   anchor: '<circle cx="12" cy="5" r="2.5"/><path d="M12 7.5V21M7 11h10M4 15a8 8 0 0 0 16 0"/>',
@@ -195,7 +197,11 @@ async function home() {
     </div>
     <div class="card"><h2>${icon('history')} Recently updated Tally Rooms</h2><div id="recent" class="muted">Loading…</div></div>
     <div class="safety" role="note">${icon('hardhat')}<span>SAFETY FIRST</span>${icon('hardhat')}</div>
-    <p class="counter" id="counter" hidden>${icon('users')}<span>Stevedores use it: <b id="visitors"></b></span></p>`;
+    <p class="counter" id="counter" hidden>${icon('users')}<span>Stevedores use it: <b id="visitors"></b></span></p>
+    <div class="social">
+      <a class="social-pill ig" href="https://www.instagram.com/tallyrooms" target="_blank" rel="noopener noreferrer">${icon('instagram')} Follow on Instagram</a>
+      <a class="social-pill" href="/contact">${icon('mail')} Contact us</a>
+    </div>`;
   const q = document.getElementById('q'), res = document.getElementById('results');
   const item = (s, i) => `
     <a class="ship-item" href="#/ship/${s.id}">

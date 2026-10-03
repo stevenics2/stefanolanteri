@@ -40,3 +40,7 @@ CREATE TABLE IF NOT EXISTS reports (
 CREATE INDEX IF NOT EXISTS idx_reviews_ship ON reviews(ship_id, status, created_at);
 CREATE INDEX IF NOT EXISTS idx_photos_review ON photos(review_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_ip ON reviews(ip_hash, created_at);
+
+CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
+-- contact form rate limiting (kept 24 h only)
+CREATE TABLE IF NOT EXISTS contact_log (ip_hash TEXT, created_at INTEGER);
