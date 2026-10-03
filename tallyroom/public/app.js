@@ -318,15 +318,15 @@ async function form({ shipId, name }) {
       <label class="l">What does it have?</label>
       <div class="arows">${AMEN.map(([k, l]) => `<div class="arow" data-k="${k}"><span class="ic">${icon(k)}</span><span class="lbl">${l}</span><span class="seg"><button type="button" class="yes" data-v="y" aria-pressed="false">YES</button><button type="button" class="no" data-v="n" aria-pressed="false">NO</button></span></div>`).join('')}</div>
       <p class="muted" style="margin:6px 0 0">Not sure? Leave it blank: it will show as unknown.</p>
-      </div>
-      <div id="notes" hidden>
       <label class="l">How many people fit inside? <span class="muted">(optional)</span></label>
       <div class="caps" id="caps">${[1, 2, 3, 4].map((n) => `<button type="button" data-c="${n}" aria-pressed="false">${icon('users')}<b>${CAP[n]}</b><small>${CAP_NAME[n]}</small></button>`).join('')}</div>
-      <label class="l" for="cm">Notes (optional)</label>
-      <textarea id="cm" name="vsl-notes" autocomplete="off" rows="3" maxlength="800" placeholder="E.g. dirty, AC not working, key from the second officer…"></textarea>
       <label class="l">${icon('camera')} Photos (max 3)</label>
       <input id="ph" type="file" accept="image/*" multiple>
       <div class="thumbs" id="th"></div>
+      </div>
+      <div id="notes" hidden>
+      <label class="l" for="cm">Notes (optional)</label>
+      <textarea id="cm" name="vsl-notes" autocomplete="off" rows="3" maxlength="800" placeholder="E.g. dirty, AC not working, key from the second officer…"></textarea>
       </div>
       <input class="hp" type="text" name="hp-x7" tabindex="-1" autocomplete="off" aria-hidden="true" data-lpignore="true" data-1p-ignore data-form-type="other">
       <div id="msg" style="margin-top:14px"></div>
