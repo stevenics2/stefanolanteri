@@ -4,7 +4,15 @@ const AMENITIES = ['power220', 'ac', 'chairs', 'desk', 'clean', 'light', 'wc'];
 const RECENT = 5;             // numero di recensioni recenti usate per la scheda
 const MAX_PHOTOS = 3;
 const MAX_PHOTO_BYTES = 1_500_000;
-const RATE_LIMIT_PER_HOUR = 5;
+// Submissions allowed per hour from one connection.
+// TEMPORARILY RELAXED: the normal limit is 5. The high value below is only a brake against automated floods.
+// To restore the normal limit without touching the code, set the variable RATE_LIMIT_PER_HOUR=5 in Cloudflare
+// (RATE_LIMIT_PER_HOUR=0 removes every limit).
+const RATE_LIMIT_DEFAULT = 200;
+const rateLimit = (env) => {
+  const v = parseInt(env.RATE_LIMIT_PER_HOUR, 10);
+  return Number.isNaN(v) ? RATE_LIMIT_DEFAULT : v;
+};
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), {
@@ -318,7 +326,8 @@ async function submitReview(env, request, ctx) {
   const { n } = await env.DB.prepare(
     `SELECT COUNT(*) AS n FROM reviews WHERE ip_hash = ? AND created_at > ?`
   ).bind(ipHash, since).first();
-  if (n >= RATE_LIMIT_PER_HOUR) return err('Too many submissions. Please try again later.', 429);
+  const limit = rateLimit(env);
+  if (limit > 0 && n >= limit) return err('Too many submissions. Please try again later.', 429);
 
   let form;
   try { form = await request.formData(); } catch { return err('The request could not be read'); }

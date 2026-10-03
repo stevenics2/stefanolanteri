@@ -18,7 +18,7 @@ Runs entirely on Cloudflare's free tier (Pages + D1 + R2).
 - **Legal pages**: `/privacy` and `/terms` (plain-language templates, English). They show a contact email taken from the `CONTACT_EMAIL` variable of the Pages project (a normal variable, not a secret), so the address is never written in the source. Have them reviewed for your situation, and update them if you add ads or change what you collect.
 - **Visitor counter**: the home page shows "Stevedores use it: N". Each browser counts once (a marker in local storage; nothing personal is sent), and obvious bots are ignored. The number is kept in the `meta` table.
 - **Privacy by design**: the anonymous anti-abuse code stored with each submission is erased after 30 days by the daily reminder Worker.
-- Anti-spam: hidden honeypot field and at most 5 submissions per hour per connection. Every review has a "Report" button.
+- Anti-spam: hidden honeypot field and a limit on submissions per hour per connection (normally 5; set with the `RATE_LIMIT_PER_HOUR` variable in Cloudflare: `5` for the normal limit, `0` for none. While it is not set, a high safety ceiling of 200 per hour applies). Every review has a "Report" button.
 - Photos are resized on the phone (about 200-300 KB) before upload, so the free storage lasts a long time.
 
 ## Deploy
