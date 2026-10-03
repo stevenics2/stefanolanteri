@@ -196,12 +196,12 @@ async function home() {
       <p class="attrib">Headlines link to the original publisher.</p>
     </div>
     <div class="card"><h2>${icon('history')} Recently updated Tally Rooms</h2><div id="recent" class="muted">Loading…</div></div>
-    <div class="safety" role="note">${icon('hardhat')}<span>SAFETY FIRST</span>${icon('hardhat')}</div>
     <p class="counter" id="counter" hidden>${icon('users')}<span>Stevedores use it: <b id="visitors"></b></span></p>
     <div class="social">
       <a class="social-pill ig" href="https://www.instagram.com/tallyrooms" target="_blank" rel="noopener noreferrer">${icon('instagram')} Follow on Instagram</a>
       <a class="social-pill" href="/contact">${icon('mail')} Contact us</a>
-    </div>`;
+    </div>
+    <div class="safety" role="note">${icon('hardhat')}<span>SAFETY FIRST</span>${icon('hardhat')}</div>`;
   const q = document.getElementById('q'), res = document.getElementById('results');
   const item = (s, i) => `
     <a class="ship-item" href="#/ship/${s.id}">
