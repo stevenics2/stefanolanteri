@@ -152,7 +152,7 @@ async function loadWeather() {
       return `<div class="wx-t ${lvl}">
         <div class="wx-n"><b>${esc(p.name)}</b><small>${esc(p.cc)}</small></div>
         <div class="wx-m"><span class="wx-i">${wxEmoji(p.symbol)}</span><span class="wx-d">${p.temp}°C</span></div>
-        <div class="wx-w">${icon('wind')}${p.wind_kn} kn ${dir}${lvl === 'hi' ? ' · strong' : ''}</div>
+        <div class="wx-w">${icon('wind')}${p.wind_kmh ?? Math.round(p.wind_kn * 1.852)} km/h ${dir}${lvl === 'hi' ? ' · strong' : ''}</div>
       </div>`;
     }).join('');
     card.hidden = false;

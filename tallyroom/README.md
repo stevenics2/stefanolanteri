@@ -10,7 +10,7 @@ Runs entirely on Cloudflare's free tier (Pages + D1 + R2).
 - Reviews are **anonymous** and published only after **manual approval** in `/admin`.
 - An existing list of ships (name + rating) can be imported from `/admin`. The imported rating is used until the first real review arrives.
 - **Save to your phone**: on a phone, the first visit shows a one-time popup. On Android it installs the site to the home screen with one tap (the site is installable: `manifest.webmanifest`, `sw.js` and the icons in `public/`). On iPhone/iPad it shows the steps, because iOS does not allow this from code.
-- **Home page**: a random selection of 6 major ports with live weather (temperature and wind in knots, strong wind highlighted), the latest port news headlines, the most recently updated Tally Rooms, and a SAFETY FIRST banner.
+- **Home page**: a random selection of 6 major ports with live weather (temperature and wind speed in km/h, strong wind highlighted), the latest port news headlines, the most recently updated Tally Rooms, and a SAFETY FIRST banner.
   - Weather: [MET Norway](https://api.met.no/doc/TermsOfService) (free, commercial use allowed with a descriptive User-Agent; credit shown on the page). Cached 30 minutes per port. The port list is in `functions/api/[[path]].js` (`PORTS`).
   - News: public RSS/Atom feeds of Port Technology International, Container News, Splash247 and gCaptain (`NEWS_FEEDS` in the same file). Only headline, source and link are shown; at most 2 per source; general feeds are filtered for port-related words. A source that does not respond is skipped. Cached 20 minutes. `/admin` > "Check news sources" shows which sources respond.
   - If a source is unreachable the card simply disappears.

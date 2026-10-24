@@ -199,7 +199,8 @@ async function portWeather(env, port, ctx) {
       return {
         id, name, cc,
         temp: Math.round(d.air_temperature),
-        wind_kn: Math.round((d.wind_speed || 0) * 1.94384),
+        wind_kn: Math.round((d.wind_speed || 0) * 1.94384),     // used for the strong-wind alert
+        wind_kmh: Math.round((d.wind_speed || 0) * 3.6),        // shown to the user
         wind_dir: typeof d.wind_from_direction === 'number' ? Math.round(d.wind_from_direction) : null,
         symbol: t.next_1_hours?.summary?.symbol_code || t.next_6_hours?.summary?.symbol_code || null,
         rain_mm: t.next_1_hours?.details?.precipitation_amount ?? null,
