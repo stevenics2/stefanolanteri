@@ -167,7 +167,7 @@ async function loadNews() {
     if (!items.length) { card.hidden = true; return; }
     // Every headline gets a picture: the one from the feed, or one of our own port photos when the feed has none
     // (or it cannot be loaded). The same headline always gets the same photo, and the headlines on screen get different ones.
-    const FALLBACKS = ['/img/port-1.webp', '/img/port-2.webp', '/img/port-3.webp', '/img/port-4.webp', '/img/port-5.webp'];
+    const FALLBACKS = ['/img/port-1.webp', '/img/port-2.webp', '/img/port-3.webp', '/img/port-4.webp', '/img/port-5.webp', '/img/port-6.webp', '/img/port-7.webp'];
     const used = new Set();
     const fallbackFor = (n) => {
       let h = 0; for (const ch of String(n.link || n.title)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
