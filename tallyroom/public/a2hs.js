@@ -9,7 +9,14 @@
     set() { try { localStorage.setItem(KEY, '1'); } catch { /* private mode: may show again */ } },
   };
 
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+  if ('serviceWorker' in navigator) {
+    // Check for a newer service worker at every start and every time the app comes back to the foreground,
+    // so that changes to notifications reach phones quickly (a saved iPhone app is often only suspended, not restarted).
+    navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).then((reg) => {
+      reg.update().catch(() => {});
+      document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reg.update().catch(() => {}); });
+    }).catch(() => {});
+  }
 
   const ua = navigator.userAgent;
   const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
