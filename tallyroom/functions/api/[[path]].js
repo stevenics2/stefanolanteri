@@ -710,10 +710,10 @@ async function queueReviewPush(env, rev) {
   if (last && last.t && now - last.t < PUSH_MIN_GAP_MS) return;          // approving many at once = one notification
   const ship = await env.DB.prepare('SELECT name FROM ships WHERE id = ?').bind(rev.ship_id).first();
   const name = up(ship && ship.name);
-  // "NAME - 4 ⭐" for a rated Tally Room, "NAME - NO TALLY" when the review says there is none
+  // "NAME - Rate: 4 ⭐" for a rated Tally Room, "NAME - NO TALLY 😢" when the review says there is none
   const rated = rev.has_tally !== 0;
   await env.DB.prepare('INSERT INTO push_jobs (title, body, url, created_at) VALUES (?, ?, ?, ?)')
-    .bind(rated ? PUSH_TITLE_RATED : PUSH_TITLE_NO_TALLY, rated ? `${name} - ${rev.rating} ⭐` : `${name} - NO TALLY`, `/#/ship/${rev.ship_id}`, now).run();
+    .bind(rated ? PUSH_TITLE_RATED : PUSH_TITLE_NO_TALLY, rated ? `${name} - Rate: ${rev.rating} ⭐` : `${name} - NO TALLY 😢`, `/#/ship/${rev.ship_id}`, now).run();
 }
 
 async function adminPush(env) {
