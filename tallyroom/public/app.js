@@ -165,14 +165,26 @@ async function loadNews() {
   try {
     const { items } = await api('/news');
     if (!items.length) { card.hidden = true; return; }
-    const thumbs = items.some((n) => n.image);       // text only, as before, when no headline has a picture
-    box.innerHTML = items.map((n) => `
-      <a class="news-i${thumbs ? ' has-img' : ''}" href="${esc(n.link)}" target="_blank" rel="noopener noreferrer">
-        ${thumbs ? `<span class="news-th">${n.image ? `<img src="${esc(n.image)}" alt="" width="72" height="72" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : icon('news')}</span>` : ''}
+    // Every headline gets a picture: the one from the feed, or one of our own port photos when the feed has none
+    // (or it cannot be loaded). The same headline always gets the same photo, and the headlines on screen get different ones.
+    const FALLBACKS = ['/img/port-1.webp', '/img/port-2.webp', '/img/port-3.webp', '/img/port-4.webp', '/img/port-5.webp'];
+    const used = new Set();
+    const fallbackFor = (n) => {
+      let h = 0; for (const ch of String(n.link || n.title)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+      let i = h % FALLBACKS.length;
+      for (let k = 0; k < FALLBACKS.length && used.has(i); k++) i = (i + 1) % FALLBACKS.length;
+      used.add(i); return FALLBACKS[i];
+    };
+    const picks = items.map((n) => ({ ...n, own: n.image ? '' : fallbackFor(n) }));
+    box.innerHTML = picks.map((n) => `
+      <a class="news-i has-img" href="${esc(n.link)}" target="_blank" rel="noopener noreferrer">
+        <span class="news-th"><img src="${esc(n.image || n.own)}" data-fb="${esc(n.own || fallbackFor(n))}" alt="" width="72" height="72" loading="lazy" decoding="async"${n.image ? ' referrerpolicy="no-referrer"' : ''}></span>
         <span class="news-tx"><b>${esc(n.title)}</b><small>${esc(n.source)}${n.date ? ' · ' + ago(n.date) : ''}</small></span>
       </a>`).join('');
-    // if a picture cannot be loaded (blocked or removed), show the placeholder icon instead
+    // a picture that cannot be loaded (blocked or removed) is replaced by our own photo, and in the very last case by an icon
     box.querySelectorAll('.news-th img').forEach((img) => img.addEventListener('error', () => {
+      const fb = img.dataset.fb;
+      if (fb && !img.src.endsWith(fb)) { img.removeAttribute('referrerpolicy'); img.src = fb; return; }
       const th = img.parentElement; th.classList.add('ph'); th.innerHTML = icon('news');
     }));
     card.hidden = false;
