@@ -474,14 +474,14 @@ async function adminQueue(env) {
 }
 
 async function adminReview(env, id, action) {
-  const rev = await env.DB.prepare(`SELECT ship_id FROM reviews WHERE id=?`).bind(id).first();
+  const rev = await env.DB.prepare(`SELECT ship_id, rating, has_tally FROM reviews WHERE id=?`).bind(id).first();
   if (!rev) return err('Not found', 404);
   if (action === 'approve') {
     await env.DB.batch([
       env.DB.prepare(`UPDATE reviews SET status='approved' WHERE id=?`).bind(id),
       env.DB.prepare(`UPDATE ships SET status='approved' WHERE id=?`).bind(rev.ship_id),
     ]);
-    try { await queueReviewPush(env, rev.ship_id); } catch { /* a notification problem must never block an approval */ }
+    try { await queueReviewPush(env, rev); } catch { /* a notification problem must never block an approval */ }
   } else if (action === 'reject' || action === 'delete') {
     const { results: ph } = await env.DB.prepare(`SELECT r2_key FROM photos WHERE review_id=?`).bind(id).all();
     for (const p of ph) await env.PHOTOS.delete(p.r2_key);
@@ -643,7 +643,8 @@ async function submitContact(env, request) {
 }
 
 // ---- notifiche push: iscrizioni dei telefoni e coda di invio (l'invio vero lo fa il Worker in reminder/) ----
-const PUSH_TITLE = 'New Tally Room Review!';
+const PUSH_TITLE_RATED = 'New Tally Room Rated ✅';
+const PUSH_TITLE_NO_TALLY = 'New Tally Room Report ❌';
 const PUSH_MIN_GAP_MS = 5 * 60 * 1000;      // at most one notification to everybody every 5 minutes
 // only genuine push services are accepted: the Worker later sends requests to these addresses
 const PUSH_HOSTS = /^(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9.-]+\.push\.apple\.com|[a-z0-9.-]+\.notify\.windows\.com)$/i;
@@ -701,15 +702,18 @@ async function pushUnsubscribe(env, request) {
 }
 
 // Called when a review is approved: queues one notification (the Worker delivers it within a minute).
-async function queueReviewPush(env, shipId) {
+async function queueReviewPush(env, rev) {
   const any = await env.DB.prepare('SELECT 1 AS x FROM push_subs LIMIT 1').first();
   if (!any) return;
   const now = Date.now();
   const last = await env.DB.prepare('SELECT MAX(created_at) AS t FROM push_jobs WHERE target IS NULL').first();
   if (last && last.t && now - last.t < PUSH_MIN_GAP_MS) return;          // approving many at once = one notification
-  const ship = await env.DB.prepare('SELECT name FROM ships WHERE id = ?').bind(shipId).first();
+  const ship = await env.DB.prepare('SELECT name FROM ships WHERE id = ?').bind(rev.ship_id).first();
+  const name = up(ship && ship.name);
+  // "NAME - 4/5" for a rated Tally Room, "NAME - NO TALLY" when the review says there is none
+  const rated = rev.has_tally !== 0;
   await env.DB.prepare('INSERT INTO push_jobs (title, body, url, created_at) VALUES (?, ?, ?, ?)')
-    .bind(PUSH_TITLE, up(ship && ship.name), `/#/ship/${shipId}`, now).run();
+    .bind(rated ? PUSH_TITLE_RATED : PUSH_TITLE_NO_TALLY, rated ? `${name} - ${rev.rating}/5` : `${name} - NO TALLY`, `/#/ship/${rev.ship_id}`, now).run();
 }
 
 async function adminPush(env) {

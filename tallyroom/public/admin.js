@@ -97,7 +97,7 @@ async function load() {
   };
   api('/push').then((d) => {
     document.getElementById('pushinfo').textContent = d.subscribers
-      ? d.subscribers + ' phone' + (d.subscribers === 1 ? ' has' : 's have') + ' turned on notifications. Approving a review sends "New Tally Room Review!" to all of them, at most once every 5 minutes. The test goes only to the phone that subscribed last.'
+      ? d.subscribers + ' phone' + (d.subscribers === 1 ? ' has' : 's have') + ' turned on notifications. Approving a review sends "New Tally Room Rated ✅" with the vessel and rating to all of them, at most once every 5 minutes. The test goes only to the phone that subscribed last.'
       : 'Nobody has turned on notifications yet. Open the site on your phone, turn them on from the home page, then come back here to send a test.';
   }).catch(() => {});
   document.getElementById('pt').onclick = async () => {
