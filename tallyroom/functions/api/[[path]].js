@@ -237,9 +237,30 @@ const xmlText = (block, tag) => {
   return m ? decodeEntities(m[1].replace(/^\s*<!\[CDATA\[([\s\S]*?)\]\]>\s*$/, '$1')).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim() : '';
 };
 
+// Cerca l'immagine di anteprima che il feed stesso mette a disposizione (mai la pagina dell'articolo).
+const IMG_EXT = /\.(jpe?g|png|webp|gif|avif)(\?|#|$)/i;
+const BAD_IMG = /(pixel|1x1|spacer|blank|gravatar|emoji|logo|avatar|tracking|feedburner)/i;
+const attr = (tag, name) => { const m = tag.match(new RegExp(`${name}\\s*=\\s*["']([^"']+)["']`, 'i')); return m ? decodeEntities(m[1]) : ''; };
+function feedImage(block) {
+  const cands = [];
+  for (const m of block.matchAll(/<media:(?:content|thumbnail)\b[^>]*>/gi)) {
+    const tag = m[0], url = attr(tag, 'url'), type = attr(tag, 'type'), medium = attr(tag, 'medium');
+    if (url && (/^image\//i.test(type) || medium === 'image' || /thumbnail/i.test(tag.slice(0, 16)) || IMG_EXT.test(url))) cands.push(url);
+  }
+  for (const m of block.matchAll(/<enclosure\b[^>]*>/gi)) { const u = attr(m[0], 'url'); if (u && (/^image\//i.test(attr(m[0], 'type')) || IMG_EXT.test(u))) cands.push(u); }
+  for (const m of block.matchAll(/<link\b[^>]*rel=["']enclosure["'][^>]*>/gi)) { const u = attr(m[0], 'href'); if (u && IMG_EXT.test(u)) cands.push(u); }
+  // first <img> inside the item body (content:encoded or description, usually wrapped in CDATA or escaped)
+  const body = decodeEntities(block.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1'));
+  for (const m of body.matchAll(/<img\b[^>]*>/gi)) {
+    const tag = m[0], src = attr(tag, 'src') || attr(tag, 'data-src'); const w = parseInt(attr(tag, 'width'), 10);
+    if (src && !(w && w < 60)) cands.push(src);
+  }
+  return cands.map((u) => u.trim()).find((u) => /^https:\/\//i.test(u) && u.length < 500 && !BAD_IMG.test(u)) || null;
+}
+
 // Legge un feed RSS o Atom. Restituisce sempre { items, info } e non lancia mai errori.
 async function readFeed(feed) {
-  const info = { source: feed.source, url: feed.url, status: null, bytes: 0, items: 0, error: null, preview: null };
+  const info = { source: feed.source, url: feed.url, status: null, bytes: 0, items: 0, images: 0, error: null, preview: null };
   try {
     const r = await fetch(feed.url, {
       headers: { 'user-agent': SITE_UA, accept: 'application/rss+xml, application/atom+xml, application/xml;q=0.9, text/xml;q=0.8, */*;q=0.5', 'accept-language': 'en' },
@@ -255,9 +276,10 @@ async function readFeed(feed) {
       let link = xmlText(it, 'link');
       if (!link) link = (it.match(/<link[^>]+href=["']([^"']+)["']/i) || [])[1] || '';     // Atom
       const date = Date.parse(xmlText(it, 'pubDate') || xmlText(it, 'published') || xmlText(it, 'updated') || xmlText(it, 'dc:date'));
-      return { title: xmlText(it, 'title').slice(0, 170), link: decodeEntities(link), source: feed.source, date: Number.isNaN(date) ? 0 : date, all: !!feed.all };
+      return { title: xmlText(it, 'title').slice(0, 170), link: decodeEntities(link), source: feed.source, date: Number.isNaN(date) ? 0 : date, all: !!feed.all, image: feedImage(it) };
     }).filter((x) => x.title && /^https?:\/\//i.test(x.link));
     info.items = items.length;
+    info.images = items.filter((x) => x.image).length;
     if (!items.length) { info.error = 'no readable items'; info.preview = xml.slice(0, 140).replace(/\s+/g, ' '); }
     return { items, info };
   } catch (e) {
@@ -278,16 +300,18 @@ function pickNews(lists) {
     .sort((a, b) => b.date - a.date)
     .filter((n) => { if (seen.has(n.link)) return false; seen.add(n.link); perSource[n.source] = (perSource[n.source] || 0) + 1; return perSource[n.source] <= 2; })
     .slice(0, 3)
-    .map(({ title, link, source, date }) => ({ title, link, source, date }));
+    .map(({ title, link, source, date, image }) => ({ title, link, source, date, image }));
 }
 
 async function news(env, ctx) {
-  const items = await cachedJson('news-v2', NEWS_TTL, ctx, async () => {
+  const items = await cachedJson('news-v3', NEWS_TTL, ctx, async () => {
     const results = await Promise.all(feedList(env).map(readFeed));
     const picked = pickNews(results.map((r) => r.items));
     return picked.length ? picked : null;
   });
-  return json({ items: items || [] });
+  // NEWS_IMAGES=off (variable in Cloudflare) hides the thumbnails at once, without touching the code.
+  const showImages = String(env.NEWS_IMAGES || 'on').toLowerCase() !== 'off';
+  return json({ items: (items || []).map((n) => ({ ...n, image: showImages ? n.image || null : null })) });
 }
 
 // Controllo per l'admin: stato di ogni fonte, senza cache.

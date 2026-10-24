@@ -85,7 +85,7 @@ async function load() {
     const b = document.getElementById('nw'), out = document.getElementById('nwr'); b.disabled = true; out.textContent = 'Checking…';
     try {
       const d = await api('/news-check');
-      out.innerHTML = d.feeds.map((f) => `<div class="nrow ${f.error ? 'bad' : 'ok'}"><b>${esc(f.source)}</b><small>${f.error ? esc(f.error) + (f.preview ? ' · ' + esc(f.preview) : '') : f.items + ' headlines'}</small></div>`).join('')
+      out.innerHTML = d.feeds.map((f) => `<div class="nrow ${f.error ? 'bad' : 'ok'}"><b>${esc(f.source)}</b><small>${f.error ? esc(f.error) + (f.preview ? ' · ' + esc(f.preview) : '') : f.items + ' headlines, ' + (f.images || 0) + ' with a picture'}</small></div>`).join('')
         + `<p class="muted" style="margin-top:8px">${d.picked.length ? 'Shown on the home page:' : 'Nothing to show on the home page right now.'}</p>`
         + d.picked.map((n) => `<div class="nrow ok"><b>${esc(n.title)}</b><small>${esc(n.source)}</small></div>`).join('');
     } catch (e) { out.textContent = e.message; } finally { b.disabled = false; }

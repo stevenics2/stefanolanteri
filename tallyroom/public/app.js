@@ -164,10 +164,16 @@ async function loadNews() {
   try {
     const { items } = await api('/news');
     if (!items.length) { card.hidden = true; return; }
+    const thumbs = items.some((n) => n.image);       // text only, as before, when no headline has a picture
     box.innerHTML = items.map((n) => `
-      <a class="news-i" href="${esc(n.link)}" target="_blank" rel="noopener noreferrer">
-        <b>${esc(n.title)}</b><small>${esc(n.source)}${n.date ? ' · ' + ago(n.date) : ''}</small>
+      <a class="news-i${thumbs ? ' has-img' : ''}" href="${esc(n.link)}" target="_blank" rel="noopener noreferrer">
+        ${thumbs ? `<span class="news-th">${n.image ? `<img src="${esc(n.image)}" alt="" width="72" height="72" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : icon('news')}</span>` : ''}
+        <span class="news-tx"><b>${esc(n.title)}</b><small>${esc(n.source)}${n.date ? ' · ' + ago(n.date) : ''}</small></span>
       </a>`).join('');
+    // if a picture cannot be loaded (blocked or removed), show the placeholder icon instead
+    box.querySelectorAll('.news-th img').forEach((img) => img.addEventListener('error', () => {
+      const th = img.parentElement; th.classList.add('ph'); th.innerHTML = icon('news');
+    }));
     card.hidden = false;
   } catch { card.hidden = true; }
 }
