@@ -481,6 +481,7 @@ async function adminReview(env, id, action) {
       env.DB.prepare(`UPDATE reviews SET status='approved' WHERE id=?`).bind(id),
       env.DB.prepare(`UPDATE ships SET status='approved' WHERE id=?`).bind(rev.ship_id),
     ]);
+    try { await queueReviewPush(env, rev.ship_id); } catch { /* a notification problem must never block an approval */ }
   } else if (action === 'reject' || action === 'delete') {
     const { results: ph } = await env.DB.prepare(`SELECT r2_key FROM photos WHERE review_id=?`).bind(id).all();
     for (const p of ph) await env.PHOTOS.delete(p.r2_key);
@@ -641,12 +642,99 @@ async function submitContact(env, request) {
   return json({ ok: true });
 }
 
+// ---- notifiche push: iscrizioni dei telefoni e coda di invio (l'invio vero lo fa il Worker in reminder/) ----
+const PUSH_TITLE = 'New Tally Room Review!';
+const PUSH_MIN_GAP_MS = 5 * 60 * 1000;      // at most one notification to everybody every 5 minutes
+// only genuine push services are accepted: the Worker later sends requests to these addresses
+const PUSH_HOSTS = /^(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9.-]+\.push\.apple\.com|[a-z0-9.-]+\.notify\.windows\.com)$/i;
+const b64urlEnc = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const b64urlDec = (str) => { let t = String(str).replace(/-/g, '+').replace(/_/g, '/'); while (t.length % 4) t += '='; return Uint8Array.from(atob(t), (c) => c.charCodeAt(0)); };
+
+// The site's own key pair (VAPID) is created once, on first use, and kept in the database.
+async function vapidPublicKey(env) {
+  const get = () => env.DB.prepare(`SELECT value FROM meta WHERE key = 'vapid_public'`).first();
+  const row = await get();
+  if (row) return row.value;
+  const pair = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
+  const pub = b64urlEnc(await crypto.subtle.exportKey('raw', pair.publicKey));
+  const jwk = JSON.stringify(await crypto.subtle.exportKey('jwk', pair.privateKey));
+  await env.DB.batch([   // one atomic batch: if another request got there first, both inserts are ignored
+    env.DB.prepare(`INSERT OR IGNORE INTO meta (key, value) VALUES ('vapid_private', ?)`).bind(jwk),
+    env.DB.prepare(`INSERT OR IGNORE INTO meta (key, value) VALUES ('vapid_public', ?)`).bind(pub),
+  ]);
+  return (await get()).value;
+}
+
+async function pushSubscribe(env, request) {
+  const d = await request.json().catch(() => null);
+  const sub = (d && d.subscription) || d || {};
+  const endpoint = String(sub.endpoint || '');
+  const keys = sub.keys || {};
+  let u;
+  try { u = new URL(endpoint); } catch { return err('Invalid subscription'); }
+  if (u.protocol !== 'https:' || !PUSH_HOSTS.test(u.hostname) || endpoint.length > 700) return err('Unsupported notification service');
+  try {
+    const p = b64urlDec(keys.p256dh), a = b64urlDec(keys.auth);
+    if (p.length !== 65 || p[0] !== 4 || a.length !== 16) throw new Error('bad keys');
+    await crypto.subtle.importKey('raw', p, { name: 'ECDH', namedCurve: 'P-256' }, false, []);   // must be a real P-256 point
+  } catch { return err('Invalid subscription'); }
+
+  const now = Date.now();
+  const ipHash = await sha((request.headers.get('cf-connecting-ip') || 'unknown') + (env.SALT || ''));
+  await env.DB.prepare('DELETE FROM push_log WHERE created_at < ?').bind(now - 86_400_000).run();
+  const mine = (await env.DB.prepare('SELECT COUNT(*) AS n FROM push_log WHERE ip_hash = ? AND created_at > ?').bind(ipHash, now - 3_600_000).first()).n;
+  if (mine >= 10) return err('Too many requests. Please try again later.', 429);
+  const total = (await env.DB.prepare('SELECT COUNT(*) AS n FROM push_subs').first()).n;
+  if (total >= 50000) return err('Notifications are full right now.', 503);
+  await env.DB.prepare('INSERT INTO push_log (ip_hash, created_at) VALUES (?, ?)').bind(ipHash, now).run();
+  await env.DB.prepare(
+    `INSERT INTO push_subs (endpoint, p256dh, auth, created_at, fails) VALUES (?, ?, ?, ?, 0)
+     ON CONFLICT(endpoint) DO UPDATE SET p256dh = excluded.p256dh, auth = excluded.auth, fails = 0`
+  ).bind(endpoint, keys.p256dh, keys.auth, now).run();
+  return json({ ok: true });
+}
+
+async function pushUnsubscribe(env, request) {
+  const d = await request.json().catch(() => ({}));
+  if (d.endpoint) await env.DB.prepare('DELETE FROM push_subs WHERE endpoint = ?').bind(String(d.endpoint).slice(0, 700)).run();
+  return json({ ok: true });
+}
+
+// Called when a review is approved: queues one notification (the Worker delivers it within a minute).
+async function queueReviewPush(env, shipId) {
+  const any = await env.DB.prepare('SELECT 1 AS x FROM push_subs LIMIT 1').first();
+  if (!any) return;
+  const now = Date.now();
+  const last = await env.DB.prepare('SELECT MAX(created_at) AS t FROM push_jobs WHERE target IS NULL').first();
+  if (last && last.t && now - last.t < PUSH_MIN_GAP_MS) return;          // approving many at once = one notification
+  const ship = await env.DB.prepare('SELECT name FROM ships WHERE id = ?').bind(shipId).first();
+  await env.DB.prepare('INSERT INTO push_jobs (title, body, url, created_at) VALUES (?, ?, ?, ?)')
+    .bind(PUSH_TITLE, up(ship && ship.name), `/#/ship/${shipId}`, now).run();
+}
+
+async function adminPush(env) {
+  const { n } = await env.DB.prepare('SELECT COUNT(*) AS n FROM push_subs').first();
+  return json({ subscribers: n });
+}
+async function adminPushTest(env) {
+  const sub = await env.DB.prepare('SELECT MAX(id) AS id FROM push_subs').first();
+  if (!sub || !sub.id) return err('Nobody has turned on notifications yet', 404);
+  await env.DB.prepare('INSERT INTO push_jobs (title, body, url, target, created_at) VALUES (?, ?, ?, ?, ?)')
+    .bind('Test notification', 'Notifications are working.', '/', sub.id, Date.now()).run();
+  return json({ ok: true });
+}
+
 // ---- migrazione automatica (database creati prima della colonna has_tally) ----
 let schemaChecked = false;
 async function ensureSchema(env) {
   if (schemaChecked) return;
   await env.DB.prepare('CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)').run();
   await env.DB.prepare('CREATE TABLE IF NOT EXISTS contact_log (ip_hash TEXT, created_at INTEGER)').run();
+  await env.DB.batch([
+    env.DB.prepare('CREATE TABLE IF NOT EXISTS push_subs (id INTEGER PRIMARY KEY AUTOINCREMENT, endpoint TEXT NOT NULL UNIQUE, p256dh TEXT NOT NULL, auth TEXT NOT NULL, created_at INTEGER NOT NULL, fails INTEGER NOT NULL DEFAULT 0)'),
+    env.DB.prepare('CREATE TABLE IF NOT EXISTS push_jobs (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, body TEXT, url TEXT, target INTEGER, created_at INTEGER NOT NULL, cursor INTEGER NOT NULL DEFAULT 0, done INTEGER NOT NULL DEFAULT 0)'),
+    env.DB.prepare('CREATE TABLE IF NOT EXISTS push_log (ip_hash TEXT, created_at INTEGER)'),
+  ]);
   try {
     await env.DB.prepare('SELECT has_tally FROM reviews LIMIT 1').first();
   } catch {
@@ -675,6 +763,9 @@ export async function onRequest({ request, env, params, waitUntil }) {
     if (path === '/recent' && m === 'GET') return await recent(env);
     if (path === '/contact' && m === 'GET') return json({ email: env.CONTACT_EMAIL || null });
     if (path === '/contact' && m === 'POST') return await submitContact(env, request);
+    if (path === '/push/key' && m === 'GET') return json({ key: await vapidPublicKey(env) });
+    if (path === '/push/subscribe' && m === 'POST') return await pushSubscribe(env, request);
+    if (path === '/push/unsubscribe' && m === 'POST') return await pushUnsubscribe(env, request);
     if (path === '/stats' && m === 'GET') return json({ visitors: await readVisitors(env) });
     if (path === '/visit' && m === 'POST') return await countVisit(env, request);
     if (path === '/weather' && m === 'GET') return await weather(env, url, ctx);
@@ -692,6 +783,8 @@ export async function onRequest({ request, env, params, waitUntil }) {
       if (path === '/admin/import' && m === 'POST') return await adminImport(env, request);
       if (path === '/admin/ships' && m === 'GET') return await adminShips(env, url);
       if (path === '/admin/backup' && m === 'GET') return await adminBackup(env);
+      if (path === '/admin/push' && m === 'GET') return await adminPush(env);
+      if (path === '/admin/push/test' && m === 'POST') return await adminPushTest(env);
       if (path === '/admin/news-check' && m === 'GET') return await adminNewsCheck(env);
       if ((x = path.match(/^\/admin\/ships\/(\d+)\/delete$/)) && m === 'POST') return await adminDeleteShip(env, +x[1]);
       if ((x = path.match(/^\/admin\/reviews\/(\d+)\/(approve|reject|delete)$/)) && m === 'POST')

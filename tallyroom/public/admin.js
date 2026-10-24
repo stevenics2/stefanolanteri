@@ -47,6 +47,11 @@ async function load() {
         <div class="row"><button class="btn bad" data-a="delete">Delete review</button><button class="btn sec" data-a="dismiss">Dismiss</button></div>
       </div>`).join('') || '<p class="muted">No reports.</p>'}
     </div>
+    <div class="card"><h2>Notifications</h2>
+      <p class="muted" id="pushinfo">Checking…</p>
+      <button class="btn block" id="pt" type="button">Send a test to the newest subscriber</button>
+      <div id="ptr" style="margin-top:10px"></div>
+    </div>
     <div class="card"><h2>Backup</h2>
       <p class="muted">A full backup of the database is emailed to you every 7 days. You can also download one now (photos are not included).</p>
       <button class="btn block" id="bk" type="button">Download backup now</button>
@@ -89,6 +94,17 @@ async function load() {
         + `<p class="muted" style="margin-top:8px">${d.picked.length ? 'Shown on the home page:' : 'Nothing to show on the home page right now.'}</p>`
         + d.picked.map((n) => `<div class="nrow ok"><b>${esc(n.title)}</b><small>${esc(n.source)}</small></div>`).join('');
     } catch (e) { out.textContent = e.message; } finally { b.disabled = false; }
+  };
+  api('/push').then((d) => {
+    document.getElementById('pushinfo').textContent = d.subscribers
+      ? d.subscribers + ' phone' + (d.subscribers === 1 ? ' has' : 's have') + ' turned on notifications. Approving a review sends "New Tally Room Review!" to all of them, at most once every 5 minutes. The test goes only to the phone that subscribed last.'
+      : 'Nobody has turned on notifications yet. Open the site on your phone, turn them on from the home page, then come back here to send a test.';
+  }).catch(() => {});
+  document.getElementById('pt').onclick = async () => {
+    const b = document.getElementById('pt'), out = document.getElementById('ptr'); b.disabled = true;
+    try { await api('/push/test', 'POST'); out.innerHTML = '<div class="msg">Test queued. It should arrive within a minute.</div>'; }
+    catch (e) { out.innerHTML = '<div class="msg err">' + esc(e.message) + '</div>'; }
+    finally { b.disabled = false; }
   };
   document.getElementById('bk').onclick = async () => {
     const b = document.getElementById('bk'); b.disabled = true;

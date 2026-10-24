@@ -1,3 +1,4 @@
+import { sendWebPush } from './webpush.js';
 // Promemoria per l'amministratore: un'email riepilogativa ogni N giorni
 // finché ci sono recensioni o navi in attesa di approvazione da almeno N giorni.
 // In più, ogni 7 giorni invia per email un backup completo del database.
@@ -83,6 +84,8 @@ async function run(env) {
   const now = Date.now();
 
   await env.DB.prepare('CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)').run();
+  // Housekeeping: finished push jobs are deleted after 7 days.
+  await env.DB.prepare('DELETE FROM push_jobs WHERE created_at < ? AND done = 1').bind(now - 7 * DAY).run().catch(() => {});
   // Privacy: the anti-abuse code stored with a submission is erased after 30 days.
   await env.DB.prepare('UPDATE reviews SET ip_hash = NULL WHERE ip_hash IS NOT NULL AND created_at < ?').bind(now - 30 * DAY).run();
   const { results: pending } = await env.DB.prepare(
@@ -120,13 +123,62 @@ async function run(env) {
   return `reminder sent for ${pending.length} items`;
 }
 
+
+// ---- Push notifications: delivers queued jobs to subscribed phones in batches (runs every minute) ----
+const PUSH_BATCH = 40;                 // the free plan allows 50 outgoing requests per run
+const PUSH_TABLES = [
+  'CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)',
+  'CREATE TABLE IF NOT EXISTS push_subs (id INTEGER PRIMARY KEY AUTOINCREMENT, endpoint TEXT NOT NULL UNIQUE, p256dh TEXT NOT NULL, auth TEXT NOT NULL, created_at INTEGER NOT NULL, fails INTEGER NOT NULL DEFAULT 0)',
+  'CREATE TABLE IF NOT EXISTS push_jobs (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, body TEXT, url TEXT, target INTEGER, created_at INTEGER NOT NULL, cursor INTEGER NOT NULL DEFAULT 0, done INTEGER NOT NULL DEFAULT 0)',
+];
+
+async function pushTick(env) {
+  await env.DB.batch(PUSH_TABLES.map((q) => env.DB.prepare(q)));
+  const job = await env.DB.prepare('SELECT * FROM push_jobs WHERE done = 0 ORDER BY id LIMIT 1').first();
+  if (!job) return 'push: nothing queued';
+
+  const { results: kv } = await env.DB.prepare(`SELECT key, value FROM meta WHERE key IN ('vapid_public', 'vapid_private')`).all();
+  const keys = Object.fromEntries(kv.map((r) => [r.key, r.value]));
+  if (!keys.vapid_public || !keys.vapid_private) {
+    await env.DB.prepare('UPDATE push_jobs SET done = 1 WHERE id = ?').bind(job.id).run();
+    return 'push: no keys yet, job dropped';
+  }
+  const vapid = { publicKey: keys.vapid_public, privateJwk: JSON.parse(keys.vapid_private), subject: env.SITE_URL || 'https://tallyrooms.com' };
+
+  const { results: subs } = job.target
+    ? await env.DB.prepare('SELECT * FROM push_subs WHERE id = ?').bind(job.target).all()
+    : await env.DB.prepare('SELECT * FROM push_subs WHERE id > ? ORDER BY id LIMIT ?').bind(job.cursor, PUSH_BATCH).all();
+
+  const payload = { title: job.title, body: job.body || '', url: job.url || '/' };
+  const statuses = await Promise.all(subs.map((s) => sendWebPush(s, payload, vapid).catch(() => 0)));
+
+  const stmts = []; let sent = 0, gone = 0, failed = 0;
+  subs.forEach((s, i) => {
+    const st = statuses[i];
+    if (st >= 200 && st < 300) { sent++; stmts.push(env.DB.prepare('UPDATE push_subs SET fails = 0 WHERE id = ? AND fails > 0').bind(s.id)); }
+    else if (st === 404 || st === 410) { gone++; stmts.push(env.DB.prepare('DELETE FROM push_subs WHERE id = ?').bind(s.id)); }   // phone unsubscribed
+    else { failed++; stmts.push(env.DB.prepare('UPDATE push_subs SET fails = fails + 1 WHERE id = ?').bind(s.id)); stmts.push(env.DB.prepare('DELETE FROM push_subs WHERE id = ? AND fails >= 5').bind(s.id)); }
+  });
+  const finished = job.target ? true : subs.length < PUSH_BATCH;
+  stmts.push(env.DB.prepare('UPDATE push_jobs SET cursor = ?, done = ? WHERE id = ?').bind(subs.length ? subs[subs.length - 1].id : job.cursor, finished ? 1 : 0, job.id));
+  await env.DB.batch(stmts);
+  return `push: job ${job.id} sent ${sent}, gone ${gone}, failed ${failed}${finished ? ', finished' : ', more to send'}`;
+}
+
 export default {
   async scheduled(event, env, ctx) {
+    if (event.cron === '* * * * *') {                       // every minute: push notifications
+      ctx.waitUntil(pushTick(env).then((m) => console.log(m)).catch((e) => console.log('push error', String(e))));
+      return;
+    }
+    // daily: reminders, weekly backup, and housekeeping
     ctx.waitUntil(Promise.all([run(env), backup(env)]).then((m) => console.log(m.join(' | '))));
   },
   // Pagina di controllo: mostra solo se i segreti sono visibili, mai i loro valori.
   async fetch(request, env) {
     const flag = (v) => (v ? 'configured' : 'MISSING');
+    let subs = '?';
+    try { subs = (await env.DB.prepare('SELECT COUNT(*) AS n FROM push_subs').first()).n; } catch { subs = '0'; }
     return new Response([
       'tally-room-reminder: runs on a daily schedule',
       `RESEND_API_KEY: ${flag(env.RESEND_API_KEY)}`,
@@ -134,6 +186,7 @@ export default {
       `MAIL_FROM: ${env.MAIL_FROM ? 'configured' : 'default (notifications@tallyrooms.com)'}`,
       `Database: ${env.DB ? 'connected' : 'MISSING'}`,
       `Weekly backup email: ${env.RESEND_API_KEY && env.ADMIN_EMAIL ? 'enabled' : 'disabled (secrets missing)'}`,
+      `Push notifications: every minute, ${subs} subscribed phone(s)`,
     ].join('\n'), { status: 200, headers: { 'content-type': 'text/plain; charset=utf-8' } });
   },
 };

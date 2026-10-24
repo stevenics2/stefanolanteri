@@ -3,7 +3,7 @@ main = "worker.js"
 compatibility_date = "2025-01-01"
 
 [triggers]
-crons = ["0 8 * * *"]          # ogni giorno alle 08:00 UTC
+crons = ["0 8 * * *", "* * * * *"]   # daily at 08:00 UTC (reminders, backup) and every minute (push notifications)
 
 [vars]
 REMIND_EVERY_DAYS = "3"

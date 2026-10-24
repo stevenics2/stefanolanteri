@@ -16,6 +16,7 @@ const P = {
   news: '<path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8v4h-8z"/>',
   shuffle: '<path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>',
   wind: '<path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2M9.6 4.6A2 2 0 1 1 11 8H2M12.6 19.4A2 2 0 1 0 14 16H2"/>',
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
   instagram: '<rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><path d="M17.5 6.5h.01"/>',
   mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
@@ -178,6 +179,64 @@ async function loadNews() {
   } catch { card.hidden = true; }
 }
 
+// ---------- Push notifications (opt-in) ----------
+const PUSH_SUPPORTED = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const IS_STANDALONE = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const keyToBytes = (b64) => { const t = (b64 + '='.repeat((4 - (b64.length % 4)) % 4)).replace(/-/g, '+').replace(/_/g, '/'); return Uint8Array.from(atob(t), (c) => c.charCodeAt(0)); };
+const pstore = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch { /* ignore */ } } };
+const postJson = (path, body) => api(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+
+async function loadPush() {
+  const card = document.getElementById('push-card');
+  // iPhone only allows notifications for a site saved on the home screen
+  if (!card || !PUSH_SUPPORTED || (IS_IOS && !IS_STANDALONE)) return;
+  let reg;
+  try { reg = await navigator.serviceWorker.ready; } catch { return; }
+  const sub = await reg.pushManager.getSubscription().catch(() => null);
+  const show = (html) => { card.innerHTML = html; card.hidden = false; };
+
+  const showOn = (s) => {
+    show(`<p class="push-on">${icon('bell')}<span>Notifications are on.</span> <button class="linkbtn" id="push-off" type="button">Turn off</button></p>`);
+    document.getElementById('push-off').addEventListener('click', async () => {
+      try { await s.unsubscribe(); await postJson('/push/unsubscribe', { endpoint: s.endpoint }); } catch { /* ignore */ }
+      pstore.set('tr_push_later', String(Date.now() + 30 * 86400000)); card.hidden = true;
+    });
+  };
+
+  if (Notification.permission === 'granted' && sub) {
+    if (Date.now() - Number(pstore.get('tr_push_sync') || 0) > 86400000) {      // keep the server in step with the phone once a day
+      postJson('/push/subscribe', sub.toJSON()).then(() => pstore.set('tr_push_sync', String(Date.now()))).catch(() => {});
+    }
+    showOn(sub); return;
+  }
+  if (Notification.permission === 'denied') return;                              // the phone blocks it: do not nag
+  if (Date.now() < Number(pstore.get('tr_push_later') || 0)) return;
+
+  show(`<h2>${icon('bell')} Notifications</h2>
+    <p class="muted" style="margin:0 0 12px">Get a notification when a new Tally Room review is published.</p>
+    <button class="btn block" id="push-on" type="button">Turn on notifications</button>
+    <button class="linkbtn push-later" id="push-later" type="button">Not now</button>
+    <div id="push-msg"></div>`);
+  document.getElementById('push-later').addEventListener('click', () => { pstore.set('tr_push_later', String(Date.now() + 14 * 86400000)); card.hidden = true; });
+  document.getElementById('push-on').addEventListener('click', async () => {
+    const btn = document.getElementById('push-on'), msg = document.getElementById('push-msg');
+    btn.disabled = true;
+    try {
+      const perm = await Notification.requestPermission();                       // the phone shows its own question, in its own language
+      if (perm !== 'granted') { card.hidden = true; return; }
+      const { key } = await api('/push/key');
+      const s = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyToBytes(key) });
+      await postJson('/push/subscribe', s.toJSON());
+      pstore.set('tr_push_sync', String(Date.now()));
+      showOn(s);
+    } catch {
+      btn.disabled = false;
+      msg.innerHTML = '<div class="msg err" style="margin-top:10px">Could not turn on notifications. Please try again.</div>';
+    }
+  });
+}
+
 // ---------- Home ----------
 async function home() {
   $app.innerHTML = `
@@ -202,6 +261,7 @@ async function home() {
       <p class="attrib">Headlines link to the original publisher.</p>
     </div>
     <div class="card"><h2>${icon('history')} Recently updated Tally Rooms</h2><div id="recent" class="muted">Loading…</div></div>
+    <div class="card" id="push-card" hidden></div>
     <p class="counter" id="counter" hidden>${icon('users')}<span>Stevedores use it: <b id="visitors"></b></span></p>
     <div class="social">
       <a class="social-pill ig" href="https://www.instagram.com/tallyrooms" target="_blank" rel="noopener noreferrer">${icon('instagram')} Follow on Instagram</a>
@@ -234,6 +294,7 @@ async function home() {
   visitors.then((n) => { if (n != null) { document.getElementById('visitors').textContent = n.toLocaleString('en-US'); document.getElementById('counter').hidden = false; } });
   loadWeather();
   loadNews();
+  loadPush();
   document.getElementById('wx-shuffle').addEventListener('click', loadWeather);
   api('/recent').then(({ ships }) => {
     document.getElementById('recent').innerHTML = ships.length ? ships.map((s) => item(s)).join('') : '<p class="empty">No reviews yet. Be the first to update a Tally Room!</p>';

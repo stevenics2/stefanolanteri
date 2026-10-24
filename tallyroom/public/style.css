@@ -309,3 +309,9 @@ footer .copy,footer p{margin:0}
 .news-th img{width:100%;height:100%;object-fit:cover;display:block}
 .news-th svg{width:26px;height:26px}
 .news-tx{min-width:0;display:block}
+
+/* push notifications card */
+.push-on{display:flex;align-items:center;gap:10px;margin:0;font-weight:600;color:var(--ink)}
+.push-on svg{width:20px;height:20px;color:var(--ok)}
+.push-on .linkbtn{margin-left:auto}
+.push-later{display:block;margin:10px auto 0;font-size:.85rem}

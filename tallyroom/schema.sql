@@ -44,3 +44,8 @@ CREATE INDEX IF NOT EXISTS idx_reviews_ip ON reviews(ip_hash, created_at);
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
 -- contact form rate limiting (kept 24 h only)
 CREATE TABLE IF NOT EXISTS contact_log (ip_hash TEXT, created_at INTEGER);
+
+-- push notifications (the site creates these automatically as well)
+CREATE TABLE IF NOT EXISTS push_subs (id INTEGER PRIMARY KEY AUTOINCREMENT, endpoint TEXT NOT NULL UNIQUE, p256dh TEXT NOT NULL, auth TEXT NOT NULL, created_at INTEGER NOT NULL, fails INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS push_jobs (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, body TEXT, url TEXT, target INTEGER, created_at INTEGER NOT NULL, cursor INTEGER NOT NULL DEFAULT 0, done INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS push_log (ip_hash TEXT, created_at INTEGER);
