@@ -34,7 +34,7 @@
   const DOTS = svg('<circle cx="12" cy="5" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="19" r="1.2"/>');
 
   let root = null;
-  function close() { if (root) { root.remove(); root = null; } }
+  function close() { if (root) { root.remove(); root = null; window.__popupOpen = false; document.dispatchEvent(new Event('tr-popup-closed')); } }
 
   function steps() {
     if (isIOS) {
@@ -69,6 +69,7 @@
           <button class="a2-later ${!isIOS && deferred ? '' : 'primary'}" id="a2-close" type="button">${!isIOS && deferred ? 'Not now' : 'Got it'}</button>
         </div>
       </div>`;
+    window.__popupOpen = true;
     document.body.append(root);
     root.addEventListener('click', (e) => { if (e.target === root) close(); });
     root.querySelector('#a2-close').addEventListener('click', close);

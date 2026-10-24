@@ -11,17 +11,13 @@ self.addEventListener('fetch', (e) => {
 self.addEventListener('push', (e) => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch { d = { body: e.data ? e.data.text() : '' }; }
-  // An empty title is intended: the phone shows its own "from Tally Rooms" there and our text goes below.
-  const title = typeof d.title === 'string' ? d.title : 'New Tally Room Rated ✅';
-  const options = {
+  e.waitUntil(self.registration.showNotification(d.title || 'New Tally Room Rated ✅', {
     body: d.body || '',
     icon: '/icon-192.png',
     badge: '/icon-192.png',
     tag: 'new-review',                         // a newer notification replaces the previous one on the phone
     data: { url: d.url || '/' },
-  };
-  // If a phone refuses an empty title, fall back to the site name so that a notification is always shown.
-  e.waitUntil(self.registration.showNotification(title, options).catch(() => self.registration.showNotification('Tally Rooms', options)));
+  }));
 });
 
 self.addEventListener('notificationclick', (e) => {

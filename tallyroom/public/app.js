@@ -187,53 +187,99 @@ const keyToBytes = (b64) => { const t = (b64 + '='.repeat((4 - (b64.length % 4))
 const pstore = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch { /* ignore */ } } };
 const postJson = (path, body) => api(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
 
-async function loadPush() {
-  const card = document.getElementById('push-card');
-  // iPhone only allows notifications for a site saved on the home screen
-  if (!card || !PUSH_SUPPORTED || (IS_IOS && !IS_STANDALONE)) return;
+// What can this phone do right now?  none | ios-tab | blocked | off | on
+async function pushInfo() {
+  if (!PUSH_SUPPORTED) return { mode: 'none' };
+  if (IS_IOS && !IS_STANDALONE) return { mode: 'ios-tab' };          // iPhone only allows it for a site saved on the home screen
   let reg;
-  try { reg = await navigator.serviceWorker.ready; } catch { return; }
+  try { reg = await navigator.serviceWorker.ready; } catch { return { mode: 'none' }; }
   const sub = await reg.pushManager.getSubscription().catch(() => null);
-  const show = (html) => { card.innerHTML = html; card.hidden = false; };
+  if (Notification.permission === 'granted' && sub) return { mode: 'on', reg, sub };
+  if (Notification.permission === 'denied') return { mode: 'blocked', reg };
+  return { mode: 'off', reg };
+}
 
-  const showOn = (s) => {
-    show(`<p class="push-on">${icon('bell')}<span>Notifications are on.</span> <button class="linkbtn" id="push-off" type="button">Turn off</button></p>`);
+// Asks the phone for permission and subscribes. Returns 'granted', 'denied' or 'default' (question dismissed).
+async function enablePush(reg) {
+  const perm = await Notification.requestPermission();                 // the phone shows its own question, in its own language
+  if (perm !== 'granted') return perm;
+  const { key } = await api('/push/key');
+  const s = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyToBytes(key) });
+  await postJson('/push/subscribe', s.toJSON());
+  pstore.set('tr_push_sync', String(Date.now()));
+  return 'granted';
+}
+
+// The card near the bottom of the home page: always there, whatever the state.
+async function renderPushCard(notice) {
+  const card = document.getElementById('push-card');
+  if (!card) return;
+  const info = await pushInfo();
+  if (info.mode === 'none') { card.hidden = true; return; }
+  const note = notice ? `<div class="msg err" style="margin-top:10px">${esc(notice)}</div>` : '';
+
+  if (info.mode === 'on') {
+    if (Date.now() - Number(pstore.get('tr_push_sync') || 0) > 86400000) {          // keep the server in step with the phone once a day
+      postJson('/push/subscribe', info.sub.toJSON()).then(() => pstore.set('tr_push_sync', String(Date.now()))).catch(() => {});
+    }
+    card.innerHTML = `<p class="push-on">${icon('bell')}<span>Notifications are on.</span> <button class="linkbtn" id="push-off" type="button">Turn off</button></p>`;
     document.getElementById('push-off').addEventListener('click', async () => {
-      try { await s.unsubscribe(); await postJson('/push/unsubscribe', { endpoint: s.endpoint }); } catch { /* ignore */ }
-      pstore.set('tr_push_later', String(Date.now() + 30 * 86400000)); card.hidden = true;
+      try { await info.sub.unsubscribe(); await postJson('/push/unsubscribe', { endpoint: info.sub.endpoint }); } catch { /* ignore */ }
+      renderPushCard();                                                               // back to the "Turn on" card
     });
-  };
-
-  if (Notification.permission === 'granted' && sub) {
-    if (Date.now() - Number(pstore.get('tr_push_sync') || 0) > 86400000) {      // keep the server in step with the phone once a day
-      postJson('/push/subscribe', sub.toJSON()).then(() => pstore.set('tr_push_sync', String(Date.now()))).catch(() => {});
-    }
-    showOn(sub); return;
+  } else if (info.mode === 'ios-tab') {
+    card.innerHTML = `<h2>${icon('bell')} Notifications</h2>
+      <p class="muted" style="margin:0">On iPhone, notifications work from the Home Screen app. Tap the Share button, choose <b>Add to Home Screen</b>, then open Tally Rooms from your home screen and turn them on here.</p>`;
+  } else if (info.mode === 'blocked') {
+    card.innerHTML = `<h2>${icon('bell')} Notifications</h2>
+      <p class="muted" style="margin:0">Notifications are blocked on this phone. To get them, allow notifications for Tally Rooms in your phone settings, then open this page again.</p>`;
+  } else {
+    card.innerHTML = `<h2>${icon('bell')} Notifications</h2>
+      <p class="muted" style="margin:0 0 12px">Get a notification when a new Tally Room review is published.</p>
+      <button class="btn block" id="push-on" type="button">Turn on notifications</button>${note}`;
+    document.getElementById('push-on').addEventListener('click', async () => {
+      const btn = document.getElementById('push-on'); btn.disabled = true;
+      try { await enablePush(info.reg); renderPushCard(); } catch { renderPushCard('Could not turn on notifications. Please try again.'); }
+    });
   }
-  if (Notification.permission === 'denied') return;                              // the phone blocks it: do not nag
-  if (Date.now() < Number(pstore.get('tr_push_later') || 0)) return;
+  card.hidden = false;
+}
 
-  show(`<h2>${icon('bell')} Notifications</h2>
-    <p class="muted" style="margin:0 0 12px">Get a notification when a new Tally Room review is published.</p>
-    <button class="btn block" id="push-on" type="button">Turn on notifications</button>
-    <button class="linkbtn push-later" id="push-later" type="button">Not now</button>
-    <div id="push-msg"></div>`);
-  document.getElementById('push-later').addEventListener('click', () => { pstore.set('tr_push_later', String(Date.now() + 14 * 86400000)); card.hidden = true; });
-  document.getElementById('push-on').addEventListener('click', async () => {
-    const btn = document.getElementById('push-on'), msg = document.getElementById('push-msg');
-    btn.disabled = true;
-    try {
-      const perm = await Notification.requestPermission();                       // the phone shows its own question, in its own language
-      if (perm !== 'granted') { card.hidden = true; return; }
-      const { key } = await api('/push/key');
-      const s = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyToBytes(key) });
-      await postJson('/push/subscribe', s.toJSON());
-      pstore.set('tr_push_sync', String(Date.now()));
-      showOn(s);
-    } catch {
-      btn.disabled = false;
-      msg.innerHTML = '<div class="msg err" style="margin-top:10px">Could not turn on notifications. Please try again.</div>';
-    }
+// First visit only: a popup that invites to turn notifications on. The card above stays available afterwards.
+async function maybePushPopup() {
+  if (pstore.get('tr_push_popup_seen')) return;
+  const info = await pushInfo();
+  if (info.mode !== 'off') return;
+  if (window.__popupOpen) {                                                           // let the "save to your phone" popup finish first
+    await new Promise((res) => { const f = () => { document.removeEventListener('tr-popup-closed', f); setTimeout(res, 600); }; document.addEventListener('tr-popup-closed', f); setTimeout(res, 120000); });
+  }
+  if (pstore.get('tr_push_popup_seen')) return;
+  pstore.set('tr_push_popup_seen', '1');                                              // shown once per phone, whatever the answer
+
+  const root = document.createElement('div');
+  root.className = 'a2-overlay';
+  root.innerHTML = `
+    <div class="a2-sheet" role="dialog" aria-modal="true" aria-labelledby="pp-t">
+      <div class="a2-head">
+        <img src="/icon-192.png" alt="" width="52" height="52">
+        <div><h2 id="pp-t">Get notified</h2><p>New Tally Room reviews, as they are published.</p></div>
+      </div>
+      <p class="a2-p">Turn on notifications to know when a new Tally Room review is published. You can turn them off at any time from the bottom of the home page.</p>
+      <div class="a2-actions">
+        <button class="btn block" id="pp-on" type="button">${icon('bell')} Turn on notifications</button>
+        <button class="a2-later" id="pp-no" type="button">Not now</button>
+      </div>
+      <div id="pp-msg"></div>
+    </div>`;
+  window.__popupOpen = true;
+  document.body.append(root);
+  const close = () => { root.remove(); window.__popupOpen = false; document.dispatchEvent(new Event('tr-popup-closed')); renderPushCard(); };
+  root.addEventListener('click', (e) => { if (e.target === root) close(); });
+  document.getElementById('pp-no').addEventListener('click', close);
+  document.getElementById('pp-on').addEventListener('click', async () => {
+    const btn = document.getElementById('pp-on'); btn.disabled = true;
+    try { await enablePush(info.reg); close(); }
+    catch { btn.disabled = false; document.getElementById('pp-msg').innerHTML = '<div class="msg err" style="margin-top:10px">Could not turn on notifications. Please try again.</div>'; }
   });
 }
 
@@ -294,7 +340,7 @@ async function home() {
   visitors.then((n) => { if (n != null) { document.getElementById('visitors').textContent = n.toLocaleString('en-US'); document.getElementById('counter').hidden = false; } });
   loadWeather();
   loadNews();
-  loadPush();
+  renderPushCard();
   document.getElementById('wx-shuffle').addEventListener('click', loadWeather);
   api('/recent').then(({ ships }) => {
     document.getElementById('recent').innerHTML = ships.length ? ships.map((s) => item(s)).join('') : '<p class="empty">No reviews yet. Be the first to update a Tally Room!</p>';
@@ -483,3 +529,4 @@ function route() {
 }
 addEventListener('hashchange', route);
 route();
+setTimeout(maybePushPopup, 4000);          // first visit: invite to turn on notifications (after the other popup, if any)

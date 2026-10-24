@@ -643,10 +643,8 @@ async function submitContact(env, request) {
 }
 
 // ---- notifiche push: iscrizioni dei telefoni e coda di invio (l'invio vero lo fa il Worker in reminder/) ----
-// The title is left empty on purpose: phones print "from Tally Rooms" there on their own, and everything we say goes in the text below.
-const PUSH_TITLE = '';
-const PUSH_HEAD_RATED = 'New Tally Room Rated ✅';
-const PUSH_HEAD_NO_TALLY = 'New Tally Room Report ❌';
+const PUSH_TITLE_RATED = 'New Tally Room Rated ✅';
+const PUSH_TITLE_NO_TALLY = 'New Tally Room Report ❌';
 const PUSH_MIN_GAP_MS = 5 * 60 * 1000;      // at most one notification to everybody every 5 minutes
 // only genuine push services are accepted: the Worker later sends requests to these addresses
 const PUSH_HOSTS = /^(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9.-]+\.push\.apple\.com|[a-z0-9.-]+\.notify\.windows\.com)$/i;
@@ -712,10 +710,10 @@ async function queueReviewPush(env, rev) {
   if (last && last.t && now - last.t < PUSH_MIN_GAP_MS) return;          // approving many at once = one notification
   const ship = await env.DB.prepare('SELECT name FROM ships WHERE id = ?').bind(rev.ship_id).first();
   const name = up(ship && ship.name);
-  // "NAME - 4/5" for a rated Tally Room, "NAME - NO TALLY" when the review says there is none
+  // "NAME - 4 ⭐" for a rated Tally Room, "NAME - NO TALLY" when the review says there is none
   const rated = rev.has_tally !== 0;
   await env.DB.prepare('INSERT INTO push_jobs (title, body, url, created_at) VALUES (?, ?, ?, ?)')
-    .bind(PUSH_TITLE, `${rated ? PUSH_HEAD_RATED : PUSH_HEAD_NO_TALLY}\n${name} - ${rated ? `${rev.rating}/5` : 'NO TALLY'}`, `/#/ship/${rev.ship_id}`, now).run();
+    .bind(rated ? PUSH_TITLE_RATED : PUSH_TITLE_NO_TALLY, rated ? `${name} - ${rev.rating} ⭐` : `${name} - NO TALLY`, `/#/ship/${rev.ship_id}`, now).run();
 }
 
 async function adminPush(env) {
@@ -726,7 +724,7 @@ async function adminPushTest(env) {
   const sub = await env.DB.prepare('SELECT MAX(id) AS id FROM push_subs').first();
   if (!sub || !sub.id) return err('Nobody has turned on notifications yet', 404);
   await env.DB.prepare('INSERT INTO push_jobs (title, body, url, target, created_at) VALUES (?, ?, ?, ?, ?)')
-    .bind(PUSH_TITLE, 'Test notification\nNotifications are working.', '/', sub.id, Date.now()).run();
+    .bind('Test notification', 'Notifications are working.', '/', sub.id, Date.now()).run();
   return json({ ok: true });
 }
 
