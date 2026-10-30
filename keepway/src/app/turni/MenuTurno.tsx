@@ -61,6 +61,7 @@ function MenuGiorno({ data, onClose, onVai }: { data: string; onClose: () => voi
   };
 
   const salvaCambio = () => {
+    incassa();
     const tipo = pagato ? "cambio_azienda" : "cambio_personale";
     const spostato = ge.baseCodici; // i turni di questo giorno
     const gruppo = nuovoId(); // collega le due modifiche: si annullano e si contano insieme
@@ -81,10 +82,14 @@ function MenuGiorno({ data, onClose, onVai }: { data: string; onClose: () => voi
     );
   };
 
-  const salvaStraordinario = () => {
-    // "Incasso": la cassa di un negozio e una piccola esplosione di monetine
+  // "Incasso": la cassa di un negozio e una piccola esplosione di monetine
+  const incassa = () => {
     if (stato.impostazioni.suoni) suono("incasso");
     if (stato.impostazioni.animazioni) void monete();
+  };
+
+  const salvaStraordinario = () => {
+    incassa();
     const codici = unisci([...new Set([...ge.codici, ...extra])]);
     conferma(
       [{ id: nuovoId(), data, tipo: "straordinario", codici, ex: base, mostraEx: false, extra: unisci(extra), creato: adessoMs() }],
@@ -219,7 +224,7 @@ function MenuGiorno({ data, onClose, onVai }: { data: string; onClose: () => voi
             </p>
           )}
           <p className="text-sm text-muted">{anteprimaCambio}</p>
-          <button data-suono="via" disabled={!cambioValido} onClick={salvaCambio} className="w-full rounded-2xl bg-accent py-3.5 text-lg font-bold text-black disabled:opacity-40">
+          <button data-suono="nessuno" disabled={!cambioValido} onClick={salvaCambio} className="w-full rounded-2xl bg-accent py-3.5 text-lg font-bold text-black disabled:opacity-40">
             Salva cambio turno
           </button>
         </div>

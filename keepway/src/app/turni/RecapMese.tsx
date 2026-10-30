@@ -10,6 +10,7 @@ export default function RecapMese({ anno, mese0 }: { anno: number; mese0: number
   const r = recapMese(stato.modifiche, anno, mese0);
   const voci = [
     r.straordinari > 0 && { n: `${r.straordinari}`, etichetta: `straordinari · ${r.oreStraordinario} ore`, classe: "bg-violet-600" },
+    r.doppi > 0 && { n: `${r.doppi}`, etichetta: "doppi turni", classe: "bg-blue-600" },
     r.cambiPagati > 0 && { n: `${r.cambiPagati}`, etichetta: "cambi pagati da azienda", classe: "bg-emerald-600" },
     r.cambiPersonali > 0 && { n: `${r.cambiPersonali}`, etichetta: "cambi personali", classe: "bg-slate-600" },
     r.assenze.ferie > 0 && { n: `${r.assenze.ferie}`, etichetta: "giorni di ferie", classe: "bg-amber-600" },

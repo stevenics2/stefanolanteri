@@ -23,7 +23,7 @@ export type Ricompensa = {
 };
 
 // Avviso con "Annulla" dopo una modifica ai turni.
-export type Avviso = { id: string; testo: string; rimuovi: string[]; ripristina: Modifica[] };
+export type Avviso = { id: string; testo: string; data: string; rimuovi: string[]; ripristina: Modifica[] };
 
 type Contesto = {
   pronto: boolean;
@@ -262,7 +262,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       salvaModifiche: (nuove, testo) => {
         const sostituite = ref.current.modifiche.filter((m) => nuove.some((n) => n.data === m.data));
         aggiorna((x) => ({ ...x, modifiche: [...x.modifiche.filter((m) => !nuove.some((n) => n.data === m.data)), ...nuove] }));
-        setAvviso({ id: Date.now().toString(36), testo, rimuovi: nuove.map((n) => n.id), ripristina: sostituite });
+        setAvviso({ id: Date.now().toString(36), testo, data: nuove[0]?.data ?? oggiLocale(), rimuovi: nuove.map((n) => n.id), ripristina: sostituite });
       },
       annullaModifiche: (ids) =>
         aggiorna((x) => {

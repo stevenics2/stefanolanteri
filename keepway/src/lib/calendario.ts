@@ -151,8 +151,9 @@ export function blocchiEffettivi(): BloccoLavoro[] {
 
 // --- Recap del mese: straordinari, cambi, assenze ---
 export type RecapMese = {
-  straordinari: number; // giorni con straordinario
+  straordinari: number; // turni extra fatti in straordinario
   oreStraordinario: number;
+  doppi: number; // giorni con doppio turno nati da un cambio o da uno straordinario (il 1+4 regolare del calendario NON conta)
   cambiPagati: number; // contati per gruppo: un turno spostato da un giorno a un altro è un solo cambio
   cambiPersonali: number;
   assenze: Record<Assenza, number>;
@@ -166,9 +167,11 @@ export function recapMese(lista: Modifica[], anno: number, mese0: number): Recap
   const straord = del.filter((m) => m.tipo === "straordinario");
   const assenze: Record<Assenza, number> = { ferie: 0, malattia: 0, permesso: 0, altro: 0 };
   for (const m of del) if (m.tipo === "assenza") assenze[m.assenza ?? "altro"]++;
+  const extraTurni = straord.reduce((t, m) => t + (m.extra?.length ?? 0), 0);
   return {
-    straordinari: straord.length,
-    oreStraordinario: straord.reduce((t, m) => t + (m.extra?.length ?? 0) * ORE_TURNO, 0),
+    straordinari: extraTurni,
+    oreStraordinario: extraTurni * ORE_TURNO,
+    doppi: del.filter((m) => m.tipo !== "assenza" && m.codici.length >= 2).length,
     cambiPagati: gruppi("cambio_azienda"),
     cambiPersonali: gruppi("cambio_personale"),
     assenze,

@@ -3,6 +3,7 @@
 import { StoreProvider } from "@/lib/store";
 import AvvisoAnnulla from "./AvvisoAnnulla";
 import FeedbackTocco from "./FeedbackTocco";
+import RecapFlash from "./RecapFlash";
 import Ricompense from "./Ricompense";
 import SincronizzaNotifiche from "./SincronizzaNotifiche";
 import TimerSchermo from "./TimerSchermo";
@@ -15,6 +16,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <TimerSchermo />
       <Ricompense />
       <AvvisoAnnulla />
+      <RecapFlash />
       <FeedbackTocco />
       <SincronizzaNotifiche />
     </StoreProvider>
