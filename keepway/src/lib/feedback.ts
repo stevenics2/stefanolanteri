@@ -54,13 +54,15 @@ export function feedbackApertura(stato: Stato, oggi: string, ora: Date): Feedbac
     return { tono: "male", testo: scegli(["Sei un po' indietro: è il momento di accelerare.", "Il tempo corre e tu no: spingi!"]) };
   }
 
+  // Il lunedì il messaggio di inizio settimana ha la precedenza su tutto, anche se sei in turno (leggere si può fare anche al lavoro)
+  if (lunedi && trasc < 0.7) return { tono: "bene", testo: scegli(["Nuova settimana: il boss è a vita piena. Attacca!", "Lunedì: tutto da fare e tutto da vincere."]) };
+
   // Niente di fatto. Se sei in turno o stai dormendo non ha senso dire "il tempo corre": sei impegnato
   if (èInSilenzio(ora.getTime()) && (trasc === null || trasc < 0.9)) {
     return { tono: "medio", testo: scegli(["Adesso sei impegnato: al prossimo momento libero, una task alla volta.", "Sei in turno: quando stacchi, parti dalla più facile.", "Ora tocca al lavoro. Le task ti aspettano dopo."]) };
   }
 
   // Niente di fatto: dipende da quanto è avanzata la giornata
-  if (lunedi && trasc < 0.7) return { tono: "bene", testo: scegli(["Nuova settimana: il boss è a vita piena. Attacca!", "Lunedì: tutto da fare e tutto da vincere."]) };
   if (trasc < 0.35) return { tono: "bene", testo: scegli(["Si parte! Hai tutta la giornata davanti.", "Pagina bianca: dai il primo colpo, parti dalla più facile.", "Ancora niente, ed è giusto così. Comincia quando vuoi."]) };
   if (trasc < 0.7) return { tono: "medio", testo: scegli(["Ancora zero, ma c'è tempo: parti dalla più facile.", "Metà del tempo è andato: ora una, anche piccola."]) };
   if (trasc < 0.9) return { tono: "male", testo: scegli(["Zero task e il tempo stringe. Una piccola, adesso!", "Siamo agli sgoccioli: fanne almeno una."]) };
