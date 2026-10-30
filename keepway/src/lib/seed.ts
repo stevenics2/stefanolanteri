@@ -1,5 +1,4 @@
 import { oggiLocale } from "./date";
-import { puntiAuto } from "./regole";
 import type { Area, Stato, Task } from "./tipi";
 
 export const AREE: Area[] = [
@@ -16,9 +15,9 @@ function precaricate(): Task[] {
   const oggi = oggiLocale();
   const base = { areaId: "abitudini", ricorrenza: { tipo: "giornaliera" } as const, solo: "sempre" as const, soloACasa: false, promemoria: [], attiva: true, creatoIl: oggi };
   return [
-    { ...base, id: "meditazione", titolo: "Meditazione", durataMin: 10, minimaMin: 3, fascia: "mattina", essenziale: true, punti: puntiAuto(10) },
-    { ...base, id: "lettura", titolo: "Lettura", durataMin: 20, minimaMin: 5, fascia: "qualsiasi", essenziale: true, punti: puntiAuto(20) },
-    { ...base, id: "piatti", titolo: "Lavare i piatti", durataMin: 15, minimaMin: 5, fascia: "sera", essenziale: false, soloACasa: true, punti: puntiAuto(15) },
+    { ...base, id: "meditazione", titolo: "Meditazione", durataMin: 10, minimaMin: 3, fascia: "mattina", essenziale: true, punti: 20 },
+    { ...base, id: "lettura", titolo: "Lettura", durataMin: 20, minimaMin: 5, fascia: "qualsiasi", essenziale: true, punti: 20 },
+    { ...base, id: "piatti", titolo: "Lavare i piatti", durataMin: 15, minimaMin: 5, fascia: "sera", essenziale: false, soloACasa: true, punti: 20 },
     taskStanza(oggi),
   ];
 }
@@ -28,7 +27,7 @@ export function taskStanza(creatoIl: string): Task {
   return {
     id: "stanza", titolo: "Sistema una stanza", tipo: "stanza", areaId: "casa",
     durataMin: 15, minimaMin: 5, ricorrenza: { tipo: "giornaliera" }, fascia: "qualsiasi", solo: "sempre", adattaATurni: true,
-    soloACasa: true, essenziale: false, punti: puntiAuto(15), promemoria: ["10:00", "14:00", "18:00", "20:30"],
+    soloACasa: true, essenziale: false, punti: 50, promemoria: ["10:00", "14:00", "18:00", "20:30"],
     attiva: true, creatoIl,
   };
 }
@@ -47,6 +46,7 @@ export function statoIniziale(): Stato {
     ignorati: [],
     rinvii: [],
     vacanza: null,
+    eventi: [],
   };
 }
 
@@ -62,4 +62,5 @@ export const statoVuoto: Stato = {
   ignorati: [],
   rinvii: [],
   vacanza: null,
+  eventi: [],
 };

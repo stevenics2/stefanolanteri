@@ -5,7 +5,7 @@ import { oggiLocale } from "./date";
 import { livello, puntiMinima, xpTotali } from "./regole";
 import { nuovoId, statoIniziale, statoVuoto, taskStanza } from "./seed";
 import { stanzaDelGiorno } from "./stanze";
-import type { Impostazioni, Stato, Task, Vacanza } from "./tipi";
+import type { Evento, Impostazioni, Stato, Task, Vacanza } from "./tipi";
 
 const CHIAVE = "keepway.v1";
 const CHIAVE_VECCHIA = "binario.v1"; // il nome precedente: se ci sono dati salvati lì li si recupera
@@ -45,6 +45,9 @@ type Contesto = {
   annullaRinvio: (taskId: string) => void;
   setStanze: (stanze: string[]) => void;
   setVacanza: (v: Vacanza | null) => void;
+  salvaEvento: (e: Evento) => void;
+  eliminaEvento: (id: string) => void;
+  segnaEvento: (id: string, fatto: boolean) => void;
   azzera: () => void;
   ricompensa: Ricompensa | null;
   chiudiRicompensa: () => void;
@@ -76,6 +79,12 @@ function carica(): Stato {
           promemoria: (t as Partial<Task>).promemoria ?? [],
           adattaATurni: (t as Partial<Task>).adattaATurni ?? t.tipo === "stanza",
         }));
+        // Punti nuovi per le task precaricate (la stanza vale di più), solo se non li hai già cambiati tu.
+        const VECCHI_E_NUOVI: Record<string, [number, number]> = { stanza: [15, 50], meditazione: [10, 20], piatti: [15, 20] };
+        for (const t of task) {
+          const v = VECCHI_E_NUOVI[t.id];
+          if (v && t.punti === v[0]) t.punti = v[1];
+        }
         if (!task.some((t) => t.id === "stanza")) task.push(taskStanza(oggiLocale()));
         return {
           ...base,
@@ -87,6 +96,7 @@ function carica(): Stato {
           ignorati: s.ignorati ?? [],
           rinvii: s.rinvii ?? [],
           vacanza: s.vacanza ?? null,
+          eventi: s.eventi ?? [],
         } as Stato;
       }
     }
@@ -228,6 +238,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         aggiorna((x) => ({ ...x, rinvii: x.rinvii.filter((r) => !(r.taskId === taskId && r.data === oggiLocale())) })),
       setStanze: (stanze) => aggiorna((x) => ({ ...x, stanze })),
       setVacanza: (vacanza) => aggiorna((x) => ({ ...x, vacanza })),
+      salvaEvento: (e) =>
+        aggiorna((x) => ({ ...x, eventi: x.eventi.some((y) => y.id === e.id) ? x.eventi.map((y) => (y.id === e.id ? e : y)) : [...x.eventi, e] })),
+      eliminaEvento: (id) => aggiorna((x) => ({ ...x, eventi: x.eventi.filter((e) => e.id !== id) })),
+      segnaEvento: (id, fatto) => aggiorna((x) => ({ ...x, eventi: x.eventi.map((e) => (e.id === id ? { ...e, fatto } : e)) })),
       azzera: () => {
         aggiorna(() => statoIniziale());
         setRicompensa(null);

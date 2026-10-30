@@ -1,8 +1,8 @@
 "use client";
 
-import { AlarmClock, Check, Clock, Flame, SkipForward, Timer, Undo2 } from "lucide-react";
+import { AlarmClock, Check, Clock, Flame, Play, SkipForward, Undo2 } from "lucide-react";
 import { useState } from "react";
-import { serie } from "@/lib/regole";
+import { puntiMinima, serie } from "@/lib/regole";
 import { finestraMigliore, hhmm } from "@/lib/sonno";
 import { stanzaDelGiorno, titoloTask } from "@/lib/stanze";
 import { useStore } from "@/lib/store";
@@ -41,7 +41,7 @@ export default function TaskCard({ task, soloMinima }: { task: Task; soloMinima:
   return (
     <div className={`rounded-2xl bg-card p-4 ${fatto ? "opacity-60" : ""}`} style={{ borderLeft: `4px solid ${colore}` }}>
       <div className="flex items-start gap-3">
-        <AreaIcona nome={area?.icona ?? ""} colore={colore} />
+        <AreaIcona nome={task.icona ?? area?.icona ?? ""} colore={colore} />
         <div className="flex-1">
           <div className={`font-semibold ${fatto ? "line-through" : ""}`}>{titoloTask(task, stato, oggi)}</div>
           <div className="mt-0.5 text-xs text-muted">
@@ -61,11 +61,16 @@ export default function TaskCard({ task, soloMinima }: { task: Task; soloMinima:
             </div>
           )}
         </div>
-        {giorni > 0 && (
-          <div className="flex shrink-0 items-center gap-1 text-sm font-semibold text-accent">
-            <Flame size={18} /> {giorni}
-          </div>
-        )}
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <span className="rounded-full bg-accent/15 px-2.5 py-0.5 text-sm font-extrabold text-accent">
+            +{soloMinima && minima ? puntiMinima(task.punti) : task.punti} XP
+          </span>
+          {giorni > 0 && (
+            <span className="flex items-center gap-1 text-sm font-semibold text-accent">
+              <Flame size={16} /> {giorni}
+            </span>
+          )}
+        </div>
       </div>
 
       {fatto ? (
@@ -82,12 +87,12 @@ export default function TaskCard({ task, soloMinima }: { task: Task; soloMinima:
           <div className="mt-3 flex flex-wrap gap-2">
             {task.durataMin && !soloMinima && (
               <button onClick={() => apriTimer(task.id, false, task.durataMin!)} className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-black">
-                <Timer size={16} /> Timer
+                <Play size={16} fill="currentColor" /> Inizia!
               </button>
             )}
             {soloMinima && minima && (
               <button onClick={() => apriTimer(task.id, true, minima)} className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-black">
-                <Timer size={16} /> Timer ({minima} min)
+                <Play size={16} fill="currentColor" /> Inizia! ({minima} min)
               </button>
             )}
             <button data-suono="nessuno" onClick={() => completa(task.id, { minima: soloMinima && !!minima })} className="inline-flex items-center gap-1.5 rounded-xl bg-white/10 px-4 py-2 text-sm">
@@ -95,7 +100,7 @@ export default function TaskCard({ task, soloMinima }: { task: Task; soloMinima:
             </button>
             {minima && !soloMinima && (
               <button data-suono="nessuno" onClick={() => completa(task.id, { minima: true })} className="rounded-xl bg-white/10 px-4 py-2 text-sm">
-                Minima ({minima}′)
+                Minima ({minima}′) · +{puntiMinima(task.punti)}
               </button>
             )}
           </div>

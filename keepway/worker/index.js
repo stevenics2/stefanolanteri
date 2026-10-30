@@ -17,7 +17,7 @@ const SCHEMA = [
 
 const PUSH_HOSTS = /^(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9.-]+\.push\.apple\.com|[a-z0-9.-]+\.notify\.windows\.com)$/i;
 const DEVICE = /^[A-Za-z0-9-]{16,64}$/;
-const MAX_PIANO = 100;
+const MAX_PIANO = 200;
 const TROPPO_TARDI_MS = 30 * 60 * 1000; // una notifica in ritardo di oltre 30 minuti non ha più senso
 const MAX_FALLIMENTI = 5;
 
@@ -102,7 +102,7 @@ async function salvaPiano(env, request) {
   const righe = [];
   for (const it of d.items.slice(0, MAX_PIANO)) {
     const quando = Number(it?.quando);
-    if (!Number.isFinite(quando) || quando < ora - 60_000 || quando > ora + 7 * 86_400_000) continue;
+    if (!Number.isFinite(quando) || quando < ora - 60_000 || quando > ora + 31 * 86_400_000) continue;
     const id = clip(it.id, 80);
     if (!id) continue;
     righe.push(

@@ -1,5 +1,5 @@
-import TaskLista from "./TaskLista";
+import TaskHub from "./TaskHub";
 
 export default function Pagina() {
-  return <TaskLista />;
+  return <TaskHub />;
 }

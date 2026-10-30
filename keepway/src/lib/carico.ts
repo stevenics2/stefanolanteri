@@ -6,7 +6,12 @@ import roster from "@/data/roster.json";
 //   nessuna   -> nessuna task (giorno di recupero)
 export type Carico = "normale" | "essenziale" | "nessuna";
 
-const perData = new Map((roster as { d: string; t: string }[]).map((g) => [g.d, g.t]));
+const giorniRoster = roster as { d: string; t: string; o: string }[];
+const perData = new Map(giorniRoster.map((g) => [g.d, g.t]));
+const infoPerData = new Map(giorniRoster.map((g) => [g.d, g]));
+
+// Turno e orario di un giorno (es. { t: "3", o: "13:00-19:00" }), o undefined se è fuori dal calendario importato.
+export const turnoDelGiorno = (data: string) => infoPerData.get(data);
 
 export function caricoGiorno(data: string): Carico {
   const turno = perData.get(data);

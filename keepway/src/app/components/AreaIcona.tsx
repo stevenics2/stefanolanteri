@@ -1,11 +1,32 @@
-import { Dumbbell, House, Repeat, Target, type LucideIcon } from "lucide-react";
+import {
+  Activity, Bike, BellRing, Brain, Briefcase, CalendarDays, Car, Dumbbell, Flower2, Footprints, House, Repeat, Smile, Snowflake,
+  Stethoscope, Target, Waves, type LucideIcon,
+} from "lucide-react";
 
 // Le icone delle aree. Nei dati si salva solo la chiave ("dumbbell", "casa"...).
-const MAPPA: Record<string, LucideIcon> = {
+export const MAPPA: Record<string, LucideIcon> = {
+  // aree
   dumbbell: Dumbbell,
   target: Target,
   casa: House,
   ripeti: Repeat,
+  // allenamenti
+  corsa: Footprints,
+  camminata: Footprints,
+  palestra: Dumbbell,
+  freddo: Snowflake,
+  bici: Bike,
+  nuoto: Waves,
+  stretching: Activity,
+  yoga: Flower2,
+  // appuntamenti e promemoria
+  dottore: Stethoscope,
+  dentista: Smile,
+  psicologa: Brain,
+  lavoro: Briefcase,
+  auto: Car,
+  calendario: CalendarDays,
+  promemoria: BellRing,
 };
 
 // Icona dentro un riquadro arrotondato del colore dell'area.

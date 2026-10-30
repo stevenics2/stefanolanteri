@@ -3,6 +3,7 @@
 import { CalendarCheck, Clock } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import roster from "@/data/roster.json";
+import CalendarioMese from "./CalendarioMese";
 
 // Un giorno del calendario: d = data (AAAA-MM-GG), t = codice turno, o = orario, u = unità operativa.
 type Giorno = { d: string; t: string; o: string; u: string };
@@ -25,6 +26,7 @@ function oggiLocale(): string {
 
 export default function TurniLista() {
   const [filtro, setFiltro] = useState<Filtro>("tutti");
+  const [vista, setVista] = useState<"lista" | "mese">("lista");
   const [oggi, setOggi] = useState<string | null>(null);
   const [ora, setOra] = useState("");
   const rigaOggi = useRef<HTMLLIElement | null>(null);
@@ -65,13 +67,23 @@ export default function TurniLista() {
       <header className="sticky top-0 z-10 bg-background px-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-3 border-b border-white/10">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Turni</h1>
-          <button
-            onClick={vaiAOggi}
-            className="inline-flex items-center gap-1.5 rounded-full bg-accent/15 text-accent px-3 py-1.5 text-sm font-medium"
-          >
-            <CalendarCheck size={16} /> Oggi
-          </button>
+          {vista === "lista" && (
+            <button
+              onClick={vaiAOggi}
+              className="inline-flex items-center gap-1.5 rounded-full bg-accent/15 text-accent px-3 py-1.5 text-sm font-medium"
+            >
+              <CalendarCheck size={16} /> Oggi
+            </button>
+          )}
         </div>
+        <div className="mt-3 grid grid-cols-2 gap-1 rounded-xl bg-white/10 p-1 text-sm font-medium">
+          {(["lista", "mese"] as const).map((v) => (
+            <button key={v} onClick={() => setVista(v)} className={`rounded-lg py-1.5 capitalize ${vista === v ? "bg-accent text-black" : "text-muted"}`}>
+              {v === "lista" ? "Lista" : "Calendario"}
+            </button>
+          ))}
+        </div>
+        {vista === "lista" && (
         <div className="mt-3 flex gap-2 text-sm">
           {(["tutti", "lavoro", "riposi"] as Filtro[]).map((f) => (
             <button
@@ -85,8 +97,12 @@ export default function TurniLista() {
             </button>
           ))}
         </div>
+        )}
       </header>
 
+      {vista === "mese" ? (
+        <CalendarioMese />
+      ) : (
       <ul>
         {visibili.map((g) => {
           const [a, m, gg] = g.d.split("-").map(Number);
@@ -120,6 +136,7 @@ export default function TurniLista() {
           );
         })}
       </ul>
+      )}
     </section>
   );
 }

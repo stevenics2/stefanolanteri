@@ -234,3 +234,31 @@ export function finestraMigliore(data: string): Finestra | null {
   const tutte = finestreLibere(data, 8 * 60, 22 * 60 + 30, 45);
   return tutte.reduce<Finestra | null>((m, f) => (!m || f.a - f.da > m.a - m.da ? f : m), null);
 }
+
+// --- Conflitti: un appuntamento che cade in un turno o nel sonno ---
+export type Conflitto = { tipo: "turno" | "sonno" | "dati"; testo: string };
+
+const dateConTurni = new Set((roster as Giorno[]).map((g) => g.d));
+const SPOSTAMENTO_MIN = 30; // margine prima del turno per arrivare
+
+// `da`/`a` = minuti dalla mezzanotte di `data` (a può superare le 24:00).
+export function conflittiAgenda(data: string, da: number, a: number): Conflitto[] {
+  if (!dateConTurni.has(data)) return [{ tipo: "dati", testo: "Per quel giorno non ho i turni: non posso controllare i conflitti." }];
+  const base = mezzanotte(data);
+  const inizio = base + da;
+  const fine = base + a;
+  const out: Conflitto[] = [];
+  for (const b of blocchiTutti) {
+    if (inizio < b.fine && fine > b.inizio - SPOSTAMENTO_MIN) {
+      out.push({ tipo: "turno", testo: `Cade durante il turno ${b.turno} (${hhmm(b.inizio)}–${hhmm(b.fine)})` });
+    }
+  }
+  for (const x of sonni) {
+    if (inizio < x.sveglia && fine > x.aLetto) {
+      const nome =
+        x.tipo === "dopo_notte" ? "il sonno dopo la notte" : x.tipo === "riposino" ? "il riposino prima della notte" : `il sonno prima del turno ${x.turno}`;
+      out.push({ tipo: "sonno", testo: `Cade durante ${nome} (${hhmm(x.aLetto)}–${hhmm(x.sveglia)})` });
+    }
+  }
+  return out;
+}

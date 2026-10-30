@@ -1,4 +1,5 @@
 import { dataPiù } from "./date";
+import { giorniTra } from "./eventi";
 import { èIgnorata, èPrevista } from "./regole";
 import { èInSilenzio, finestraMigliore, hhmm } from "./sonno";
 import { titoloTask } from "./stanze";
@@ -16,7 +17,8 @@ export type Notifica = {
 };
 
 const GIORNI_AVANTI = 2; // oggi + i prossimi 2 giorni
-const MAX_NOTIFICHE = 80;
+const MAX_NOTIFICHE = 150;
+const ORIZZONTE_EVENTI_GIORNI = 30; // gli avvisi degli appuntamenti si preparano con largo anticipo
 
 // "2026-10-30" + "18:00" -> istante reale, nel fuso del telefono.
 function istante(data: string, hhmm: string): number {
@@ -92,5 +94,50 @@ export function pianoNotifiche(stato: Stato, ora: number, oggi: string): Notific
     }
   }
 
+  out.push(...notificheEventi(stato, ora, oggi));
+
   return out.sort((a, b) => a.quando - b.quando).slice(0, MAX_NOTIFICHE);
+}
+
+// Sposta un orario fuori dal silenzio (turno o sonno), al massimo di 6 ore in avanti; null se non si trova posto.
+function fuoriDalSilenzio(quando: number): number | null {
+  for (let i = 0; i <= 12; i++) {
+    const q = quando + i * 30 * 60_000;
+    if (!èInSilenzio(q)) return q;
+  }
+  return null;
+}
+
+// Avvisi per appuntamenti e promemoria: con anticipo (es. una settimana prima), la vigilia e poche ore prima.
+// Quelli a priorità alta arrivano sempre, anche durante turni e sonno.
+function notificheEventi(stato: Stato, ora: number, oggi: string): Notifica[] {
+  const out: Notifica[] = [];
+  const entro = ora + ORIZZONTE_EVENTI_GIORNI * 86_400_000;
+
+  for (const e of stato.eventi) {
+    if (e.fatto || giorniTra(oggi, e.data) < 0) continue;
+    const alta = e.priorita === "alta";
+    const quandoEvento = istante(e.data, e.ora ?? "09:00");
+    const ora_ = e.ora ? ` alle ${e.ora}` : "";
+    const aggiungi = (sigla: string, quando: number, testo: string) => {
+      const q = alta ? quando : fuoriDalSilenzio(quando);
+      if (q === null || q <= ora || q > entro) return;
+      if (sigla !== "giorno" && q >= quandoEvento - 30 * 60_000) return; // spostato troppo in là: ormai non servirebbe più
+      out.push({ id: `ev-${e.id}-${sigla}`, quando: q, titolo: e.titolo, testo, url: "/oggi/", tag: `ev-${e.id}`, urgente: alta });
+    };
+
+    // con anticipo scelto (es. 7 giorni prima), alle 9:30
+    if (e.anticipoGiorni > 1) {
+      const n = e.anticipoGiorni;
+      const quando = e.anticipoGiorni === 7 ? "Tra una settimana" : `Tra ${n} giorni`;
+      aggiungi("anticipo", istante(dataPiù(e.data, -n), "09:30"), `${quando}, ${e.data.split("-").reverse().slice(0, 2).join("/")}${ora_}`);
+    }
+    // la sera prima, alle 18:30
+    if (e.tipo === "appuntamento" || e.anticipoGiorni > 0) aggiungi("vigilia", istante(dataPiù(e.data, -1), "18:30"), `Domani${ora_}`);
+    // poche ore prima (solo se c'è un orario)
+    if (e.ora) aggiungi("ore", quandoEvento - 2 * 3_600_000, "Tra 2 ore");
+    // promemoria senza orario: la mattina stessa
+    if (!e.ora) aggiungi("giorno", istante(e.data, "09:00"), "Oggi");
+  }
+  return out;
 }

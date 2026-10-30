@@ -24,6 +24,7 @@ export type Task = {
   soloACasa: boolean; // in modalità fuori casa (vacanza/trasferta) non viene proposta
   promemoria: string[]; // orari "HH:MM" dei promemoria, ripetuti fino a quando non è fatta (partono con le notifiche)
   tipo?: "stanza"; // "stanza" = ogni giorno una stanza diversa, a rotazione
+  icona?: string; // icona della task (se manca, quella dell'area)
   adattaATurni?: boolean; // il momento giusto e i promemoria si scelgono nei momenti liberi tra turni e sonno
   attiva: boolean;
   creatoIl: string;
@@ -48,6 +49,24 @@ export type Rinvio = { taskId: string; data: string; alle: number };
 // Modalità fuori casa: dal giorno `dal` fino ad `al` (vuoto = finché non torno).
 export type Vacanza = { dal: string; al: string | null };
 
+export type Priorita = "alta" | "media" | "bassa";
+
+// Appuntamenti (dentista, psicologa...) e promemoria: cose che succedono in un giorno preciso.
+export type Evento = {
+  id: string;
+  tipo: "appuntamento" | "promemoria";
+  titolo: string;
+  icona: string; // chiave di un'icona (vedi components/AreaIcona.tsx)
+  data: string; // AAAA-MM-GG
+  ora: string | null; // "HH:MM"; null = tutto il giorno
+  durataMin: number;
+  priorita: Priorita;
+  luogo: string;
+  anticipoGiorni: number; // da quanti giorni prima compare in "In arrivo" e arriva l'avviso (0 = nessuno)
+  fatto: boolean;
+  creato: number;
+};
+
 export type Impostazioni = { suoni: boolean; animazioni: boolean; vibrazione: boolean; suonoTocco: boolean };
 
 export type TimerAttivo = {
@@ -70,4 +89,5 @@ export type Stato = {
   ignorati: Ignorato[];
   rinvii: Rinvio[];
   vacanza: Vacanza | null;
+  eventi: Evento[];
 };

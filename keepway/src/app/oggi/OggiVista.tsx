@@ -8,16 +8,21 @@ import { dataLunga } from "@/lib/date";
 import { èIgnorata, èPrevista, inVacanza } from "@/lib/regole";
 import { titoloTask } from "@/lib/stanze";
 import { useStore } from "@/lib/store";
-import type { Task } from "@/lib/tipi";
+import type { Evento, Task } from "@/lib/tipi";
+import { AgendaDomani, AgendaOggi, InArrivo } from "../components/AgendaBox";
 import RiepilogoOggi from "../components/RiepilogoOggi";
 import SonnoCard from "../components/SonnoCard";
 import TaskCard from "../components/TaskCard";
+import FormEvento from "../task/FormEvento";
 
-const ORA_SERA = 18; // dalle 18 le task non fatte passano in "prima di dormire"
+// Dalle 18 le task non ancora fatte passano in "prima di dormire". Spenta durante lo sviluppo, per vedere tutto il resto.
+const REGOLA_SERA_ATTIVA = false;
+const ORA_SERA = 18;
 
 export default function OggiVista() {
   const { pronto, stato, oggi, adesso, setVacanza, ripristina } = useStore();
   const [mostraTutte, setMostraTutte] = useState(false);
+  const [daModificare, setDaModificare] = useState<Evento | null>(null);
   if (!pronto) return null;
 
   const carico = caricoGiorno(oggi);
@@ -33,7 +38,7 @@ export default function OggiVista() {
   const ordina = (a: Task, b: Task) => Number(èFatta(a)) - Number(èFatta(b)) || peso(a) - peso(b);
 
   // "Prima di dormire": le task della sera (piatti) e, dalle 18 in poi, tutto quello che non è ancora fatto.
-  const èSera = adesso > 0 && new Date(adesso).getHours() >= ORA_SERA;
+  const èSera = REGOLA_SERA_ATTIVA && adesso > 0 && new Date(adesso).getHours() >= ORA_SERA;
   const primaDiDormire = (t: Task) => t.fascia === "sera" || (èSera && !èFatta(t));
   const cosaOggi = daFare.filter((t) => !primaDiDormire(t)).sort(ordina);
   const mustPrimaDiDormire = daFare.filter(primaDiDormire).sort(ordina);
@@ -87,6 +92,8 @@ export default function OggiVista() {
         </button>
       )}
 
+      <AgendaOggi onModifica={setDaModificare} />
+
       {cosaOggi.length > 0 && (
         <div className="space-y-2">
           <h2 className="flex items-center gap-2 text-lg font-bold">
@@ -108,6 +115,9 @@ export default function OggiVista() {
           ))}
         </div>
       )}
+
+      <AgendaDomani onModifica={setDaModificare} />
+      <InArrivo onModifica={setDaModificare} />
 
       {ignorate.length > 0 && (
         <div className="space-y-1 rounded-2xl bg-card p-4 text-sm">
@@ -131,6 +141,8 @@ export default function OggiVista() {
 
       {/* Il sonno chiude la giornata: sta in fondo, dopo tutto il resto */}
       <SonnoCard />
+
+      {daModificare && <FormEvento key={daModificare.id} tipo={daModificare.tipo} iniziale={daModificare} onClose={() => setDaModificare(null)} />}
     </section>
   );
 }
