@@ -35,6 +35,7 @@ function MenuGiorno({ data, onClose, onVai }: { data: string; onClose: () => voi
   const [riposo, setRiposo] = useState(false);
   const [sposta, setSposta] = useState(false);
   const [altroGiorno, setAltroGiorno] = useState(dataPiù(data, 1));
+  const [finaleAltro, setFinaleAltro] = useState<string[] | null>(null); // il turno scelto per l'altro giorno (null = quello proposto)
   // straordinario
   const [extra, setExtra] = useState<string[]>([]);
   // assenza
@@ -63,14 +64,13 @@ function MenuGiorno({ data, onClose, onVai }: { data: string; onClose: () => voi
   const salvaCambio = () => {
     incassa();
     const tipo = pagato ? "cambio_azienda" : "cambio_personale";
-    const spostato = ge.baseCodici; // i turni di questo giorno
     const gruppo = nuovoId(); // collega le due modifiche: si annullano e si contano insieme
     if (sposta) {
       const altro = giornoEffettivo(altroGiorno);
       if (!altro) return;
       const mods: Modifica[] = [
         { id: nuovoId(), data, tipo, codici: [], ex: base, mostraEx: true, gruppo, creato: adessoMs() },
-        { id: nuovoId(), data: altroGiorno, tipo, codici: unisci([...new Set([...altro.codici, ...spostato])]), ex: etichettaCodici(altro.codici), mostraEx: false, gruppo, creato: adessoMs() },
+        { id: nuovoId(), data: altroGiorno, tipo, codici: unisci(finale), ex: etichettaBase(altroGiorno), mostraEx: false, gruppo, creato: adessoMs() },
       ];
       conferma(mods, `Turno ${base} spostato al ${altroGiorno.split("-").reverse().join("/")}.`);
       return;
@@ -104,15 +104,20 @@ function MenuGiorno({ data, onClose, onVai }: { data: string; onClose: () => voi
     );
   };
 
+  // Se salto questo turno: l'altro giorno di default riceve il mio turno in più, ma si può scegliere qualunque turno (es. solo il 3, il 2+3, il 4...).
+  const altro = sposta ? giornoEffettivo(altroGiorno) : undefined;
+  const proposto = altro ? unisci([...new Set([...altro.codici, ...ge.baseCodici])]) : [];
+  const finale = finaleAltro ?? proposto;
   const anteprimaCambio = sposta
-    ? `${etichettaBase(data)} → R - (ex ${base}); ${altroGiorno.split("-").reverse().join("/")} riceve il turno ${base}`
+    ? `Oggi → R - (ex ${base}); il ${altroGiorno.split("-").reverse().slice(0, 2).join("/")} farai: ${finale.length ? etichettaCodici(unisci(finale)) : "scegli il turno"}`
     : riposo
       ? `Diventa: R - (ex ${base})`
       : nuovi.length
         ? `Diventa: ${etichettaCodici(unisci(nuovi))} - (ex ${base})`
         : "Scegli il nuovo turno";
-  const combinazioneOk = riposo || sposta || nuovi.length <= 1 || combinazioneValida(nuovi);
-  const cambioValido = sposta ? !ge.riposo : combinazioneOk && (riposo || nuovi.length > 0);
+  const selezione = sposta ? finale : nuovi; // quella da controllare
+  const combinazioneOk = sposta ? finale.length > 0 && combinazioneValida(finale) : riposo || nuovi.length <= 1 || combinazioneValida(nuovi);
+  const cambioValido = sposta ? !ge.riposo && !!altro && combinazioneOk : combinazioneOk && (riposo || nuovi.length > 0);
   const disponibiliExtra = extraConsentiti(ge.codici); // solo i doppi consentiti: 2+3, 3+4, 1+4
 
   return (
@@ -204,8 +209,19 @@ function MenuGiorno({ data, onClose, onVai }: { data: string; onClose: () => voi
           {sposta ? (
             <label className="block text-sm text-muted">
               Quale giorno?
-              <input type="date" value={altroGiorno} onChange={(e) => setAltroGiorno(e.target.value)} className={campo} />
+              <input type="date" value={altroGiorno} onChange={(e) => { setAltroGiorno(e.target.value); setFinaleAltro(null); }} className={campo} />
             </label>
+          ) : null}
+          {sposta ? (
+            <div>
+              <Etichetta>Che turno farai quel giorno? {altro ? `Ora ha: ${altro.etichetta}` : ""}</Etichetta>
+              <div className="flex flex-wrap gap-2">
+                {["1", "2", "3", "4"].map((c) => (
+                  <Chip key={c} attivo={finale.includes(c)} onClick={() => setFinaleAltro(finale.includes(c) ? finale.filter((x) => x !== c) : [...finale, c])}>{c}</Chip>
+                ))}
+              </div>
+              <p className="mt-1 text-xs text-muted">Puoi sceglierne più di uno (2+3, 3+4, 1+4). Parte già con i turni che quel giorno ha, più il tuo.</p>
+            </div>
           ) : (
             <div>
               <Etichetta>Nuovo turno (puoi sceglierne più di uno, es. 2 e 3)</Etichetta>
@@ -218,9 +234,9 @@ function MenuGiorno({ data, onClose, onVai }: { data: string; onClose: () => voi
             </div>
           )}
 
-          {!combinazioneOk && (
+          {!combinazioneOk && selezione.length > 1 && (
             <p className="flex items-start gap-2 rounded-xl border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-200">
-              <AlertTriangle size={18} className="mt-0.5 shrink-0" /> {unisci(nuovi).join("+")} non si può: i doppi turni possibili sono {DOPPI_CONSENTITI.join(", ")}.
+              <AlertTriangle size={18} className="mt-0.5 shrink-0" /> {unisci(selezione).join("+")} non si può: i doppi turni possibili sono {DOPPI_CONSENTITI.join(", ")}.
             </p>
           )}
           <p className="text-sm text-muted">{anteprimaCambio}</p>

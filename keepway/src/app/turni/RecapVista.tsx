@@ -26,10 +26,11 @@ export default function RecapVista() {
   const modifiche = stato.modifiche.filter((x) => x.data.startsWith(`${a}-${p2(m + 1)}`)).sort((x, y) => x.data.localeCompare(y.data));
   const assenze = r.assenze.ferie + r.assenze.malattia + r.assenze.permesso + r.assenze.altro;
 
-  const riquadri: { n: number; nome: string; sotto?: string; classe: string }[] = [
-    { n: r.straordinari, nome: "Turni straordinario", sotto: `${r.oreStraordinario} ore`, classe: "bg-violet-600" },
-    { n: r.cambiPagati + r.cambiPersonali, nome: "Cambi turno", sotto: `${r.cambiPagati} pagati · ${r.cambiPersonali} personali`, classe: "bg-emerald-600" },
-    { n: r.doppi, nome: "Doppi turni", sotto: "da cambio o straordinario", classe: "bg-blue-600" },
+  // Le voci del recap, in elenco. Dei cambi turno contano solo quelli pagati dall'azienda.
+  const voci: { n: number; nome: string; sotto: string; classe: string }[] = [
+    { n: r.straordinari, nome: "Turni straordinario", sotto: `${r.oreStraordinario} ore di straordinario`, classe: "bg-violet-600" },
+    { n: r.cambiPagati, nome: "Cambi turno pagati da azienda", sotto: "i cambi richiesti dall'azienda", classe: "bg-emerald-600" },
+    { n: r.doppi, nome: "Doppi turni", sotto: "da straordinario o da cambio pagato", classe: "bg-blue-600" },
     { n: assenze, nome: "Assenze", sotto: assenze ? `${r.assenze.ferie} ferie · ${r.assenze.malattia} malattia · ${r.assenze.permesso} permessi` : "nessuna", classe: "bg-amber-600" },
   ];
 
@@ -41,14 +42,14 @@ export default function RecapVista() {
         <button data-suono="via" onClick={() => vai(1)} aria-label="Mese successivo" className="rounded-xl bg-white/10 p-2"><ChevronRight size={20} /></button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        {riquadri.map((x) => (
-          <div key={x.nome} className="rounded-2xl bg-card p-3">
-            <div className="flex items-center gap-2">
-              <span className={`${x.classe} min-w-9 rounded-xl px-2 py-1 text-center text-xl font-black leading-none text-white`}>{x.n}</span>
-              <span className="text-sm font-semibold leading-tight">{x.nome}</span>
+      <div className="space-y-2">
+        {voci.map((x) => (
+          <div key={x.nome} className="flex items-center gap-4 rounded-2xl bg-card p-3">
+            <span className={`${x.classe} flex h-12 min-w-12 items-center justify-center rounded-xl px-2 text-2xl font-black leading-none text-white`}>{x.n}</span>
+            <div className="min-w-0">
+              <div className="font-semibold leading-tight">{x.nome}</div>
+              <div className="text-xs text-muted">{x.sotto}</div>
             </div>
-            {x.sotto && <div className="mt-1.5 text-xs text-muted">{x.sotto}</div>}
           </div>
         ))}
       </div>

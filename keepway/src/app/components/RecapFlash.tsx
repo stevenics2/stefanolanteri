@@ -17,10 +17,10 @@ export default function RecapFlash() {
     </div>
   );
   return (
-    <div className="pop pointer-events-none fixed bottom-[calc(env(safe-area-inset-bottom)+8.75rem)] left-3 z-40 w-40 rounded-xl bg-card/90 p-2.5 text-[11px] shadow-xl ring-1 ring-white/10 backdrop-blur">
+    <div className="pop pointer-events-none fixed bottom-[calc(env(safe-area-inset-bottom)+8.75rem)] left-3 z-40 w-44 rounded-xl bg-card/90 p-2.5 text-[11px] shadow-xl ring-1 ring-white/10 backdrop-blur">
       <div className="mb-1 font-bold uppercase tracking-wide">{MESI_LUNGHI[m - 1]}</div>
       {riga("Turni straordinario", r.straordinari)}
-      {riga("Cambi turno", r.cambiPagati + r.cambiPersonali)}
+      {riga("Cambi turno pagati", r.cambiPagati)}
       {riga("Doppi turni", r.doppi)}
     </div>
   );

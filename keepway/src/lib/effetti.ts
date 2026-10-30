@@ -30,8 +30,19 @@ function nota(freq: number, inizio: number, durata: number, volume = 0.15, onda:
 
 function avviaAudio() {
   const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-  ctx ??= new AC();
-  if (ctx.state === "suspended") void ctx.resume();
+  if (!ctx || ctx.state === "closed") ctx = new AC();
+  // Su iPhone, dopo che l'app è stata in background (o lo schermo bloccato), l'audio passa a "interrupted" e resta muto
+  // finché non lo si riattiva: quindi si riattiva ogni volta che non sta già suonando, non solo se è "suspended".
+  if (ctx.state !== "running") void ctx.resume().catch(() => {});
+}
+
+// Si chiama al primo contatto con lo schermo, così l'audio è già pronto quando serve il suono.
+export function riprendiAudio() {
+  try {
+    avviaAudio();
+  } catch {
+    // niente audio disponibile
+  }
 }
 
 // Un "tic" brevissimo per ogni tocco.

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { suono, tic, type Suono } from "@/lib/effetti";
+import { riprendiAudio, suono, tic, type Suono } from "@/lib/effetti";
 import { useStore } from "@/lib/store";
 import { vibra } from "@/lib/vibrazione";
 
@@ -26,7 +26,12 @@ export default function FeedbackTocco() {
       } else if (opzioni.current.suonoTocco) tic();
     };
     document.addEventListener("click", alTocco, true);
-    return () => document.removeEventListener("click", alTocco, true);
+    // Appena si tocca lo schermo si riattiva l'audio (iOS lo spegne quando l'app va in background)
+    document.addEventListener("pointerdown", riprendiAudio, true);
+    return () => {
+      document.removeEventListener("click", alTocco, true);
+      document.removeEventListener("pointerdown", riprendiAudio, true);
+    };
   }, []);
 
   return null;
