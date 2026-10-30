@@ -27,6 +27,7 @@ export default function FormTask({ iniziale, onClose }: { iniziale: Task | null;
   const [essenziale, setEssenziale] = useState(iniziale?.essenziale ?? false);
   const [soloACasa, setSoloACasa] = useState(iniziale?.soloACasa ?? false);
   const [adatta, setAdatta] = useState(iniziale?.adattaATurni ?? false);
+  const [spostamento, setSpostamento] = useState(iniziale?.spostamentoMin ?? 0);
   const [promemoria, setPromemoria] = useState((iniziale?.promemoria ?? []).join(", "));
 
   const puntiFinali = xp ?? puntiAuto(durata);
@@ -58,6 +59,8 @@ export default function FormTask({ iniziale, onClose }: { iniziale: Task | null;
       essenziale,
       soloACasa,
       adattaATurni: adatta,
+      km: iniziale?.km,
+      spostamentoMin: spostamento,
       promemoria: promemoria.split(/[,\s]+/).filter((o) => /^\d{1,2}:\d{2}$/.test(o)).map((o) => o.padStart(5, "0")),
       tipo: iniziale?.tipo,
       attiva: iniziale?.attiva ?? true,
@@ -126,6 +129,13 @@ export default function FormTask({ iniziale, onClose }: { iniziale: Task | null;
           </div>
         )}
         {tipo === "una_volta" && <input type="date" value={data} onChange={(e) => setData(e.target.value)} className={campo} aria-label="Giorno" />}
+      </div>
+
+      <div>
+        <Etichetta>Spostamento (andata, e altrettanto per il ritorno)</Etichetta>
+        <div className="flex flex-wrap gap-2">
+          {[0, 10, 20, 30, 45].map((m) => <Chip key={m} attivo={spostamento === m} onClick={() => setSpostamento(m)}>{m === 0 ? "Da casa" : `${m} min`}</Chip>)}
+        </div>
       </div>
 
       <div>

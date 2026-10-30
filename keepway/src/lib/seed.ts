@@ -8,6 +8,9 @@ export const AREE: Area[] = [
   { id: "abitudini", nome: "Abitudini quotidiane", colore: "#f5a524", icona: "ripeti", frase: "Sono uno costante" },
 ];
 
+// Ora corrente in ms. Sta qui (e non dentro i componenti) perché va chiamata solo quando l'utente fa qualcosa, mai durante il disegno.
+export const adessoMs = () => Date.now();
+
 export const nuovoId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
 // Task precaricate: le abitudini fisse della v1.
@@ -47,6 +50,7 @@ export function statoIniziale(): Stato {
     rinvii: [],
     vacanza: null,
     eventi: [],
+    modifiche: [],
   };
 }
 
@@ -63,4 +67,5 @@ export const statoVuoto: Stato = {
   rinvii: [],
   vacanza: null,
   eventi: [],
+  modifiche: [],
 };

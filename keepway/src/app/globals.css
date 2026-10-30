@@ -74,3 +74,8 @@ html {
 @media (prefers-reduced-motion: reduce) {
   .shimmer::after, .fiamma { animation: none; }
 }
+
+/* Cursore lampeggiante del recap */
+@keyframes cursore { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+.cursore { animation: cursore 1s steps(1) infinite; margin-left: 1px; }
+@media (prefers-reduced-motion: reduce) { .cursore { animation: none; } }

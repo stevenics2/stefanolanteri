@@ -1,29 +1,26 @@
-import roster from "@/data/roster.json";
+import { giornoEffettivo } from "./calendario";
 
-// Quante task proporre in un dato giorno, in base al turno di quella data.
+// Quante task proporre in un dato giorno, in base ai turni di quella data (modifiche comprese).
 //   normale   -> tutte le task del giorno
-//   essenziale-> solo le task essenziali (versione minima)
+//   essenziale-> solo le task essenziali
 //   nessuna   -> nessuna task (giorno di recupero)
 export type Carico = "normale" | "essenziale" | "nessuna";
 
-const giorniRoster = roster as { d: string; t: string; o: string }[];
-const perData = new Map(giorniRoster.map((g) => [g.d, g.t]));
-const infoPerData = new Map(giorniRoster.map((g) => [g.d, g]));
-
-// Turno e orario di un giorno (es. { t: "3", o: "13:00-19:00" }), o undefined se è fuori dal calendario importato.
-export const turnoDelGiorno = (data: string) => infoPerData.get(data);
-
 export function caricoGiorno(data: string): Carico {
-  const turno = perData.get(data);
-  if (turno === "1 + 4") return "nessuna"; // notte + sera
-  if (turno === "1") return "essenziale"; // dopo la notte
+  const g = giornoEffettivo(data);
+  if (!g) return "normale";
+  const c = g.codici;
+  if (c.includes("1") && c.includes("4")) return "nessuna"; // notte + sera
+  if (c.includes("1")) return "essenziale"; // dopo la notte
+  if (c.length >= 2) return "essenziale"; // doppio turno (2+3, 3+4...): 12 ore di fila
+  if (g.modifica?.tipo === "assenza" && g.modifica.assenza === "malattia") return "essenziale";
   // Il turno 2 prima di una notte NON è pesante: dalle 18 all'1 sei in forma (palestra compresa).
   return "normale";
 }
 
-// "riposo" = RD o R; "lavoro" = tutti gli altri turni; "sconosciuto" = data fuori dal calendario importato.
+// "riposo" = nessun turno (riposo, ferie, malattia...); "lavoro" = c'è almeno un turno; "sconosciuto" = fuori dal calendario importato.
 export function tipoGiorno(data: string): "lavoro" | "riposo" | "sconosciuto" {
-  const t = perData.get(data);
-  if (t === undefined) return "sconosciuto";
-  return t === "RD" || t === "R" ? "riposo" : "lavoro";
+  const g = giornoEffettivo(data);
+  if (!g) return "sconosciuto";
+  return g.riposo ? "riposo" : "lavoro";
 }

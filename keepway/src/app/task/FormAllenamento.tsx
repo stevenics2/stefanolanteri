@@ -2,49 +2,54 @@
 
 import { useState } from "react";
 import { GIORNI_LUNGHI } from "@/lib/date";
+import { MIN_PER_KM } from "@/lib/durata";
 import { nuovoId } from "@/lib/seed";
 import { useStore } from "@/lib/store";
 import AreaIcona from "../components/AreaIcona";
 import { Chip, Etichetta, Interruttore, Riquadro, Schermo } from "./ui";
 
-// Durata, versione minima e punti consigliati per ogni attività.
+const XP_PER_KM = 10;
+
+// Per ogni attività: durata e punti consigliati, e quanto ci si mette ad andare (fuori casa).
+// `km` = si misura in chilometri invece che in minuti (niente timer: la durata si ricava a 6 min/km).
 const ATTIVITA = [
-  { id: "corsa", nome: "Corsa", durata: 30, minima: 10, xp: 40 },
-  { id: "palestra", nome: "Palestra", durata: 60, minima: 20, xp: 60 },
-  { id: "freddo", nome: "Bagno freddo", durata: 5, minima: 2, xp: 30 },
-  { id: "camminata", nome: "Camminata", durata: 30, minima: 10, xp: 30 },
-  { id: "bici", nome: "Bici", durata: 45, minima: 15, xp: 50 },
-  { id: "nuoto", nome: "Nuoto", durata: 40, minima: 15, xp: 50 },
-  { id: "stretching", nome: "Stretching", durata: 15, minima: 5, xp: 20 },
-  { id: "yoga", nome: "Yoga", durata: 30, minima: 10, xp: 30 },
+  { id: "corsa", nome: "Corsa", durata: 30, durate: [] as number[], xp: 0, spostamento: 20, km: true },
+  { id: "palestra", nome: "Palestra", durata: 60, durate: [60, 90, 120], xp: 60, spostamento: 20, km: false },
+  { id: "freddo", nome: "Bagno freddo", durata: 5, durate: [3, 5, 10], xp: 30, spostamento: 0, km: false },
+  { id: "camminata", nome: "Camminata", durata: 30, durate: [20, 30, 45, 60], xp: 30, spostamento: 0, km: false },
+  { id: "bici", nome: "Bici", durata: 45, durate: [30, 45, 60, 90], xp: 50, spostamento: 20, km: false },
+  { id: "nuoto", nome: "Nuoto", durata: 40, durate: [30, 40, 60], xp: 50, spostamento: 20, km: false },
+  { id: "stretching", nome: "Stretching", durata: 15, durate: [10, 15, 20, 30], xp: 20, spostamento: 0, km: false },
+  { id: "yoga", nome: "Yoga", durata: 30, durate: [20, 30, 45, 60], xp: 30, spostamento: 0, km: false },
 ];
 
 export default function FormAllenamento({ onClose }: { onClose: () => void }) {
   const { oggi, salvaTask } = useStore();
   const [scelta, setScelta] = useState(ATTIVITA[0]);
   const [durata, setDurata] = useState(ATTIVITA[0].durata);
-  const [minima, setMinima] = useState(ATTIVITA[0].minima);
+  const [km, setKm] = useState(5);
   const [xp, setXp] = useState(ATTIVITA[0].xp);
-  const [ognigiorno, setOgniGiorno] = useState(false);
+  const [spostamento, setSpostamento] = useState(ATTIVITA[0].spostamento);
   const [giorni, setGiorni] = useState<number[]>([]);
   const [adatta, setAdatta] = useState(true);
 
   const cambia = (a: (typeof ATTIVITA)[number]) => {
     setScelta(a);
     setDurata(a.durata);
-    setMinima(a.minima);
     setXp(a.xp);
+    setSpostamento(a.spostamento);
   };
-  const valido = ognigiorno || giorni.length > 0;
+  const valido = giorni.length > 0;
+  const xpFinali = scelta.km ? km * XP_PER_KM : xp;
 
   const salva = () => {
     if (!valido) return;
     salvaTask({
-      id: nuovoId(), titolo: scelta.nome, areaId: "allenamento", icona: scelta.id,
-      durataMin: durata, minimaMin: minima,
-      ricorrenza: ognigiorno ? { tipo: "giornaliera" } : { tipo: "settimana", giorni },
+      id: nuovoId(), titolo: scelta.km ? `Corsa ${km} km` : scelta.nome, areaId: "allenamento", icona: scelta.id,
+      durataMin: scelta.km ? null : durata, minimaMin: null, km: scelta.km ? km : undefined, spostamentoMin: spostamento,
+      ricorrenza: { tipo: "settimana", giorni },
       fascia: "qualsiasi", solo: "sempre", soloACasa: false, promemoria: [], adattaATurni: adatta,
-      punti: xp, essenziale: false, attiva: true, creatoIl: oggi,
+      punti: xpFinali, essenziale: false, attiva: true, creatoIl: oggi,
     });
     onClose();
   };
@@ -63,35 +68,55 @@ export default function FormAllenamento({ onClose }: { onClose: () => void }) {
       </div>
 
       <div>
-        <Etichetta>Quali giorni?</Etichetta>
-        <div className="mb-2"><Chip attivo={ognigiorno} onClick={() => setOgniGiorno((v) => !v)}>Ogni giorno</Chip></div>
-        {!ognigiorno && (
-          <div className="flex flex-wrap gap-2">
-            {[1, 2, 3, 4, 5, 6, 0].map((g) => (
-              <Chip key={g} attivo={giorni.includes(g)} onClick={() => setGiorni((x) => (x.includes(g) ? x.filter((y) => y !== g) : [...x, g]))}>
+        <Etichetta>Quando?</Etichetta>
+        <div className="grid grid-cols-7 gap-1.5">
+          {[1, 2, 3, 4, 5, 6, 0].map((g) => {
+            const attivo = giorni.includes(g);
+            return (
+              <button
+                key={g}
+                type="button"
+                onClick={() => setGiorni((x) => (x.includes(g) ? x.filter((y) => y !== g) : [...x, g]))}
+                className={`rounded-xl py-2.5 text-sm font-semibold ${attivo ? "bg-accent text-black" : "bg-white/10"}`}
+              >
                 {GIORNI_LUNGHI[g].slice(0, 3)}
-              </Chip>
-            ))}
-          </div>
-        )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      <div>
-        <Etichetta>Durata (minuti)</Etichetta>
-        <div className="flex flex-wrap gap-2">
-          {[5, 10, 15, 20, 30, 45, 60, 90].map((m) => <Chip key={m} attivo={durata === m} onClick={() => setDurata(m)}>{m}</Chip>)}
+      {scelta.km ? (
+        <div>
+          <Etichetta>Quanti km?</Etichetta>
+          <div className="flex flex-wrap gap-2">
+            {[3, 5, 8, 10, 12, 15, 21].map((k) => <Chip key={k} attivo={km === k} onClick={() => setKm(k)}>{k} km</Chip>)}
+          </div>
+          <p className="mt-1.5 text-xs text-muted">
+            Circa {km * MIN_PER_KM} minuti di corsa ({MIN_PER_KM} min al km), più {spostamento * 2} di spostamento tra andata e ritorno. Vale {xpFinali} XP.
+          </p>
         </div>
-      </div>
+      ) : (
+        <>
+          <div>
+            <Etichetta>Durata (minuti)</Etichetta>
+            <div className="flex flex-wrap gap-2">
+              {scelta.durate.map((m) => <Chip key={m} attivo={durata === m} onClick={() => setDurata(m)}>{m}</Chip>)}
+            </div>
+          </div>
+          <div>
+            <Etichetta>Punti XP</Etichetta>
+            <div className="flex flex-wrap gap-2">
+              {[20, 30, 40, 50, 60, 100].map((v) => <Chip key={v} attivo={xp === v} onClick={() => setXp(v)}>+{v}</Chip>)}
+            </div>
+          </div>
+        </>
+      )}
+
       <div>
-        <Etichetta>Versione minima (basta questa per tenere la serie)</Etichetta>
+        <Etichetta>Spostamento (andata, e altrettanto per il ritorno)</Etichetta>
         <div className="flex flex-wrap gap-2">
-          {[2, 5, 10, 15, 20].map((m) => <Chip key={m} attivo={minima === m} onClick={() => setMinima(m)}>{m} min</Chip>)}
-        </div>
-      </div>
-      <div>
-        <Etichetta>Punti XP</Etichetta>
-        <div className="flex flex-wrap gap-2">
-          {[20, 30, 40, 50, 60, 100].map((v) => <Chip key={v} attivo={xp === v} onClick={() => setXp(v)}>+{v}</Chip>)}
+          {[0, 10, 20, 30, 45].map((m) => <Chip key={m} attivo={spostamento === m} onClick={() => setSpostamento(m)}>{m === 0 ? "Da casa" : `${m} min`}</Chip>)}
         </div>
       </div>
 

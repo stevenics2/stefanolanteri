@@ -3,6 +3,7 @@
 import { AlarmClock, Check, Clock, Flame, Play, SkipForward, Undo2 } from "lucide-react";
 import { useState } from "react";
 import { puntiMinima, serie } from "@/lib/regole";
+import { durataMin, durataTotaleMin } from "@/lib/durata";
 import { finestraMigliore, hhmm } from "@/lib/sonno";
 import { stanzaDelGiorno, titoloTask } from "@/lib/stanze";
 import { useStore } from "@/lib/store";
@@ -23,7 +24,7 @@ export default function TaskCard({ task, soloMinima }: { task: Task; soloMinima:
   const colore = area?.colore ?? "#888";
   const minima = task.minimaMin;
   // Task che si adatta ai turni: il momento libero più lungo di oggi (né in turno, né a dormire)
-  const finestra = task.adattaATurni && !fatto ? finestraMigliore(oggi) : null;
+  const finestra = task.adattaATurni && !fatto ? finestraMigliore(oggi, durataTotaleMin(task)) : null;
   const senzaTempo = task.adattaATurni && !fatto && !finestra;
   const stanza = task.tipo === "stanza" ? stanzaDelGiorno(stato.stanze, stato.completamenti, task.id, oggi) : null;
 
@@ -46,7 +47,8 @@ export default function TaskCard({ task, soloMinima }: { task: Task; soloMinima:
           <div className={`font-semibold ${fatto ? "line-through" : ""}`}>{titoloTask(task, stato, oggi)}</div>
           <div className="mt-0.5 text-xs text-muted">
             {area?.nome}
-            {task.durataMin ? ` · ${task.durataMin} min` : ""}
+            {task.km ? ` · ${task.km} km (~${durataMin(task)} min)` : task.durataMin ? ` · ${task.durataMin} min` : ""}
+            {task.spostamentoMin ? ` · +${task.spostamentoMin * 2} min di spostamento` : ""}
             {minima ? ` (minima ${minima})` : ""}
           </div>
           {finestra && (

@@ -25,6 +25,8 @@ export type Task = {
   promemoria: string[]; // orari "HH:MM" dei promemoria, ripetuti fino a quando non è fatta (partono con le notifiche)
   tipo?: "stanza"; // "stanza" = ogni giorno una stanza diversa, a rotazione
   icona?: string; // icona della task (se manca, quella dell'area)
+  km?: number; // corsa: distanza; la durata si ricava (6 minuti al km) e non c'è il timer
+  spostamentoMin?: number; // minuti per andare (e altrettanti per tornare) se la task si fa fuori casa
   adattaATurni?: boolean; // il momento giusto e i promemoria si scelgono nei momenti liberi tra turni e sonno
   attiva: boolean;
   creatoIl: string;
@@ -62,8 +64,25 @@ export type Evento = {
   durataMin: number;
   priorita: Priorita;
   luogo: string;
-  anticipoGiorni: number; // da quanti giorni prima compare in "In arrivo" e arriva l'avviso (0 = nessuno)
+  avvisi: number[]; // quanti giorni prima avvisare (es. [7, 3]): compare in "In arrivo" e arriva la notifica
+  spostamentoMin: number; // minuti per andare (e altrettanti per tornare)
   fatto: boolean;
+  creato: number;
+};
+
+// Cosa è cambiato in un giorno rispetto ai turni importati. Ogni modifica si può annullare.
+export type TipoModifica = "straordinario" | "cambio_azienda" | "cambio_personale" | "assenza";
+export type Assenza = "ferie" | "malattia" | "permesso" | "altro";
+export type Modifica = {
+  id: string;
+  data: string;
+  tipo: TipoModifica;
+  codici: string[]; // i turni che il giorno ha DOPO la modifica ([] = riposo)
+  ex: string; // come era prima: "3", "2+3", "RD"...
+  mostraEx: boolean; // scrivere "(ex 3)" accanto al nuovo turno
+  extra?: string[]; // straordinario: i turni aggiunti
+  assenza?: Assenza;
+  gruppo?: string; // modifiche collegate (es. un turno spostato da un giorno a un altro)
   creato: number;
 };
 
@@ -90,4 +109,5 @@ export type Stato = {
   rinvii: Rinvio[];
   vacanza: Vacanza | null;
   eventi: Evento[];
+  modifiche: Modifica[];
 };

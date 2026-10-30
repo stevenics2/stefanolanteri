@@ -1,8 +1,8 @@
 "use client";
 
-import { CalendarPlus, BellRing, ChevronLeft, ChevronRight } from "lucide-react";
+import { BellRing, CalendarPlus, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 import { useState } from "react";
-import { turnoDelGiorno } from "@/lib/carico";
+import { giornoEffettivo, type GiornoEffettivo } from "@/lib/calendario";
 import { dataLunga, MESI_LUNGHI } from "@/lib/date";
 import { eventiDelGiorno, prioritaDi } from "@/lib/eventi";
 import { finestreLibere, hhmm } from "@/lib/sonno";
@@ -10,24 +10,37 @@ import { useStore } from "@/lib/store";
 import type { Evento } from "@/lib/tipi";
 import { RigaEvento } from "../components/AgendaBox";
 import FormEvento from "../task/FormEvento";
+import { Banda, bandaDi } from "./banda";
+import MenuTurno from "./MenuTurno";
+import RecapMese from "./RecapMese";
 
 const SETTIMANA = ["L", "M", "M", "G", "V", "S", "D"];
 const p2 = (n: number) => String(n).padStart(2, "0");
 
-// Colore del turno nella casella: blu = lavoro, viola = doppio, verde = riposo.
-function stileTurno(t: string | undefined) {
-  if (t === undefined) return "bg-white/5 text-muted";
-  if (t === "RD" || t === "R") return "bg-emerald-500/20 text-emerald-200";
-  if (t.includes("+")) return "bg-violet-600 text-white";
+// Colore della casella: blu = lavoro, viola = notte + sera, verde = riposo, ambra = assenza, grigio = non ho i turni.
+function stileTurno(g: GiornoEffettivo | undefined) {
+  if (!g) return "bg-white/5 text-muted";
+  if (g.modifica?.tipo === "assenza") return "bg-amber-500/25 text-amber-100";
+  if (g.riposo) return "bg-emerald-500/20 text-emerald-200";
+  if (g.codici.includes("1") && g.codici.includes("4")) return "bg-violet-600 text-white";
   return "bg-blue-600 text-white";
 }
 
-// Il mese con i turni e i puntini degli appuntamenti. Toccando un giorno vedi i dettagli e puoi aggiungere appuntamenti.
+// Cosa scrivere nella casella (poco spazio): 3, 2+3, R, FER...
+function testoCasella(g: GiornoEffettivo | undefined) {
+  if (!g) return "";
+  if (g.modifica?.tipo === "assenza") return (g.modifica.assenza ?? "altro").slice(0, 3).toUpperCase();
+  if (g.riposo) return g.codiceBase === "RD" && !g.modifica ? "RD" : "R";
+  return g.codici.join("+");
+}
+
+// Il mese con i turni e i puntini degli appuntamenti. Toccando un giorno vedi i dettagli, modifichi il turno e aggiungi appuntamenti.
 export default function CalendarioMese() {
   const { pronto, stato, oggi } = useStore();
   const [mese, setMese] = useState<{ a: number; m: number } | null>(null);
   const [scelto, setScelto] = useState<string | null>(null);
   const [modulo, setModulo] = useState<{ tipo: "appuntamento" | "promemoria"; evento: Evento | null; data: string } | null>(null);
+  const [menu, setMenu] = useState<string | null>(null);
   if (!pronto) return null;
 
   const { a, m } = mese ?? { a: Number(oggi.slice(0, 4)), m: Number(oggi.slice(5, 7)) - 1 };
@@ -42,12 +55,14 @@ export default function CalendarioMese() {
   const celle = [...Array<null>(spazi).fill(null), ...Array.from({ length: giorni }, (_, i) => `${a}-${p2(m + 1)}-${p2(i + 1)}`)];
 
   const sel = scelto ?? (oggi.startsWith(`${a}-${p2(m + 1)}`) ? oggi : null);
-  const turnoSel = sel ? turnoDelGiorno(sel) : undefined;
+  const geSel = sel ? giornoEffettivo(sel) : undefined;
   const eventiSel = sel ? eventiDelGiorno(stato.eventi, sel, "0000-00-00") : [];
   const liberi = sel ? finestreLibere(sel, 8 * 60, 22 * 60 + 30, 30) : [];
 
   return (
     <div className="space-y-4 px-4 pb-4 pt-4">
+      <RecapMese anno={a} mese0={m} />
+
       <div className="flex items-center justify-between">
         <button data-suono="indietro" onClick={() => vai(-1)} aria-label="Mese precedente" className="rounded-xl bg-white/10 p-2"><ChevronLeft size={20} /></button>
         <div className="text-lg font-bold capitalize">{MESI_LUNGHI[m]} {a}</div>
@@ -60,23 +75,25 @@ export default function CalendarioMese() {
       <div className="grid grid-cols-7 gap-1">
         {celle.map((d, i) => {
           if (!d) return <div key={i} />;
-          const t = turnoDelGiorno(d)?.t;
+          const g = giornoEffettivo(d);
           const eventi = stato.eventi.filter((e) => e.data === d && !e.fatto);
+          const banda = bandaDi(g?.modifica);
           return (
             <button
               key={d}
               onClick={() => setScelto(d)}
-              className={`flex aspect-[3/4] flex-col items-center justify-between rounded-xl py-1.5 ${stileTurno(t)} ${
+              className={`relative flex aspect-[3/4] flex-col items-center justify-between overflow-hidden rounded-xl pt-1.5 ${stileTurno(g)} ${
                 d === sel ? "ring-2 ring-white" : d === oggi ? "ring-2 ring-accent" : ""
               }`}
             >
               <span className="text-[11px] opacity-80">{Number(d.slice(8))}</span>
-              <span className="text-sm font-extrabold leading-none">{t === undefined ? "" : t === "1 + 4" ? "1+4" : t}</span>
-              <span className="flex h-2 items-center gap-0.5">
+              <span className="text-sm font-extrabold leading-none">{testoCasella(g)}</span>
+              <span className="flex h-2.5 items-center gap-0.5">
                 {eventi.slice(0, 3).map((e) => (
                   <span key={e.id} className="h-1.5 w-1.5 rounded-full" style={{ background: prioritaDi(e.priorita).colore }} />
                 ))}
               </span>
+              {banda && <span className={`absolute inset-x-0 bottom-0 h-1 ${banda.classe}`} />}
             </button>
           );
         })}
@@ -86,14 +103,25 @@ export default function CalendarioMese() {
         <div className="space-y-3 rounded-3xl bg-card p-4">
           <div>
             <div className="text-lg font-bold first-letter:uppercase">{dataLunga(sel)}</div>
-            <div className="text-sm text-muted">
-              {turnoSel === undefined
-                ? "Turni non disponibili per questo giorno"
-                : turnoSel.t === "RD" || turnoSel.t === "R"
-                  ? `Riposo (${turnoSel.t})`
-                  : `Turno ${turnoSel.t}${turnoSel.o ? ` · ${turnoSel.o}` : ""}`}
-            </div>
+            {geSel ? (
+              <div className="mt-1 overflow-hidden rounded-xl">
+                <div className={`px-3 py-2 ${stileTurno(geSel)}`}>
+                  <span className="font-bold">{geSel.etichetta}</span>
+                  {geSel.orario && <span className="ml-2 text-sm opacity-90">{geSel.orario}</span>}
+                </div>
+                <Banda m={geSel.modifica} />
+              </div>
+            ) : (
+              <div className="text-sm text-muted">Turni non disponibili per questo giorno</div>
+            )}
           </div>
+
+          {geSel && (
+            <button data-suono="via" onClick={() => setMenu(sel)} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white/10 py-2.5 text-sm font-semibold">
+              <Pencil size={16} /> Modifica turno (cambio, straordinario, assenza)
+            </button>
+          )}
+
           {eventiSel.length === 0 && <p className="text-sm text-muted">Nessun appuntamento.</p>}
           {eventiSel.map((e) => (
             <RigaEvento key={e.id} e={e} oggi={sel} alTocco={() => setModulo({ tipo: e.tipo, evento: e, data: sel })} />
@@ -113,6 +141,7 @@ export default function CalendarioMese() {
       {modulo && (
         <FormEvento key={modulo.evento?.id ?? modulo.tipo + modulo.data} tipo={modulo.tipo} iniziale={modulo.evento} dataIniziale={modulo.data} onClose={() => setModulo(null)} />
       )}
+      {menu && <MenuTurno key={menu} data={menu} onClose={() => setMenu(null)} />}
     </div>
   );
 }

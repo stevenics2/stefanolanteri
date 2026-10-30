@@ -8,6 +8,9 @@ export const MESI_LUNGHI = [
   "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre",
 ];
 
+export const GIORNI_BREVI = ["dom", "lun", "mar", "mer", "gio", "ven", "sab"];
+export const MESI_BREVI = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"];
+
 export function oggiLocale(d: Date = new Date()): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }

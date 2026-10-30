@@ -5,17 +5,16 @@ import { useMemo } from "react";
 import { consiglioSonno } from "@/lib/sonno";
 import { useStore } from "@/lib/store";
 
-// Il comando rapido di iOS che crea la sveglia (si crea una volta sola: vedi Impostazioni).
+// Il comando rapido di iOS che crea la sveglia: chiede lui l'orario (si crea una volta sola: vedi Impostazioni).
 const NOME_COMANDO = "Keepway Sveglia";
-const linkSveglia = (hhmm: string) =>
-  `shortcuts://run-shortcut?name=${encodeURIComponent(NOME_COMANDO)}&input=text&text=${encodeURIComponent(hhmm)}`;
+const LINK_SVEGLIA = `shortcuts://run-shortcut?name=${encodeURIComponent(NOME_COMANDO)}`;
 
 // Il prossimo sonno consigliato, in base ai turni (dopo la notte, riposino prima della notte, notte normale).
 export default function SonnoCard() {
-  const { pronto, oggi } = useStore();
+  const { pronto, oggi, stato } = useStore();
   // Si ricalcola quando cambia il giorno o i dati sono pronti (serve l'ora locale del telefono).
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const c = useMemo(() => (pronto ? consiglioSonno(new Date()) : undefined), [pronto, oggi]);
+  const c = useMemo(() => (pronto ? consiglioSonno(new Date()) : undefined), [pronto, oggi, stato.modifiche]);
 
   if (c === undefined) return null;
 
@@ -45,11 +44,11 @@ export default function SonnoCard() {
       </p>
       <p className="mt-2 text-sm text-muted">{c.dettaglio}</p>
       <a
-        href={linkSveglia(c.sveglia)}
+        href={LINK_SVEGLIA}
         data-suono="via"
         className="mt-3 inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2.5 text-sm font-semibold"
       >
-        <AlarmClock size={16} /> Imposta la sveglia alle {c.sveglia}
+        <AlarmClock size={16} /> Imposta sveglia
       </a>
     </div>
   );

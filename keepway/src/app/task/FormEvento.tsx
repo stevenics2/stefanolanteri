@@ -19,13 +19,6 @@ const CATEGORIE = [
   { id: "auto", nome: "Auto" },
   { id: "calendario", nome: "Altro" },
 ];
-const ANTICIPI = [
-  { v: 0, n: "Nessuno" },
-  { v: 1, n: "1 giorno" },
-  { v: 3, n: "3 giorni" },
-  { v: 7, n: "1 settimana" },
-  { v: 14, n: "2 settimane" },
-];
 
 // Modulo per appuntamenti e promemoria. Controlla da solo se l'orario va in conflitto con i turni, il sonno o altri appuntamenti.
 export default function FormEvento({
@@ -36,11 +29,14 @@ export default function FormEvento({
   const [icona, setIcona] = useState(iniziale?.icona ?? (èApp ? "dottore" : "promemoria"));
   const [titolo, setTitolo] = useState(iniziale?.titolo ?? "");
   const [data, setData] = useState(iniziale?.data ?? dataIniziale ?? dataPiù(oggi, 1));
-  const [ora, setOra] = useState(iniziale?.ora ?? "");
+  const [ora, setOra] = useState(iniziale?.ora ?? "11:00"); // parte da un orario scritto, così non sembra vuoto
+  const [senzaOra, setSenzaOra] = useState(iniziale ? iniziale.ora === null : false); // solo per i promemoria
   const [durata, setDurata] = useState(iniziale?.durataMin ?? 60);
   const [priorita, setPriorita] = useState<Priorita>(iniziale?.priorita ?? "media");
   const [luogo, setLuogo] = useState(iniziale?.luogo ?? "");
-  const [anticipo, setAnticipo] = useState(iniziale?.anticipoGiorni ?? (èApp ? 7 : 0));
+  const [avvisi, setAvvisi] = useState<number[]>(iniziale?.avvisi ?? (èApp ? [7] : []));
+  const [spostamento, setSpostamento] = useState(iniziale?.spostamentoMin ?? (èApp ? 20 : 0));
+  const attivaAvviso = (n: number) => setAvvisi((x) => (x.includes(n) ? x.filter((y) => y !== n) : [...x, n].sort((a, b) => b - a)));
 
   const scegliCategoria = (id: string, nome: string) => {
     const precedente = CATEGORIE.find((c) => c.id === icona)?.nome;
@@ -49,12 +45,12 @@ export default function FormEvento({
   };
 
   // Controlli: turni e sonno, e altri appuntamenti nello stesso orario.
-  const inizio = ora ? aMinuti(ora) : null;
+  const inizio = !senzaOra && ora ? aMinuti(ora) : null;
   const fine = inizio === null ? null : inizio + (èApp ? durata : 15);
   const conflitti =
     inizio !== null && fine !== null && data
       ? [
-          ...conflittiAgenda(data, inizio, fine).map((c) => c.testo),
+          ...conflittiAgenda(data, inizio, fine, èApp ? spostamento : 0).map((c) => c.testo),
           ...stato.eventi
             .filter((e) => e.id !== iniziale?.id && e.tipo === "appuntamento" && e.data === data && e.ora && !e.fatto)
             .filter((e) => inizio < aMinuti(e.ora!) + e.durataMin && fine > aMinuti(e.ora!))
@@ -74,11 +70,12 @@ export default function FormEvento({
       titolo: titolo.trim() || nome,
       icona,
       data,
-      ora: ora || null,
+      ora: senzaOra ? null : ora || null,
       durataMin: durata,
       priorita,
       luogo: luogo.trim(),
-      anticipoGiorni: anticipo,
+      avvisi,
+      spostamentoMin: èApp ? spostamento : 0,
       fatto: iniziale?.fatto ?? false,
       creato: iniziale?.creato ?? Date.now(),
     });
@@ -113,9 +110,13 @@ export default function FormEvento({
         </div>
         <div className="grid grid-cols-2 gap-3">
           <input type="date" value={data} onChange={(e) => setData(e.target.value)} className={campo} aria-label="Giorno" />
-          <input type="time" value={ora} onChange={(e) => setOra(e.target.value)} className={campo} aria-label="Ora" />
+          <input type="time" value={ora} onChange={(e) => setOra(e.target.value)} disabled={senzaOra} className={`${campo} disabled:opacity-40`} aria-label="Ora" />
         </div>
-        {!ora && <p className="mt-1 text-xs text-muted">{èApp ? "Senza ora vale per tutto il giorno." : "Senza ora ti avviso la mattina alle 9:00."}</p>}
+        {!èApp && (
+          <div className="mt-2">
+            <Chip attivo={senzaOra} onClick={() => setSenzaOra((v) => !v)}>Senza ora (ti avviso alle 9:00)</Chip>
+          </div>
+        )}
       </div>
 
       {èApp && (
@@ -125,6 +126,14 @@ export default function FormEvento({
             {[30, 60, 90, 120].map((m) => (
               <Chip key={m} attivo={durata === m} onClick={() => setDurata(m)}>{m < 60 ? `${m} min` : m === 60 ? "1 ora" : `${String(m / 60).replace(".", ",")} ore`}</Chip>
             ))}
+          </div>
+          <div className="mt-3">
+            <Etichetta>Spostamento (andata, e altrettanto per il ritorno)</Etichetta>
+            <div className="flex flex-wrap gap-2">
+              {[0, 10, 20, 30, 45].map((m) => (
+                <Chip key={m} attivo={spostamento === m} onClick={() => setSpostamento(m)}>{m === 0 ? "Nessuno" : `${m} min`}</Chip>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -176,13 +185,14 @@ export default function FormEvento({
       </div>
 
       <div>
-        <Etichetta>Avvisami prima</Etichetta>
+        <Etichetta>Avvisami prima (puoi sceglierne più di uno)</Etichetta>
         <div className="flex flex-wrap gap-2">
-          {ANTICIPI.map((a) => (
-            <Chip key={a.v} attivo={anticipo === a.v} onClick={() => setAnticipo(a.v)}>{a.n}</Chip>
+          <Chip attivo={avvisi.length === 0} onClick={() => setAvvisi([])}>Nessuno</Chip>
+          {[{ v: 1, n: "1 giorno" }, { v: 3, n: "3 giorni" }, { v: 7, n: "1 settimana" }, { v: 14, n: "2 settimane" }].map((a) => (
+            <Chip key={a.v} attivo={avvisi.includes(a.v)} onClick={() => attivaAvviso(a.v)}>{a.n}</Chip>
           ))}
         </div>
-        <p className="mt-1 text-xs text-muted">Compare in «In arrivo» in Oggi e ti arriva una notifica. La sera prima e poche ore prima ti avviso sempre.</p>
+        <p className="mt-1 text-xs text-muted">Compaiono in «In arrivo» in Oggi e ti arriva una notifica per ognuno. La sera prima e poche ore prima ti avviso sempre.</p>
       </div>
 
       {èApp && (

@@ -1,5 +1,6 @@
 import { dataPiù } from "./date";
 import { giorniTra } from "./eventi";
+import { durataTotaleMin } from "./durata";
 import { èIgnorata, èPrevista } from "./regole";
 import { èInSilenzio, finestraMigliore, hhmm } from "./sonno";
 import { titoloTask } from "./stanze";
@@ -32,7 +33,7 @@ function istante(data: string, hhmm: string): number {
 // momento libero, niente promemoria.
 function orariPerGiorno(task: Task, giorno: string): string[] {
   if (!task.adattaATurni) return [...task.promemoria].sort();
-  const f = finestraMigliore(giorno);
+  const f = finestraMigliore(giorno, durataTotaleMin(task));
   if (!f) return [];
   const candidati = [f.da + 15, f.da + 15 + 180, f.a - 45].filter((m) => m >= f.da && m <= f.a - 15).sort((a, b) => a - b);
   const scelti: number[] = [];
@@ -126,14 +127,13 @@ function notificheEventi(stato: Stato, ora: number, oggi: string): Notifica[] {
       out.push({ id: `ev-${e.id}-${sigla}`, quando: q, titolo: e.titolo, testo, url: "/oggi/", tag: `ev-${e.id}`, urgente: alta });
     };
 
-    // con anticipo scelto (es. 7 giorni prima), alle 9:30
-    if (e.anticipoGiorni > 1) {
-      const n = e.anticipoGiorni;
-      const quando = e.anticipoGiorni === 7 ? "Tra una settimana" : `Tra ${n} giorni`;
-      aggiungi("anticipo", istante(dataPiù(e.data, -n), "09:30"), `${quando}, ${e.data.split("-").reverse().slice(0, 2).join("/")}${ora_}`);
+    // un avviso per ogni anticipo scelto (es. 1 settimana prima e 3 giorni prima), alle 9:30
+    for (const n of e.avvisi.filter((x) => x > 1)) {
+      const quando = n === 7 ? "Tra una settimana" : n === 14 ? "Tra due settimane" : `Tra ${n} giorni`;
+      aggiungi(`anticipo${n}`, istante(dataPiù(e.data, -n), "09:30"), `${quando}, ${e.data.split("-").reverse().slice(0, 2).join("/")}${ora_}`);
     }
     // la sera prima, alle 18:30
-    if (e.tipo === "appuntamento" || e.anticipoGiorni > 0) aggiungi("vigilia", istante(dataPiù(e.data, -1), "18:30"), `Domani${ora_}`);
+    if (e.tipo === "appuntamento" || e.avvisi.length > 0) aggiungi("vigilia", istante(dataPiù(e.data, -1), "18:30"), `Domani${ora_}`);
     // poche ore prima (solo se c'è un orario)
     if (e.ora) aggiungi("ore", quandoEvento - 2 * 3_600_000, "Tra 2 ore");
     // promemoria senza orario: la mattina stessa

@@ -46,10 +46,10 @@ export function eventiDelGiorno(eventi: Evento[], data: string, oggi: string): E
 // "In arrivo": dopo domani, entro i giorni di anticipo scelti per ciascun evento. Prima le priorità alte, poi la data.
 export function inArrivo(eventi: Evento[], oggi: string): Evento[] {
   return eventi
-    .filter((e) => !e.fatto && e.anticipoGiorni > 0)
+    .filter((e) => !e.fatto && e.avvisi.length > 0)
     .filter((e) => {
       const n = giorniTra(oggi, e.data);
-      return n >= 2 && n <= e.anticipoGiorni;
+      return n >= 2 && n <= Math.max(...e.avvisi); // compare dal primo avviso (il più lontano)
     })
     .sort((a, b) => prioritaDi(a.priorita).peso - prioritaDi(b.priorita).peso || a.data.localeCompare(b.data) || ordina(a, b));
 }

@@ -1,11 +1,12 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { impostaModifiche } from "./calendario";
 import { oggiLocale } from "./date";
 import { livello, puntiMinima, xpTotali } from "./regole";
 import { nuovoId, statoIniziale, statoVuoto, taskStanza } from "./seed";
 import { stanzaDelGiorno } from "./stanze";
-import type { Evento, Impostazioni, Stato, Task, Vacanza } from "./tipi";
+import type { Evento, Impostazioni, Modifica, Stato, Task, Vacanza } from "./tipi";
 
 const CHIAVE = "keepway.v1";
 const CHIAVE_VECCHIA = "binario.v1"; // il nome precedente: se ci sono dati salvati lì li si recupera
@@ -20,6 +21,9 @@ export type Ricompensa = {
   nuovoLivello: string | null;
   daTimer: boolean; // finita con il timer: suona la fanfara
 };
+
+// Avviso con "Annulla" dopo una modifica ai turni.
+export type Avviso = { id: string; testo: string; rimuovi: string[]; ripristina: Modifica[] };
 
 type Contesto = {
   pronto: boolean;
@@ -48,6 +52,11 @@ type Contesto = {
   salvaEvento: (e: Evento) => void;
   eliminaEvento: (id: string) => void;
   segnaEvento: (id: string, fatto: boolean) => void;
+  salvaModifiche: (nuove: Modifica[], testo: string) => void;
+  annullaModifiche: (ids: string[]) => void; // toglie le modifiche (e le collegate dello stesso gruppo)
+  avviso: Avviso | null;
+  annullaAvviso: () => void;
+  chiudiAvviso: () => void;
   azzera: () => void;
   ricompensa: Ricompensa | null;
   chiudiRicompensa: () => void;
@@ -96,7 +105,12 @@ function carica(): Stato {
           ignorati: s.ignorati ?? [],
           rinvii: s.rinvii ?? [],
           vacanza: s.vacanza ?? null,
-          eventi: s.eventi ?? [],
+          eventi: (s.eventi ?? []).map((e) => {
+            // Vecchio formato: un solo anticipo (anticipoGiorni). Ora sono più avvisi e lo spostamento.
+            const { anticipoGiorni, ...resto } = e as typeof e & { anticipoGiorni?: number };
+            return { ...resto, avvisi: e.avvisi ?? (anticipoGiorni ? [anticipoGiorni] : []), spostamentoMin: e.spostamentoMin ?? (e.tipo === "appuntamento" ? 20 : 0) };
+          }),
+          modifiche: s.modifiche ?? [],
         } as Stato;
       }
     }
@@ -112,16 +126,20 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [adesso, setAdesso] = useState(0);
   const [oggi, setOggi] = useState(""); // si imposta nel browser: sul server la data sarebbe quella della build
   const [ricompensa, setRicompensa] = useState<Ricompensa | null>(null);
+  const [avviso, setAvviso] = useState<Avviso | null>(null);
   const ref = useRef(stato); // sempre l'ultimo stato, anche dentro timer e callback
 
   const aggiorna = useCallback((fn: (s: Stato) => Stato) => {
-    ref.current = fn(ref.current);
+    const prima = ref.current;
+    ref.current = fn(prima);
+    if (ref.current.modifiche !== prima.modifiche) impostaModifiche(ref.current.modifiche); // sonno, conflitti e carico leggono il calendario aggiornato
     setStato(ref.current);
   }, []);
 
   // Carico dal telefono solo dopo l'avvio (sul server non esiste localStorage).
   useEffect(() => {
     ref.current = carica();
+    impostaModifiche(ref.current.modifiche);
     setStato(ref.current);
     setOggi(oggiLocale());
     setAdesso(Date.now());
@@ -241,6 +259,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       salvaEvento: (e) =>
         aggiorna((x) => ({ ...x, eventi: x.eventi.some((y) => y.id === e.id) ? x.eventi.map((y) => (y.id === e.id ? e : y)) : [...x.eventi, e] })),
       eliminaEvento: (id) => aggiorna((x) => ({ ...x, eventi: x.eventi.filter((e) => e.id !== id) })),
+      salvaModifiche: (nuove, testo) => {
+        const sostituite = ref.current.modifiche.filter((m) => nuove.some((n) => n.data === m.data));
+        aggiorna((x) => ({ ...x, modifiche: [...x.modifiche.filter((m) => !nuove.some((n) => n.data === m.data)), ...nuove] }));
+        setAvviso({ id: Date.now().toString(36), testo, rimuovi: nuove.map((n) => n.id), ripristina: sostituite });
+      },
+      annullaModifiche: (ids) =>
+        aggiorna((x) => {
+          const gruppi = new Set(x.modifiche.filter((m) => ids.includes(m.id) && m.gruppo).map((m) => m.gruppo));
+          return { ...x, modifiche: x.modifiche.filter((m) => !ids.includes(m.id) && !(m.gruppo && gruppi.has(m.gruppo))) };
+        }),
+      avviso,
+      annullaAvviso: () => {
+        if (!avviso) return;
+        aggiorna((x) => ({ ...x, modifiche: [...x.modifiche.filter((m) => !avviso.rimuovi.includes(m.id)), ...avviso.ripristina] }));
+        setAvviso(null);
+      },
+      chiudiAvviso: () => setAvviso(null),
       segnaEvento: (id, fatto) => aggiorna((x) => ({ ...x, eventi: x.eventi.map((e) => (e.id === id ? { ...e, fatto } : e)) })),
       azzera: () => {
         aggiorna(() => statoIniziale());
@@ -249,7 +284,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       ricompensa,
       chiudiRicompensa: () => setRicompensa(null),
     }),
-    [stato, pronto, oggi, adesso, ricompensa, completa, aggiorna],
+    [stato, pronto, oggi, adesso, ricompensa, avviso, completa, aggiorna],
   );
 
   return <Ctx.Provider value={valore}>{children}</Ctx.Provider>;
