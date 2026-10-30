@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { aperturaCorrente, èDaRiprodurre, iscriviApertura, segnaRiprodotta } from "@/lib/apertura";
 import { dataPiù, inizioSettimana } from "@/lib/date";
 import { èPrevista, livello, serie } from "@/lib/regole";
 import { useStore } from "@/lib/store";
 
 const VERDE = "#3dffa8";
 const LARGHEZZA_BARRA = 10;
-const CHIAVE_VISTO = "keepway.oggi_visto"; // l'ultimo giorno in cui hai aperto Oggi
 
 // Un numero che "sale" fino al valore (parte da 0 la prima volta, poi da dove era).
 function useConteggio(valore: number, anima: boolean) {
@@ -94,29 +94,16 @@ export default function RiepilogoOggi({ fatte, totale }: { fatte: number; totale
   const mediaRecente = somma7(0) / 7; // gli ultimi 7 giorni, oggi compreso: per stimare quando arrivi al prossimo livello
   const eta = l.prossimo && mediaRecente > 0 ? Math.max(1, Math.ceil(l.mancano / mediaRecente)) : null;
 
-  // Primo accesso di un giorno nuovo? (l'ultimo giorno visto sta nel telefono)
-  const [visto] = useState(() => {
-    try {
-      return localStorage.getItem(CHIAVE_VISTO);
-    } catch {
-      return null;
-    }
-  });
-  const nuovoGiorno = visto !== oggi;
-  useEffect(() => {
-    try {
-      localStorage.setItem(CHIAVE_VISTO, oggi);
-    } catch {
-      // niente memoria: pazienza
-    }
-  }, [oggi]);
+  // Ogni volta che l'app si apre (o torna in primo piano) il recap fa l'animazione di ricalcolo
+  const [apertura, setApertura] = useState(() => aperturaCorrente());
+  useEffect(() => iscriviApertura(() => setApertura(aperturaCorrente())), []);
 
   return (
-    // key={oggi}: a ogni giorno nuovo il pannello si rimonta, e barre e scritta ripartono da zero
+    // key: a ogni apertura (e a ogni giorno nuovo) il pannello si rimonta, e barre e scritta ripartono da zero
     <Pannello
-      key={oggi}
+      key={`${oggi}-${apertura}`}
       anima={anima}
-      nuovoGiorno={nuovoGiorno}
+      apertura={apertura}
       l={{ numero: l.numero, nome: l.nome, prossimo: !!l.prossimo, progresso: l.progresso, mancano: l.mancano }}
       xp={xp}
       righe={[
@@ -137,19 +124,21 @@ export default function RiepilogoOggi({ fatte, totale }: { fatte: number; totale
 
 type RigaDati = { etichetta: string; perc: number; dettaglio: string };
 
-// Il riquadro vero e proprio. Al primo accesso di un giorno nuovo fa il "ricalcolo": un lampo, una scansione luminosa e le barre che si ricontano.
+// Il riquadro vero e proprio. A ogni apertura dell'app fa il "ricalcolo": un lampo, una scansione luminosa e le barre che si ricontano.
 function Pannello({
-  anima, nuovoGiorno, l, xp, righe, piede,
+  anima, apertura, l, xp, righe, piede,
 }: {
   anima: boolean;
-  nuovoGiorno: boolean;
+  apertura: number;
   l: { numero: number; nome: string; prossimo: boolean; progresso: number; mancano: number };
   xp: number;
   righe: RigaDati[];
   piede: { xpOggi: number; variazione: string; eta: string };
 }) {
-  const ricalcolo = anima && nuovoGiorno;
-  const scritta = useScrittura(ricalcolo ? "keepway@oggi:~$ ./ricalcola --nuovo-giorno" : "keepway@oggi:~$ ./status --live", anima);
+  // Si decide una volta sola per apertura: cambiando scheda e tornando qui non riparte.
+  const [ricalcolo] = useState(() => anima && èDaRiprodurre(apertura));
+  useEffect(() => segnaRiprodotta(apertura), [apertura]);
+  const scritta = useScrittura(ricalcolo ? "keepway@oggi:~$ ./ricalcola --tutto" : "keepway@oggi:~$ ./status --live", anima);
   return (
     <div
       className={`relative overflow-hidden rounded-2xl border bg-black p-3 font-mono text-[11px] ${ricalcolo ? "ricalcolo" : ""}`}
