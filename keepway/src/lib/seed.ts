@@ -51,6 +51,7 @@ export function statoIniziale(): Stato {
     vacanza: null,
     eventi: [],
     modifiche: [],
+    bonus: [],
   };
 }
 
@@ -68,4 +69,5 @@ export const statoVuoto: Stato = {
   vacanza: null,
   eventi: [],
   modifiche: [],
+  bonus: [],
 };

@@ -40,6 +40,7 @@ export type Completamento = {
   minima: boolean;
   punti: number;
   bonus: number; // "colpo di fortuna" a sorpresa
+  combo?: number; // quante task di fila (con pause sotto l'ora) fino a questa, compresa
   nota?: string; // per le task "stanza": quale stanza
   ts: number;
 };
@@ -86,6 +87,9 @@ export type Modifica = {
   creato: number;
 };
 
+// Punti extra che non vengono da una task: il forziere di fine giornata e il boss della settimana.
+export type Bonus = { id: string; data: string; xp: number; tipo: "forziere" | "boss"; testo: string; da: string /* il completamento che lo ha fatto scattare */ };
+
 export type Impostazioni = { suoni: boolean; animazioni: boolean; vibrazione: boolean; suonoTocco: boolean };
 
 export type TimerAttivo = {
@@ -110,4 +114,5 @@ export type Stato = {
   vacanza: Vacanza | null;
   eventi: Evento[];
   modifiche: Modifica[];
+  bonus: Bonus[];
 };

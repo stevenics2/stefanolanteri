@@ -1,6 +1,6 @@
 import { caricoGiorno, tipoGiorno } from "./carico";
 import { dataPiù, giornoSettimana, inizioSettimana } from "./date";
-import type { Completamento, Ignorato, Task, Vacanza } from "./tipi";
+import type { Bonus, Completamento, Ignorato, Stato, Task, Vacanza } from "./tipi";
 
 // --- Punti ---
 export const puntiAuto = (durataMin: number | null) => (durataMin ? Math.max(5, Math.round(durataMin)) : 10);
@@ -16,7 +16,8 @@ export const LIVELLI = [
   { nome: "Diventare", da: 2200 },
 ];
 
-export const xpTotali = (cs: Completamento[]) => cs.reduce((t, c) => t + c.punti + c.bonus, 0);
+export const xpTotali = (cs: Completamento[], bonus: Bonus[] = []) =>
+  cs.reduce((t, c) => t + c.punti + c.bonus, 0) + bonus.reduce((t, b) => t + b.xp, 0);
 
 export function livello(xp: number) {
   let i = 0;
@@ -82,4 +83,28 @@ export function serie(t: Task, cs: Completamento[], oggi: string, p?: Previsione
     }
   }
   return conta;
+}
+
+// --- La giornata e la settimana, in numeri ---
+type Dati = Pick<Stato, "task" | "completamenti" | "ignorati" | "vacanza">;
+
+// Le task di un giorno (non saltate) e quelle già fatte.
+export function giornata(s: Dati, data: string) {
+  const previste = s.task.filter((t) => èPrevista(t, data, { vacanza: s.vacanza }) && !èIgnorata(s.ignorati, t.id, data));
+  const fatte = previste.filter((t) => s.completamenti.some((c) => c.taskId === t.id && c.data === data));
+  return { previste, fatte };
+}
+
+// Il "boss" della settimana: i suoi punti vita sono le task previste da lunedì a domenica; ogni task fatta gli toglie un punto.
+export function bossSettimana(s: Dati, oggi: string) {
+  const lunedi = inizioSettimana(oggi);
+  let pianificate = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = dataPiù(lunedi, i);
+    pianificate += s.task.filter((t) => èPrevista(t, d, { vacanza: s.vacanza })).length;
+  }
+  const domenica = dataPiù(lunedi, 6);
+  const danni = s.completamenti.filter((c) => c.data >= lunedi && c.data <= domenica).length;
+  const hp = Math.max(0, pianificate - danni);
+  return { pianificate, danni, hp, sconfitto: pianificate >= 3 && danni >= pianificate };
 }

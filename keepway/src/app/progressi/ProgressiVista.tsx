@@ -13,7 +13,7 @@ export default function ProgressiVista() {
 
   // Punti degli ultimi 7 giorni
   const giorni = Array.from({ length: 7 }, (_, i) => dataPiù(oggi, i - 6));
-  const punti = giorni.map((d) => stato.completamenti.filter((c) => c.data === d).reduce((t, c) => t + c.punti + c.bonus, 0));
+  const punti = giorni.map((d) => stato.completamenti.filter((c) => c.data === d).reduce((t, c) => t + c.punti + c.bonus, 0) + stato.bonus.filter((b) => b.data === d).reduce((t, b) => t + b.xp, 0));
   const max = Math.max(10, ...punti);
 
   // Archivio delle prove: ogni task fatta è una prova.
