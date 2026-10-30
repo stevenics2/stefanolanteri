@@ -31,14 +31,13 @@ export default function TurniLista() {
     [filtro, stato.modifiche],
   );
 
-  // All'apertura scorre fino a oggi.
-  const giàScorso = useRef(false);
+  // Ogni volta che si entra in una scheda si riparte dal giorno di oggi: nel Roster si scorre fino alla riga di oggi,
+  // nel Calendario e nel Recap si torna in cima (il mese mostrato è quello corrente, con oggi selezionato).
   useEffect(() => {
-    if (oggi && !giàScorso.current && rigaOggi.current) {
-      rigaOggi.current.scrollIntoView({ block: "center" });
-      giàScorso.current = true;
-    }
-  }, [oggi, visibili, vista]);
+    if (!pronto || !oggi) return;
+    if (vista === "lista") rigaOggi.current?.scrollIntoView({ block: "center" });
+    else window.scrollTo({ top: 0 });
+  }, [pronto, oggi, vista, filtro]);
 
   // Giorni con meno di 12 ore di riposo (o un doppio non consentito): si segnano in rosso.
   const problemi = new Map<string, string>();
