@@ -61,8 +61,8 @@ export default function TurniLista() {
   const vaiAOggi = () => rigaOggi.current?.scrollIntoView({ block: "center", behavior: "smooth" });
 
   return (
-    <section className="-mx-4 -mt-5">
-      <header className="sticky top-0 z-10 bg-background px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-3 border-b border-white/10">
+    <section className="-mx-4 -mt-[var(--pt-pagina)]">
+      <header className="sticky top-0 z-10 bg-background px-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-3 border-b border-white/10">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Turni</h1>
           <button

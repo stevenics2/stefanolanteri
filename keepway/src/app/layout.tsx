@@ -27,7 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full flex flex-col">
         {/* pb extra: spazio per la barra in basso e la safe area dell'iPhone */}
         <Providers>
-          <main className="flex-1 px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-28">
+          <main className="flex-1 px-4 pt-[var(--pt-pagina)] pb-28">
             {children}
           </main>
           <BottomNav />

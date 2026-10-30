@@ -69,7 +69,7 @@ export default function TaskForm({ iniziale, onClose }: { iniziale: Task | null;
 
   const campo = "mt-1 w-full rounded-xl bg-white/10 px-3 py-2.5 outline-none";
   return (
-    <div className="fixed inset-0 z-30 overflow-y-auto bg-background px-4 pb-10 pt-[max(1.25rem,env(safe-area-inset-top))]">
+    <div className="fixed inset-0 z-30 overflow-y-auto bg-background px-4 pb-10 pt-[var(--pt-pagina)]">
       <div className="mx-auto max-w-md space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold">{iniziale ? "Modifica task" : "Nuova task"}</h1>

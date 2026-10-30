@@ -22,7 +22,7 @@ export default function Ricompense() {
 
   if (!r || stato.timer) return null; // con il timer aperto non deve coprire nulla
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-[max(1rem,env(safe-area-inset-top))] z-50 flex flex-col items-center gap-2 px-4">
+    <div className="pointer-events-none fixed inset-x-0 top-[calc(env(safe-area-inset-top)+0.75rem)] z-50 flex flex-col items-center gap-2 px-4">
       {r.nuovoLivello && (
         <div className="pop rounded-2xl bg-accent px-6 py-4 text-center text-black shadow-xl">
           <div className="text-xs font-semibold uppercase tracking-wide">Nuovo livello</div>
