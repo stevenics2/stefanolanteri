@@ -9,14 +9,14 @@ import TurniDaSistemare from "../components/TurniDaSistemare";
 import { Banda } from "./banda";
 import CalendarioMese from "./CalendarioMese";
 import MenuTurno from "./MenuTurno";
-import RecapMese from "./RecapMese";
+import RecapVista from "./RecapVista";
 
 type Filtro = "tutti" | "lavoro" | "riposi";
 
 export default function TurniLista() {
   const { pronto, stato, oggi } = useStore();
   const [filtro, setFiltro] = useState<Filtro>("tutti");
-  const [vista, setVista] = useState<"lista" | "mese">("lista");
+  const [vista, setVista] = useState<"lista" | "mese" | "recap">("lista");
   const [aperto, setAperto] = useState<string | null>(null);
   const rigaOggi = useRef<HTMLLIElement | null>(null);
 
@@ -58,10 +58,10 @@ export default function TurniLista() {
             </button>
           )}
         </div>
-        <div className="mt-3 grid grid-cols-2 gap-1 rounded-xl bg-white/10 p-1 text-sm font-medium">
-          {(["lista", "mese"] as const).map((v) => (
+        <div className="mt-3 grid grid-cols-3 gap-1 rounded-xl bg-white/10 p-1 text-sm font-medium">
+          {([["lista", "Lista"], ["mese", "Calendario"], ["recap", "Recap"]] as const).map(([v, nome]) => (
             <button key={v} onClick={() => setVista(v)} className={`rounded-lg py-1.5 ${vista === v ? "bg-accent text-black" : "text-muted"}`}>
-              {v === "lista" ? "Lista" : "Calendario"}
+              {nome}
             </button>
           ))}
         </div>
@@ -80,11 +80,10 @@ export default function TurniLista() {
 
       {vista === "mese" ? (
         <CalendarioMese />
+      ) : vista === "recap" ? (
+        <RecapVista />
       ) : (
         <>
-          <div className="px-4 pt-4">
-            <RecapMese anno={Number(oggi.slice(0, 4))} mese0={Number(oggi.slice(5, 7)) - 1} />
-          </div>
           <ul>
             {visibili.map((g) => {
               const [a, m, gg] = g.data.split("-").map(Number);

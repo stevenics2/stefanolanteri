@@ -12,7 +12,6 @@ import { RigaEvento } from "../components/AgendaBox";
 import FormEvento from "../task/FormEvento";
 import { Banda, bandaDi } from "./banda";
 import MenuTurno from "./MenuTurno";
-import RecapMese from "./RecapMese";
 
 const SETTIMANA = ["L", "M", "M", "G", "V", "S", "D"];
 const p2 = (n: number) => String(n).padStart(2, "0");
@@ -64,8 +63,6 @@ export default function CalendarioMese() {
 
   return (
     <div className="space-y-4 px-4 pb-4 pt-4">
-      <RecapMese anno={a} mese0={m} />
-
       <div className="flex items-center justify-between">
         <button data-suono="indietro" onClick={() => vai(-1)} aria-label="Mese precedente" className="rounded-xl bg-white/10 p-2"><ChevronLeft size={20} /></button>
         <div className="text-lg font-bold capitalize">{MESI_LUNGHI[m]} {a}</div>

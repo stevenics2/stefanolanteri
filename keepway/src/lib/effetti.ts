@@ -87,20 +87,52 @@ function rumore(inizio: number, durata: number, freq: number, volume: number) {
   src.start(ctx.currentTime + inizio);
 }
 
-// Il campanello metallico: più note NON armoniche insieme (è quello che lo fa suonare "d'ottone") che si spengono piano.
-function campanello(inizio: number, base: number, volume: number) {
-  for (const [rapporto, v, durata] of [[1, 1, 1.1], [2.76, 0.55, 0.8], [5.4, 0.3, 0.5], [1.5, 0.35, 0.9]] as const) {
-    nota(base * rapporto, inizio, durata, volume * v, "sine");
+// Una nota che scivola da una frequenza all'altra: il "tonf" sordo del tasto e del cassetto.
+function scivola(f0: number, f1: number, inizio: number, durata: number, volume: number, onda: OscillatorType = "sine") {
+  if (!ctx) return;
+  const t = ctx.currentTime + inizio;
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.type = onda;
+  osc.frequency.setValueAtTime(f0, t);
+  osc.frequency.exponentialRampToValueAtTime(f1, t + durata);
+  g.gain.setValueAtTime(volume, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + durata);
+  osc.connect(g).connect(ctx.destination);
+  osc.start(t);
+  osc.stop(t + durata);
+}
+
+// La campana d'ottone: tante note NON armoniche insieme, ognuna con la sua durata (le acute si spengono prima),
+// ognuna doppiata con una di pochissimo più alta: il "battimento" dà il luccichio metallico.
+function campana(inizio: number, base: number, volume: number) {
+  const parziali: [rapporto: number, peso: number, durata: number][] = [
+    [1, 1, 1.7], [2, 0.5, 1.3], [2.76, 0.6, 1.0], [4.07, 0.35, 0.65], [5.4, 0.25, 0.45], [6.8, 0.12, 0.3],
+  ];
+  for (const [r, v, d] of parziali) {
+    nota(base * r, inizio, d, volume * v, "sine");
+    nota(base * r * 1.004, inizio, d * 0.9, volume * v * 0.5, "sine");
   }
 }
 
-// Una vecchia cassa da negozio: scatto del tasto, "ching" del campanello, cassetto che scorre.
+// Il tintinnio delle monete nel cassetto: tanti "ping" brevissimi, acuti, un po' sparsi.
+function tintinnio(inizio: number, quanti: number) {
+  const freq = [3520, 4186, 3136, 4699, 5274, 3951, 4400];
+  for (let i = 0; i < quanti; i++) nota(freq[i % freq.length] * (1 + 0.012 * (i % 3)), inizio + i * 0.055 + (i % 2) * 0.02, 0.09, 0.045, "sine");
+}
+
+// Una vecchia cassa da negozio, in tre tempi:
+//  1) il tasto: tic-tic meccanico e un colpo sordo
+//  2) "CHING!": il campanello d'ottone, lungo e brillante
+//  3) il cassetto che scorre, un tonfo di legno e il tintinnio delle monete
 function incasso() {
-  rumore(0, 0.07, 2200, 0.4); // clack
-  nota(120, 0, 0.1, 0.35, "square"); // colpo grave
-  campanello(0.07, 2093, 0.16); // ching!
-  rumore(0.18, 0.28, 700, 0.18); // il cassetto scorre
-  campanello(0.5, 3136, 0.06); // ting finale, più piano
+  rumore(0, 0.025, 3800, 0.35);
+  rumore(0.05, 0.025, 3000, 0.3);
+  scivola(190, 55, 0, 0.14, 0.4, "triangle");
+  campana(0.13, 2349, 0.13);
+  rumore(0.36, 0.34, 650, 0.14);
+  scivola(110, 60, 0.68, 0.12, 0.22, "sine");
+  tintinnio(0.52, 7);
 }
 
 export function suono(tipo: Suono) {
