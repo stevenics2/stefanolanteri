@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Clover } from "lucide-react";
+import { Check, Clover, Zap } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { EVENTO_COMBO, EVENTO_FIAMMATA } from "./FestaOverlay";
 import { aperturaCorrente, èDaRiprodurre, iscriviApertura, segnaRiprodotta } from "@/lib/apertura";
@@ -226,7 +226,7 @@ function Pannello({
 }) {
   // Si decide una volta sola per apertura: cambiando scheda e tornando qui non riparte.
   const { ricompensa: r, festa } = useStore();
-  // la fiammata di fine combo: si rilancia a ogni evento
+  // il flash oro di fine combo: si rilancia a ogni evento
   const [fiammata, setFiammata] = useState(0);
   const [combo, setCombo] = useState<{ id: string; titolo: string; testo: string } | null>(null);
   useEffect(() => {
@@ -261,13 +261,14 @@ function Pannello({
       {r && anima && <div key={r.id} className="lampo-ora" aria-hidden />}
       {combo && (
         <div className="pointer-events-none absolute inset-0 z-[4] flex items-center justify-center px-3">
-          <div key={combo.id} className="risultato max-w-full rounded-2xl bg-black/80 px-5 py-3 text-center ring-1 ring-sky-300/40 backdrop-blur-sm" style={{ animationDelay: "0s", animationDuration: "2.4s", boxShadow: "0 0 30px -6px rgba(125,211,252,.7)" }}>
-            <div className="text-[20px] font-black leading-tight" style={{ color: "#7dd3fc" }}>{combo.titolo}</div>
-            <div className="mt-1 text-[12px] text-white/80">{combo.testo}</div>
+          <div key={combo.id} className="risultato w-full max-w-[17rem] rounded-3xl border bg-card px-4 py-3 text-center" style={{ animationDelay: "0s", animationDuration: "2.4s", borderColor: "#7dd3fc", boxShadow: "0 0 40px -6px #7dd3fc", color: "#7dd3fc" }}>
+            <Zap size={40} strokeWidth={1.6} className="mx-auto" />
+            <div className="mt-1 text-xl font-black tracking-wide">{combo.titolo}</div>
+            <p className="mt-1 text-[13px] text-white">{combo.testo}</p>
           </div>
         </div>
       )}
-      {fiammata > 0 && <div key={fiammata} className="fiammata" aria-hidden />}
+      {fiammata > 0 && <div key={fiammata} className="flash-oro" aria-hidden />}
       {r && festa.length === 0 && (
         <div className="pointer-events-none absolute inset-0 z-[4] flex items-center justify-center px-3">
           <div key={r.id} className="risultato max-w-full rounded-2xl bg-black/75 px-5 py-2.5 text-center ring-1 ring-white/20 backdrop-blur-sm">

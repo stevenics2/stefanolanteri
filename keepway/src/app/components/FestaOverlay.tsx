@@ -51,7 +51,7 @@ export default function FestaOverlay() {
       if (anim) void (tipo === "forziere" ? monete() : tipo === "combo" ? Promise.resolve() : coriandoli(true));
     }, ATTESA_ANELLI_MS + (nelBox ? 0 : attesa));
     const t2 = setTimeout(() => {
-      // a fine popup della combo: una fiammata su tutto il riquadro di avanzamento
+      // a fine popup della combo: un flash oro su tutto il riquadro di avanzamento
       if (tipo === "combo" && ultimo.current.animazioni) window.dispatchEvent(new Event(EVENTO_FIAMMATA));
       ultimo.current.chiudiFesta();
     }, ATTESA_ANELLI_MS + durata);
