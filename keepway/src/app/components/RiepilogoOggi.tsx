@@ -6,7 +6,7 @@ import { dataPiù, inizioSettimana } from "@/lib/date";
 import { èPrevista, livello, serie } from "@/lib/regole";
 import { useStore } from "@/lib/store";
 
-const VERDE = "#3dffa8";
+const COLORE = "#cdd6e0"; // argento freddo, neutro
 const LARGHEZZA_BARRA = 10;
 
 // Un numero che "sale" fino al valore (parte da 0 la prima volta, poi da dove era).
@@ -31,17 +31,6 @@ function useConteggio(valore: number, anima: boolean) {
   return anima ? v : valore;
 }
 
-// L'intestazione si "scrive" a caratteri, una volta sola.
-function useScrittura(testo: string, anima: boolean) {
-  const [n, setN] = useState(0);
-  useEffect(() => {
-    if (!anima) return;
-    const id = setInterval(() => setN((x) => (x >= testo.length ? x : x + 1)), 35);
-    return () => clearInterval(id);
-  }, [testo, anima]);
-  return anima ? testo.slice(0, n) : testo;
-}
-
 // Una riga: ETICHETTA [████████░░░░] 67%  dettaglio
 function Riga({ etichetta, perc, dettaglio, anima }: { etichetta: string; perc: number; dettaglio: string; anima: boolean }) {
   const p = useConteggio(Math.max(0, Math.min(100, Math.round(perc))), anima);
@@ -49,13 +38,13 @@ function Riga({ etichetta, perc, dettaglio, anima }: { etichetta: string; perc: 
   const fatto = p >= 100;
   return (
     <div className="grid grid-cols-[7.4rem_max-content_2.6rem_1fr] items-center gap-x-1.5 whitespace-nowrap leading-5">
-      <span style={{ color: "rgba(61,255,168,0.7)" }}>{etichetta}</span>
-      <span className="whitespace-nowrap" style={{ color: fatto ? "#d6ffe9" : VERDE, textShadow: fatto ? "0 0 8px rgba(61,255,168,0.9)" : undefined }}>
+      <span style={{ color: "rgba(205,214,224,0.7)" }}>{etichetta}</span>
+      <span className="whitespace-nowrap" style={{ color: fatto ? "#ffffff" : COLORE, textShadow: fatto ? "0 0 8px rgba(205,214,224,0.9)" : undefined }}>
         [{"█".repeat(pieni)}
-        <span style={{ color: "rgba(61,255,168,0.22)" }}>{"░".repeat(LARGHEZZA_BARRA - pieni)}</span>]
+        <span style={{ color: "rgba(205,214,224,0.22)" }}>{"░".repeat(LARGHEZZA_BARRA - pieni)}</span>]
       </span>
-      <span className="text-right font-bold tabular-nums" style={{ color: fatto ? "#d6ffe9" : VERDE }}>{p}%</span>
-      <span className="text-right text-[10px]" style={{ color: "rgba(61,255,168,0.55)" }}>{dettaglio}</span>
+      <span className="text-right font-bold tabular-nums" style={{ color: fatto ? "#ffffff" : COLORE }}>{p}%</span>
+      <span className="text-right text-[10px]" style={{ color: "rgba(205,214,224,0.55)" }}>{dettaglio}</span>
     </div>
   );
 }
@@ -124,7 +113,7 @@ export default function RiepilogoOggi({ fatte, totale }: { fatte: number; totale
 
 type RigaDati = { etichetta: string; perc: number; dettaglio: string };
 
-// Il riquadro vero e proprio. A ogni apertura dell'app fa il "ricalcolo": un lampo, una scansione luminosa e le barre che si ricontano.
+// Il riquadro vero e proprio. A ogni apertura dell'app fa il "ricalcolo": una riga luminosa lo attraversa mentre le barre si ricontano, e a conti finiti un lampo.
 function Pannello({
   anima, apertura, l, xp, righe, piede,
 }: {
@@ -138,34 +127,25 @@ function Pannello({
   // Si decide una volta sola per apertura: cambiando scheda e tornando qui non riparte.
   const [ricalcolo] = useState(() => anima && èDaRiprodurre(apertura));
   useEffect(() => segnaRiprodotta(apertura), [apertura]);
-  const scritta = useScrittura(ricalcolo ? "keepway@oggi:~$ ./ricalcola --tutto" : "keepway@oggi:~$ ./status --live", anima);
   return (
     <div
       className={`relative overflow-hidden rounded-2xl border bg-black p-3 font-mono text-[11px] ${ricalcolo ? "ricalcolo" : ""}`}
-      style={{ borderColor: "rgba(61,255,168,0.35)", boxShadow: "0 0 28px -10px rgba(61,255,168,0.6), inset 0 0 24px rgba(61,255,168,0.06)", color: VERDE }}
+      style={{ borderColor: "rgba(205,214,224,0.35)", boxShadow: "0 0 28px -10px rgba(205,214,224,0.6), inset 0 0 24px rgba(205,214,224,0.06)", color: COLORE }}
     >
       {ricalcolo && <div className="lampo" aria-hidden />}
       {ricalcolo && <div className="scansione" aria-hidden />}
 
       <div className="relative">
-        <div className="mb-1.5 flex items-center justify-between" style={{ color: "rgba(61,255,168,0.7)" }}>
-          <span className="min-h-4">
-            {scritta}
-            <span className="cursore">█</span>
-          </span>
-          <span>0x{String(l.numero).padStart(2, "0")}</span>
-        </div>
-
-        <div className="mb-1 flex items-baseline justify-between border-b pb-1" style={{ borderColor: "rgba(61,255,168,0.18)" }}>
+        <div className="mb-1 flex items-baseline justify-between border-b pb-1" style={{ borderColor: "rgba(205,214,224,0.18)" }}>
           <span className="text-[13px] font-bold uppercase tracking-widest">LV.{l.numero} {l.nome}</span>
-          <span className="text-[13px] font-black tabular-nums" style={{ textShadow: "0 0 10px rgba(61,255,168,0.6)" }}>{xp} XP</span>
+          <span className="text-[13px] font-black tabular-nums" style={{ textShadow: "0 0 10px rgba(205,214,224,0.6)" }}>{xp} XP</span>
         </div>
 
         {righe.map((r) => (
           <Riga key={r.etichetta} etichetta={r.etichetta} perc={r.perc} dettaglio={r.dettaglio} anima={anima} />
         ))}
 
-        <div className="mt-1.5 flex flex-wrap justify-between gap-x-3 border-t pt-1 text-[10px]" style={{ borderColor: "rgba(61,255,168,0.18)", color: "rgba(61,255,168,0.65)" }}>
+        <div className="mt-1.5 flex flex-wrap justify-between gap-x-3 border-t pt-1 text-[10px]" style={{ borderColor: "rgba(205,214,224,0.18)", color: "rgba(205,214,224,0.65)" }}>
           <span>+{piede.xpOggi} xp oggi</span>
           <span>Δ {piede.variazione} vs 7g prima</span>
           <span>ETA {piede.eta}</span>
