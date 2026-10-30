@@ -1,5 +1,5 @@
-import Placeholder from "../components/Placeholder";
+import TurniLista from "./TurniLista";
 
 export default function Pagina() {
-  return <Placeholder titolo="Turni" nota="In arrivo nella Fase 2." />;
+  return <TurniLista />;
 }
