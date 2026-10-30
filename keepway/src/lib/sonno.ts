@@ -175,3 +175,16 @@ export function consiglioSonno(adesso: Date): ConsiglioSonno | null {
 
   return { sonno: s, quando, aLetto, sveglia, ultimoLetto: s.ultimoLetto ? hhmm(s.ultimoLetto) : undefined, oreTxt, titolo, messaggio };
 }
+
+// --- Silenzio per le notifiche: durante i turni (mezz'ora prima compresa) e durante il sonno ---
+const blocchiTutti = costruisciBlocchi();
+
+// `ms` = istante reale (ms dal 1970). I conti del calendario usano minuti "locali": si converte l'ora locale del telefono.
+export function èInSilenzio(ms: number): boolean {
+  const d = new Date(ms);
+  const m = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 60000 + d.getHours() * 60 + d.getMinutes();
+  return (
+    blocchiTutti.some((b) => m >= b.inizio - 30 && m < b.fine) || // in turno, o in procinto di andarci
+    sonni.some((x) => m >= x.aLetto && m < x.sveglia)
+  );
+}

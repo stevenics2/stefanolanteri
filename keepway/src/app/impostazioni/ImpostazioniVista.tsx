@@ -5,6 +5,7 @@ import { useState } from "react";
 import { inVacanza } from "@/lib/regole";
 import { useStore } from "@/lib/store";
 import AreaIcona from "../components/AreaIcona";
+import NotificheImpostazioni from "./NotificheImpostazioni";
 
 export default function ImpostazioniVista() {
   const { pronto, stato, oggi, impostazioni, setFrase, setStanze, setVacanza, azzera } = useStore();
@@ -55,6 +56,8 @@ export default function ImpostazioniVista() {
           <input type="checkbox" className="h-5 w-5" checked={stato.impostazioni.animazioni} onChange={(e) => impostazioni({ animazioni: e.target.checked })} />
         </label>
       </div>
+
+      <NotificheImpostazioni />
 
       <div className="space-y-2">
         <h2 className={`${titolo} flex items-center gap-2`}><Plane size={15} /> Fuori casa (vacanza / trasferta)</h2>

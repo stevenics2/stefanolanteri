@@ -1,10 +1,17 @@
 {
-  // Pubblica la cartella `out/` (il sito statico generato da `npm run build`) su Cloudflare.
+  // Keepway su Cloudflare: il sito statico (cartella `out/`) + le API per le notifiche (`worker/index.js`).
   // Il nome deve essere uguale a quello del progetto su Cloudflare.
   "name": "keepway",
+  "main": "worker/index.js",
   "compatibility_date": "2026-10-01",
   "assets": {
     "directory": "./out",
-    "not_found_handling": "404-page"
-  }
+    "not_found_handling": "404-page",
+    // Solo le chiamate /api/* passano dal programma; tutto il resto è servito direttamente come file.
+    "run_worker_first": ["/api/*"]
+  },
+  // Ogni minuto: invia le notifiche scadute (gratis su Cloudflare)
+  "triggers": { "crons": ["* * * * *"] }
+  // Il database D1 per le notifiche si aggiunge qui, appena creato:
+  // "d1_databases": [{ "binding": "DB", "database_name": "keepway", "database_id": "..." }]
 }
