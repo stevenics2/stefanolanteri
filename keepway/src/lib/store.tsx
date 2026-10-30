@@ -64,6 +64,7 @@ type Contesto = {
   ripristina: (taskId: string) => void;
   rimanda: (taskId: string, alle: number) => void;
   annullaRinvio: (taskId: string) => void;
+  impostaMomento: (taskId: string, momento: { da: number; a: number } | null) => void;
   setStanze: (stanze: string[]) => void;
   setVacanza: (v: Vacanza | null) => void;
   salvaEvento: (e: Evento) => void;
@@ -123,6 +124,7 @@ function carica(): Stato {
           stanze: s.stanze ?? base.stanze,
           ignorati: s.ignorati ?? [],
           rinvii: s.rinvii ?? [],
+          momenti: s.momenti ?? [],
           vacanza: s.vacanza ?? null,
           eventi: (s.eventi ?? []).map((e) => {
             // Vecchio formato: un solo anticipo (anticipoGiorni). Ora sono più avvisi e lo spostamento.
@@ -323,6 +325,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         })),
       annullaRinvio: (taskId) =>
         aggiorna((x) => ({ ...x, rinvii: x.rinvii.filter((r) => !(r.taskId === taskId && r.data === oggiLocale())) })),
+      impostaMomento: (taskId, momento) =>
+        aggiorna((x) => ({
+          ...x,
+          momenti: [...x.momenti.filter((m) => !(m.taskId === taskId && m.data === oggiLocale())), ...(momento ? [{ taskId, data: oggiLocale(), ...momento }] : [])],
+        })),
       setStanze: (stanze) => aggiorna((x) => ({ ...x, stanze })),
       setVacanza: (vacanza) => aggiorna((x) => ({ ...x, vacanza })),
       salvaEvento: (e) =>

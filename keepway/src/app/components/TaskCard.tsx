@@ -1,6 +1,6 @@
 "use client";
 
-import { AlarmClock, Check, Clock, Flame, Play, SkipForward, Undo2 } from "lucide-react";
+import { AlarmClock, Check, Clock, Pencil, Flame, Play, SkipForward, Undo2 } from "lucide-react";
 import { useState } from "react";
 import { puntiMinima, serie } from "@/lib/regole";
 import { durataMin, durataTotaleMin } from "@/lib/durata";
@@ -15,8 +15,9 @@ const ora = (ms: number) => new Date(ms).toLocaleTimeString("it-IT", { hour: "2-
 // Una task nella schermata Oggi: avvia il timer, segna come fatta, fa la versione minima,
 // la rimanda a più tardi oppure la salta per oggi.
 export default function TaskCard({ task, soloMinima }: { task: Task; soloMinima: boolean }) {
-  const { stato, oggi, completa, annulla, apriTimer, ignoraOggi, rimanda, annullaRinvio } = useStore();
+  const { stato, oggi, completa, annulla, apriTimer, ignoraOggi, rimanda, annullaRinvio, impostaMomento } = useStore();
   const [piuTardi, setPiuTardi] = useState(false);
+  const [modMomento, setModMomento] = useState(false);
   const area = stato.aree.find((a) => a.id === task.areaId);
   const fatto = stato.completamenti.find((c) => c.taskId === task.id && c.data === oggi);
   const rinvio = stato.rinvii.find((r) => r.taskId === task.id && r.data === oggi);
@@ -24,7 +25,8 @@ export default function TaskCard({ task, soloMinima }: { task: Task; soloMinima:
   const colore = area?.colore ?? "#888";
   const minima = task.minimaMin;
   // Task che si adatta ai turni: il momento libero più lungo di oggi (né in turno, né a dormire)
-  const finestra = task.adattaATurni && !fatto ? finestraMigliore(oggi, durataTotaleMin(task)) : null;
+  const scelto = stato.momenti.find((m) => m.taskId === task.id && m.data === oggi);
+  const finestra = task.adattaATurni && !fatto ? (scelto ?? finestraMigliore(oggi, durataTotaleMin(task))) : null;
   const senzaTempo = task.adattaATurni && !fatto && !finestra;
   const stanza = task.tipo === "stanza" ? stanzaDelGiorno(stato.stanze, stato.completamenti, task.id, oggi) : null;
 
@@ -51,9 +53,38 @@ export default function TaskCard({ task, soloMinima }: { task: Task; soloMinima:
             {task.spostamentoMin ? ` · +${task.spostamentoMin * 2} min di spostamento` : ""}
             {minima ? ` (minima ${minima})` : ""}
           </div>
-          {finestra && (
-            <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-300">
-              <Clock size={12} /> Momento giusto: {hhmm(finestra.da)}–{hhmm(finestra.a)}
+          {finestra && !modMomento && (
+            <button data-suono="via" onClick={() => setModMomento(true)} className="mt-1 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-300">
+              <Clock size={12} /> Momento giusto: {hhmm(finestra.da)}–{hhmm(finestra.a)} <Pencil size={11} />
+            </button>
+          )}
+          {finestra && modMomento && (
+            <div className="mt-1 flex flex-nowrap items-center gap-1.5 whitespace-nowrap text-xs text-emerald-300">
+              <Clock size={12} />
+              <input id={`da-${task.id}`} type="time" defaultValue={hhmm(finestra.da)} className="w-[5.2rem] rounded-lg bg-white/10 px-1.5 py-1 text-white" />
+              –
+              <input id={`a-${task.id}`} type="time" defaultValue={hhmm(finestra.a)} className="w-[5.2rem] rounded-lg bg-white/10 px-1.5 py-1 text-white" />
+              <button
+                data-suono="ok"
+                className="rounded-full bg-emerald-500/25 px-2.5 py-1 font-bold"
+                onClick={() => {
+                  const min = (id: string) => {
+                    const [h, m] = ((document.getElementById(id) as HTMLInputElement).value || "0:0").split(":").map(Number);
+                    return h * 60 + m;
+                  };
+                  const da = min(`da-${task.id}`);
+                  const a = min(`a-${task.id}`);
+                  if (a > da) impostaMomento(task.id, { da, a });
+                  setModMomento(false);
+                }}
+              >
+                Ok
+              </button>
+              {scelto && (
+                <button data-suono="indietro" className="text-muted underline" onClick={() => { impostaMomento(task.id, null); setModMomento(false); }}>
+                  auto
+                </button>
+              )}
             </div>
           )}
           {senzaTempo && <div className="mt-1 text-xs text-amber-300">Oggi sei molto impegnato: se riesci, solo la versione minima.</div>}

@@ -48,6 +48,8 @@ export type Completamento = {
 // "Salta oggi": la task sparisce per quel giorno e non rompe la serie.
 export type Ignorato = { taskId: string; data: string };
 // "Più tardi": ricordamela alle `alle` (ms).
+// Momento giusto scelto a mano per una task in un giorno (minuti dalla mezzanotte).
+export type Momento = { taskId: string; data: string; da: number; a: number };
 export type Rinvio = { taskId: string; data: string; alle: number };
 // Modalità fuori casa: dal giorno `dal` fino ad `al` (vuoto = finché non torno).
 export type Vacanza = { dal: string; al: string | null };
@@ -111,6 +113,7 @@ export type Stato = {
   stanze: string[]; // le stanze da sistemare a rotazione, scritte per intero ("il soggiorno")
   ignorati: Ignorato[];
   rinvii: Rinvio[];
+  momenti: Momento[];
   vacanza: Vacanza | null;
   eventi: Evento[];
   modifiche: Modifica[];
