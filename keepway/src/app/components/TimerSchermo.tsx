@@ -114,6 +114,9 @@ export default function TimerSchermo() {
         )}
 
         <div className="grid grid-cols-2 gap-3">
+          <button data-suono="indietro" onClick={indietro} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/10 py-3">
+            <ArrowLeft size={18} /> Indietro
+          </button>
           <button
             data-suono="indietro"
             onClick={resettaTimer}
@@ -121,9 +124,6 @@ export default function TimerSchermo() {
             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/10 py-3 disabled:opacity-30"
           >
             <RotateCcw size={18} /> Reset
-          </button>
-          <button data-suono="indietro" onClick={indietro} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/10 py-3">
-            <ArrowLeft size={18} /> Indietro
           </button>
         </div>
 
