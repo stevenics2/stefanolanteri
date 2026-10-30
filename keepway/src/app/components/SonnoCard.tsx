@@ -27,14 +27,13 @@ export default function SonnoCard() {
   const allarme = c.sonno.corto && c.sonno.tipo === "notte";
   return (
     <div className={`rounded-2xl p-4 ${allarme ? "bg-amber-500/15 border border-amber-500/50" : "bg-card"}`}>
-      <div className="flex items-center gap-2 text-sm text-muted"><BedDouble size={16} /> {c.titolo}</div>
+      <div className="flex items-center gap-2 text-sm text-muted"><BedDouble size={16} /> Sonno</div>
+      <p className="mt-2">{c.frase}</p>
       <div className="mt-1 flex items-baseline gap-2">
         <span className="text-4xl font-bold text-accent">{c.aLetto}</span>
-        <span className="text-muted">
-          {c.quando} → sveglia {c.sveglia}
-        </span>
+        <span className="text-muted">{c.quando}</span>
       </div>
-      <p className="mt-2 text-sm text-muted">{c.messaggio}</p>
+      <p className="mt-2 text-sm text-muted">{c.dettaglio}</p>
     </div>
   );
 }

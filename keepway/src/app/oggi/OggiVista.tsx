@@ -62,7 +62,6 @@ export default function OggiVista() {
       )}
 
       <Livello />
-      <SonnoCard />
 
       {carico === "essenziale" && !mostraTutte && (
         <div className="flex items-start gap-2 rounded-2xl border border-sky-500/40 bg-sky-500/10 p-4 text-sm">
@@ -112,6 +111,9 @@ export default function OggiVista() {
           ))}
         </div>
       )}
+
+      {/* Il sonno non è la prima cosa da vedere: sta in fondo, dopo le task */}
+      <SonnoCard />
 
       {previste.length === 0 && carico === "normale" && (
         <p className="text-muted">

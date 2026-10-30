@@ -63,6 +63,7 @@ export type TipoSonno = "dopo_notte" | "riposino" | "notte";
 export type Sonno = {
   tipo: TipoSonno;
   turno: string; // il turno a cui si riferisce (precede o segue)
+  inizio?: number; // solo "notte" e "riposino": quando inizia quel turno (minuti assoluti)
   aLetto: number; // minuti assoluti
   sveglia: number;
   ultimoLetto?: number; // solo per "notte": l'ultimo orario che garantisce le 7 ore
@@ -84,6 +85,7 @@ function sonnoRegolare(q: Blocco, fineP: number | null): Sonno {
   return {
     tipo: "notte",
     turno: q.turno,
+    inizio: q.inizio,
     aLetto,
     sveglia,
     ultimoLetto: aLetto === svegliaAbituale - SONNO_IDEALE_MIN ? sveglia - SONNO_MINIMO_MIN : undefined,
@@ -112,7 +114,7 @@ function costruisciSonni(): Sonno[] {
     if (q.notte && p && distanza <= 16 * 60) {
       const aLetto = p.fine + DOPO_TURNO_MIN;
       const sveglia = q.inizio - NOTTE_PRIMA_ORE;
-      out.push({ tipo: "riposino", turno: q.turno, aLetto, sveglia, ore: sveglia - aLetto, corto: sveglia - aLetto < SONNO_MINIMO_MIN });
+      out.push({ tipo: "riposino", turno: q.turno, inizio: q.inizio, aLetto, sveglia, ore: sveglia - aLetto, corto: sveglia - aLetto < SONNO_MINIMO_MIN });
       return;
     }
 
@@ -132,11 +134,20 @@ export type ConsiglioSonno = {
   sveglia: string;
   ultimoLetto?: string;
   oreTxt: string;
-  titolo: string;
-  messaggio: string;
+  frase: string; // la frase che introduce l'orario: "Per fare il turno 3 domani, dovresti andare a dormire alle"
+  dettaglio: string; // sveglia e ore di sonno, dopo l'orario
 };
 
 const MAX_ANTICIPO_MIN = 24 * 60; // non mostrare sonni oltre le prossime 24 ore
+
+// "oggi", "stanotte", "domani"... per un turno che inizia a `inizio` (minuti assoluti), visto da `ora`.
+function giornoTurno(inizio: number, ora: number): string {
+  const diff = Math.floor(inizio / MIN_GIORNO) - Math.floor(ora / MIN_GIORNO);
+  const oraInizio = ((inizio % MIN_GIORNO) + MIN_GIORNO) % MIN_GIORNO;
+  if (diff <= 0) return "oggi";
+  if (diff === 1) return oraInizio < 5 * 60 ? "stanotte" : "domani"; // il turno 1 inizia all'1:00 della data indicata
+  return diff === 2 ? "dopodomani" : `tra ${diff} giorni`;
+}
 
 export function consiglioSonno(adesso: Date): ConsiglioSonno | null {
   const p = (x: number) => String(x).padStart(2, "0");
@@ -148,32 +159,33 @@ export function consiglioSonno(adesso: Date): ConsiglioSonno | null {
 
   const giorniDiff = Math.floor(s.aLetto / MIN_GIORNO) - Math.floor(ora / MIN_GIORNO);
   const oraLetto = ((s.aLetto % MIN_GIORNO) + MIN_GIORNO) % MIN_GIORNO;
-  const quando =
-    giorniDiff <= 0 ? "oggi" : oraLetto < 6 * 60 ? "stanotte" : "domani";
+  const quando = giorniDiff <= 0 ? "oggi" : oraLetto < 6 * 60 ? "stanotte" : "domani";
 
   const ore = s.ore / 60;
   const oreTxt = (Math.round(ore * 2) / 2).toString().replace(".", ",");
   const aLetto = hhmm(s.aLetto);
   const sveglia = hhmm(s.sveglia);
+  const turno = s.inizio !== undefined ? `${s.turno} ${giornoTurno(s.inizio, ora)}` : s.turno;
 
-  let titolo: string;
-  let messaggio: string;
+  let frase: string;
+  let dettaglio: string;
   if (s.tipo === "dopo_notte") {
-    titolo = "Dopo la notte";
-    messaggio = `Finito il turno, a letto verso le ${aLetto}. Sveglia ${sveglia}: circa ${oreTxt} ore. È meno del minimo, quindi stasera niente tardi.`;
+    frase = "Finito il turno di notte, dovresti andare a dormire alle";
+    dettaglio = `Sveglia verso le ${sveglia}: circa ${oreTxt} ore di sonno. Stasera non fare tardi.`;
   } else if (s.tipo === "riposino") {
-    titolo = "Riposino prima della notte";
-    messaggio = `Turno ${s.turno} inizia all'1:00 di stanotte. Riposino dalle ${aLetto} alle ${sveglia} (circa ${oreTxt} ore), poi preparati.`;
+    frase = `Per fare il turno ${turno}, dovresti riposare dalle`;
+    dettaglio = `Fino alle ${sveglia}: circa ${oreTxt} ore di sonno, poi preparati.`;
+  } else if (s.corto) {
+    frase = `Per fare il turno ${turno}, puoi andare a dormire alle`;
+    dettaglio = `Sveglia alle ${sveglia}: dormi solo circa ${oreTxt} ore. Giornata leggera.`;
   } else {
-    titolo = `Prima del turno ${s.turno}`;
-    messaggio = s.corto
-      ? `Sveglia ${sveglia}. Puoi dormire solo circa ${oreTxt} ore: giornata di recupero, poche task leggere.`
-      : s.ultimoLetto
-        ? `Sveglia ${sveglia}. A letto per le ${aLetto} (${oreTxt} ore). Al più tardi alle ${hhmm(s.ultimoLetto)} per arrivare a 7 ore.`
-        : `Sveglia ${sveglia}. A letto non prima delle ${aLetto} (${oreTxt} ore di sonno).`;
+    frase = `Per fare il turno ${turno}, dovresti andare a dormire alle`;
+    dettaglio = s.ultimoLetto
+      ? `Sveglia alle ${sveglia}: ${oreTxt} ore di sonno. Al più tardi alle ${hhmm(s.ultimoLetto)}, per arrivare a 7 ore.`
+      : `Sveglia alle ${sveglia}: ${oreTxt} ore di sonno.`;
   }
 
-  return { sonno: s, quando, aLetto, sveglia, ultimoLetto: s.ultimoLetto ? hhmm(s.ultimoLetto) : undefined, oreTxt, titolo, messaggio };
+  return { sonno: s, quando, aLetto, sveglia, ultimoLetto: s.ultimoLetto ? hhmm(s.ultimoLetto) : undefined, oreTxt, frase, dettaglio };
 }
 
 // --- Silenzio per le notifiche: durante i turni (mezz'ora prima compresa) e durante il sonno ---
