@@ -3,35 +3,35 @@
 import { useEffect, useState } from "react";
 import { consiglioSonno, type ConsiglioSonno } from "@/lib/sonno";
 
-// "Stasera vai a dormire alle..." in base al turno di domani.
+// Prossimo sonno consigliato, in base ai turni (dopo la notte, riposino prima della notte, notte normale).
 export default function SonnoCard() {
+  // undefined = non ancora calcolato (serve l'ora locale del telefono), null = nessun vincolo
   const [c, setC] = useState<ConsiglioSonno | null | undefined>(undefined);
 
-  // Si calcola nel browser: serve la data locale di oggi.
   useEffect(() => {
-    const n = new Date();
-    const p = (x: number) => String(x).padStart(2, "0");
-    setC(consiglioSonno(`${n.getFullYear()}-${p(n.getMonth() + 1)}-${p(n.getDate())}`));
+    setC(consiglioSonno(new Date()));
   }, []);
 
-  if (!c) return null;
+  if (c === undefined) return null;
 
-  if (c.tipo === "libero") {
+  if (c === null) {
     return (
       <div className="rounded-2xl bg-card p-4">
         <div className="text-sm text-muted">😴 Sonno</div>
-        <p className="mt-1">Domani è un giorno di riposo: nessun orario obbligato, ma resta regolare.</p>
+        <p className="mt-1">Nelle prossime 24 ore nessun turno ti vincola: dormi regolare.</p>
       </div>
     );
   }
 
+  // Riposino e dopo-notte sono corti per forza: non sono un allarme, quindi tono normale.
+  const allarme = c.sonno.corto && c.sonno.tipo === "notte";
   return (
-    <div className={`rounded-2xl p-4 ${c.ok ? "bg-card" : "bg-amber-500/15 border border-amber-500/50"}`}>
-      <div className="text-sm text-muted">😴 Sonno · domani turno {c.turnoDomani}</div>
+    <div className={`rounded-2xl p-4 ${allarme ? "bg-amber-500/15 border border-amber-500/50" : "bg-card"}`}>
+      <div className="text-sm text-muted">😴 {c.titolo}</div>
       <div className="mt-1 flex items-baseline gap-2">
         <span className="text-4xl font-bold text-accent">{c.aLetto}</span>
         <span className="text-muted">
-          {c.aLettoGiorno === "domani" ? "(dopo mezzanotte)" : "a letto entro"}
+          {c.quando} → sveglia {c.sveglia}
         </span>
       </div>
       <p className="mt-2 text-sm text-muted">{c.messaggio}</p>
