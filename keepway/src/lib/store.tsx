@@ -218,7 +218,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const feste: Festa[] = [];
       const nuoviBonus: Bonus[] = [];
       if (catena === 3 || catena === 5 || catena === 7) {
-        feste.push({ id: nuovoId(), tipo: "combo", titolo: `COMBO x${catena}`, testo: `Punti x${MOLTIPLICATORE_COMBO}: stai andando a razzo!`, xp: 0 });
+        feste.push({ id: nuovoId(), tipo: "combo", titolo: `${catena} Task completate!`, testo: `Punti x${MOLTIPLICATORE_COMBO}: stai andando a razzo!`, xp: 0 });
       }
       // Record personale di task fatte in un giorno
       const perGiorno = new Map<string, number>();

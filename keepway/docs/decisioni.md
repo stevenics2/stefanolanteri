@@ -104,3 +104,5 @@
   - Lettura: se lavori, 30 min dopo l'inizio del turno fino a 2 ore dopo (turno 3: 13:30–15:00, turno 4: 19:30–21:00, turno 2: 07:30–09:00, turno 1: 01:30–03:00); nei giorni liberi la sera.
   - Il promemoria parte all'inizio del momento giusto (durante il turno le notifiche restano silenziate). Si può sempre cambiare a mano per il giorno.
 - Il promemoria della lettura arriva anche durante il turno (si silenzia solo nel sonno).
+
+- Popup: forziere chiuso "COMPLETATO!" (poi "ECCELLENTE!!"); combo "N Task completate!".

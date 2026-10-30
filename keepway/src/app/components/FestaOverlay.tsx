@@ -42,7 +42,7 @@ export default function FestaOverlay() {
       <div className="pop w-full max-w-xs rounded-3xl border bg-card p-6 text-center" style={{ borderColor: colore, boxShadow: `0 0 60px -8px ${colore}` }}>
         <Icona size={64} strokeWidth={1.6} className={`mx-auto ${f.tipo === "forziere" && !aperto ? "scuoti" : ""}`} style={{ color: colore }} />
         <div className="mt-3 text-2xl font-black tracking-wide" style={{ color: colore }}>
-          {f.tipo === "forziere" && !aperto ? "FORZIERE!" : f.titolo}
+          {f.tipo === "forziere" && !aperto ? "COMPLETATO!" : f.titolo}
         </div>
         {(f.tipo !== "forziere" || aperto) && (
           <>
