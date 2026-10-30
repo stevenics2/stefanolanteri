@@ -62,16 +62,18 @@ export default function ImpostazioniVista() {
       <div id="sveglia" className="space-y-2">
         <h2 className={`${titolo} flex items-center gap-2`}><AlarmClock size={15} /> Sveglia dell&apos;iPhone</h2>
         <p className="text-sm text-muted">
-          Un&apos;app web non può creare sveglie da sola, ma può aprire un Comando rapido che lo fa per te. Lo crei una volta sola:
+          Un&apos;app web non può aprire l&apos;Orologio da sola, ma può aprire un Comando rapido che lo fa per te. Lo crei una volta sola, ci vuole un minuto:
         </p>
         <ol className="list-decimal space-y-1 rounded-2xl bg-card p-4 pl-8 text-sm">
           <li>Apri l&apos;app <b>Comandi rapidi</b> e tocca <b>+</b> per un nuovo comando.</li>
           <li>Chiamalo esattamente <b>Keepway Sveglia</b>.</li>
-          <li>Aggiungi l&apos;azione <b>Chiedi input</b>, scegli il tipo <b>Ora</b> e come domanda scrivi <i>A che ora?</i></li>
-          <li>Aggiungi l&apos;azione <b>Crea sveglia</b> e come orario scegli <i>Input fornito</i>.</li>
-          <li>Salva. Poi, nel riquadro del sonno in Oggi, tocca <b>Imposta sveglia</b>: si apre il comando, scegli l&apos;ora e la sveglia è creata.</li>
+          <li>Aggiungi una sola azione: <b>Apri app</b>, e come app scegli <b>Orologio</b>.</li>
+          <li>Salva. Non serve altro.</li>
+          <li>Da Keepway, nel riquadro del sonno in Oggi, tocca <b>Imposta sveglia</b>: si apre l&apos;Orologio e la sveglia la imposti lì, con l&apos;orario che ti ha consigliato Keepway.</li>
         </ol>
-        <p className="text-xs text-muted">I nomi delle azioni possono cambiare un po&apos; con la versione di iOS. La prima volta l&apos;iPhone chiede il permesso.</p>
+        <p className="text-xs text-muted">
+          L&apos;Orologio si apre sull&apos;ultima scheda usata: la prima volta tocca <b>Sveglia</b> in basso e poi resta lì. La prima volta l&apos;iPhone può chiederti il permesso di aprire il comando.
+        </p>
       </div>
 
       <div className="space-y-2">
