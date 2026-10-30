@@ -110,3 +110,5 @@
 - Box di avanzamento in Oggi: tre anelli concentrici come l'Apple Watch (rosso = oggi, verde = settimana, azzurro = livello), con animazione di riempimento a ogni apertura e punta tonda. Al centro "fatte/totale", a giornata completata una spunta. Sotto: Boss e Serie come due riquadri; la console con barre, log, combo e record è dietro "Dettagli".
 
 - Box di Oggi reso compatto (circa -30%): anelli più sottili con il numero "fatte/totale" grande al centro, e accanto sei indicatori in due colonne con barretta (Oggi, Settimana, Livello | Boss, Serie, Costanza). Tolta la parte "terminale" (log, combo, record, XP al giorno, ETA). Il "Momento giusto" della task ha ora una riga tutta sua (prima spingeva fuori il badge XP).
+
+- Completando una task: lampo subito nel riquadro degli anelli e messaggio dei punti (+XP, combo, colpo di fortuna, frase) al centro del riquadro per circa 2,5 secondi, senza il tasto Annulla (resta "Annulla" sulla scheda della task). Il vecchio messaggio in alto è stato tolto; resta solo il banner del nuovo livello.

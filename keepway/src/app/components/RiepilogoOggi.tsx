@@ -1,6 +1,6 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { Check, Clover } from "lucide-react";
 import { useEffect, useState } from "react";
 import { aperturaCorrente, èDaRiprodurre, iscriviApertura, segnaRiprodotta } from "@/lib/apertura";
 import { dataPiù, inizioSettimana } from "@/lib/date";
@@ -188,6 +188,7 @@ function Pannello({
   stat: Stat[];
 }) {
   // Si decide una volta sola per apertura: cambiando scheda e tornando qui non riparte.
+  const { ricompensa: r } = useStore();
   const [ricalcolo] = useState(() => anima && èDaRiprodurre(apertura));
   useEffect(() => segnaRiprodotta(apertura), [apertura]);
 
@@ -198,6 +199,21 @@ function Pannello({
     >
       {ricalcolo && <div className="lampo" aria-hidden />}
       {ricalcolo && <div className="scansione" aria-hidden />}
+      {r && anima && <div key={r.id} className="lampo-ora" aria-hidden />}
+      {r && (
+        <div className="pointer-events-none absolute inset-0 z-[4] flex items-center justify-center px-3">
+          <div key={r.id} className="risultato max-w-full rounded-2xl bg-black/75 px-5 py-2.5 text-center ring-1 ring-white/20 backdrop-blur-sm">
+            <div className="text-[22px] font-black leading-tight" style={{ color: "#fa114f" }}>
+              <span style={{ color: "#92f000" }}>+{r.punti} XP</span>
+              {r.moltiplicatore > 1 && <span className="ml-2 text-[13px] text-sky-300">combo x{r.moltiplicatore}</span>}
+            </div>
+            {r.bonus > 0 && (
+              <div className="mt-0.5 inline-flex items-center gap-1 text-[12px] font-bold text-emerald-400"><Clover size={14} /> +{r.bonus} colpo di fortuna!</div>
+            )}
+            <div className="mt-0.5 text-[12px] text-white/75">{r.frase || r.titolo}</div>
+          </div>
+        </div>
+      )}
 
       <div className="relative">
         <div className="mb-2 flex items-baseline justify-between border-b pb-1" style={{ borderColor: rgba(rgb, 0.18) }}>
