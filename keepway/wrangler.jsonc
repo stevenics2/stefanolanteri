@@ -11,7 +11,7 @@
     "run_worker_first": ["/api/*"]
   },
   // Ogni minuto: invia le notifiche scadute (gratis su Cloudflare)
-  "triggers": { "crons": ["* * * * *"] }
-  // Il database D1 per le notifiche si aggiunge qui, appena creato:
-  // "d1_databases": [{ "binding": "DB", "database_name": "keepway", "database_id": "..." }]
+  "triggers": { "crons": ["* * * * *"] },
+  // Database per iscrizioni e notifiche programmate. Le tabelle si creano da sole al primo uso.
+  "d1_databases": [{ "binding": "DB", "database_name": "keepway", "database_id": "0608bda0-ef63-4293-9545-c9d8afdaa991" }]
 }
