@@ -106,3 +106,5 @@
 - Il promemoria della lettura arriva anche durante il turno (si silenzia solo nel sonno).
 
 - Popup: forziere chiuso "COMPLETATO!" (poi "ECCELLENTE!!"); combo "N Task completate!".
+
+- Box di avanzamento in Oggi: tre anelli concentrici come l'Apple Watch (rosso = oggi, verde = settimana, azzurro = livello), con animazione di riempimento a ogni apertura e punta tonda. Al centro "fatte/totale", a giornata completata una spunta. Sotto: Boss e Serie come due riquadri; la console con barre, log, combo e record è dietro "Dettagli".

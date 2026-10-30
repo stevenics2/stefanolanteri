@@ -1,5 +1,6 @@
 "use client";
 
+import { Check, ChevronDown, Flame, Swords } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { aperturaCorrente, èDaRiprodurre, iscriviApertura, segnaRiprodotta } from "@/lib/apertura";
 import { dataPiù, inizioSettimana } from "@/lib/date";
@@ -11,6 +12,12 @@ type Rgb = [number, number, number];
 const FREDDO: Rgb = [205, 214, 224]; // argento freddo
 const CALDO: Rgb = [255, 233, 189]; // bianco caldo
 const CORALLO: Rgb = [255, 150, 134]; // il boss
+// I colori degli anelli (quelli dell'Apple Watch): rosso = oggi, verde = settimana, azzurro = livello
+const ANELLI = [
+  { etichetta: "OGGI", nome: "Oggi", colore: "#fa114f", traccia: "#3b0a1b" },
+  { etichetta: "SETTIMANALE", nome: "Settimana", colore: "#92f000", traccia: "#1f3200" },
+  { etichetta: "XP PROSSIMO LEVEL", nome: "Livello", colore: "#00d9e8", traccia: "#00323a" },
+];
 const VERDE: Rgb = [110, 231, 150]; // giornata completata
 const LARGHEZZA_BARRA = 10;
 const COMBO_PAUSA_MS = 60 * 60_000;
@@ -182,6 +189,7 @@ export default function RiepilogoOggi({ fatte, totale }: { fatte: number; totale
       nudge={nudge}
       tutto={tutto}
       log={log}
+      centro={{ fatte, totale }}
       righe={[
         { etichetta: "OGGI", perc: percOggi, dettaglio: totale > 0 ? `${fatte}/${totale}` : "libero", pulsa: quasi },
         { etichetta: "SETTIMANALE", perc: previsteSett > 0 ? (fatteSett / previsteSett) * 100 : 0, dettaglio: `${fatteSett}/${previsteSett}` },
@@ -201,11 +209,72 @@ export default function RiepilogoOggi({ fatte, totale }: { fatte: number; totale
   );
 }
 
+// Tre anelli concentrici come sull'Apple Watch: partono da zero e si riempiono con un'animazione morbida, con la punta tonda.
+function Anelli({ righe, anima, tutto, centro }: { righe: RigaDati[]; anima: boolean; tutto: boolean; centro: { fatte: number; totale: number } }) {
+  const [pieni, setPieni] = useState(!anima);
+  useEffect(() => {
+    if (!anima) return;
+    const id = requestAnimationFrame(() => requestAnimationFrame(() => setPieni(true)));
+    return () => cancelAnimationFrame(id);
+  }, [anima]);
+  const dati = ANELLI.map((a) => ({ ...a, riga: righe.find((r) => r.etichetta === a.etichetta) })).filter((a) => a.riga);
+  const SPESSORE = 15;
+  const GIRO = 2 * Math.PI;
+  return (
+    <div className="mt-1 flex items-center gap-4">
+      <div className="relative shrink-0" style={{ width: 132, height: 132 }}>
+        <svg width="132" height="132" viewBox="0 0 132 132" className="-rotate-90">
+          {dati.map((a, i) => {
+            const r = 58 - i * (SPESSORE + 2);
+            const lunghezza = GIRO * r;
+            const frazione = pieni ? Math.max(0, Math.min(1, (a.riga!.perc || 0) / 100)) : 0;
+            return (
+              <g key={a.etichetta}>
+                <circle cx="66" cy="66" r={r} fill="none" stroke={a.traccia} strokeWidth={SPESSORE} />
+                <circle
+                  cx="66" cy="66" r={r} fill="none" stroke={a.colore} strokeWidth={SPESSORE} strokeLinecap="round"
+                  strokeDasharray={lunghezza}
+                  strokeDashoffset={lunghezza * (1 - frazione)}
+                  style={{
+                    opacity: frazione > 0.005 ? 1 : 0,
+                    filter: frazione >= 1 ? `drop-shadow(0 0 5px ${a.colore})` : undefined,
+                    transition: `stroke-dashoffset 1.4s cubic-bezier(.3,.7,.2,1) ${i * 180}ms, filter .6s`,
+                  }}
+                />
+              </g>
+            );
+          })}
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          {tutto ? (
+            <Check size={30} strokeWidth={3.5} color="#92f000" />
+          ) : (
+            <>
+              <span className="text-[22px] font-black leading-none text-white">{centro.fatte}/{centro.totale}</span>
+              <span className="mt-0.5 text-[9px] uppercase tracking-widest" style={{ color: "rgba(255,255,255,.55)" }}>oggi</span>
+            </>
+          )}
+        </div>
+      </div>
+      <div className="min-w-0 flex-1 space-y-2">
+        {dati.map((a) => (
+          <div key={a.etichetta}>
+            <div className="text-[10px] uppercase tracking-widest" style={{ color: "rgba(255,255,255,.55)" }}>{a.nome}</div>
+            <div className="text-[17px] font-black leading-tight" style={{ color: a.colore }}>
+              {Math.round(a.riga!.perc)}%<span className="ml-1.5 text-[11px] font-semibold opacity-80">{a.riga!.dettaglio}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 type RigaDati = { etichetta: string; perc: number; dettaglio: string; pulsa?: boolean; rosso?: boolean };
 
 // Il riquadro vero e proprio. A ogni apertura fa il "ricalcolo": una riga luminosa lo attraversa mentre le barre si ricontano, e a conti finiti un lampo.
 function Pannello({
-  anima, apertura, rgb, l, xp, nudge, tutto, log, righe, piede,
+  anima, apertura, rgb, l, xp, nudge, tutto, centro, log, righe, piede,
 }: {
   anima: boolean;
   apertura: number;
@@ -214,6 +283,7 @@ function Pannello({
   xp: number;
   nudge: string | null;
   tutto: boolean;
+  centro: { fatte: number; totale: number };
   log: string[];
   righe: RigaDati[];
   piede: { xpOggi: number; variazione: string; eta: string; combo: string; record: string };
@@ -221,6 +291,7 @@ function Pannello({
   // Si decide una volta sola per apertura: cambiando scheda e tornando qui non riparte.
   const [ricalcolo] = useState(() => anima && èDaRiprodurre(apertura));
   useEffect(() => segnaRiprodotta(apertura), [apertura]);
+  const [dettagli, setDettagli] = useState(false);
 
   return (
     <div
@@ -238,9 +309,26 @@ function Pannello({
           </span>
         </div>
 
-        {righe.map((r) => (
-          <Riga key={r.etichetta} etichetta={r.etichetta} perc={r.perc} dettaglio={r.dettaglio} anima={anima} col={r.rosso && !tutto ? CORALLO : rgb} pulsa={r.pulsa} evidenzia={r.rosso ? r.dettaglio === "KO!" : undefined} />
-        ))}
+        <Anelli righe={righe} anima={anima && ricalcolo} tutto={tutto} centro={centro} />
+
+        <div className="mt-2 grid grid-cols-2 gap-2 text-[11px]">
+          {righe.filter((r) => r.etichetta === "BOSS SETTIMANA" || r.etichetta === "SERIE COMPLETATE").map((r) => {
+            const boss = r.etichetta === "BOSS SETTIMANA";
+            const col = boss && !tutto ? CORALLO : rgb;
+            return (
+              <div key={r.etichetta} className="rounded-xl px-2.5 py-1.5" style={{ background: rgba(col, 0.1), color: rgba(col) }}>
+                <div className="flex items-center justify-between gap-1 font-bold">
+                  <span className="inline-flex items-center gap-1">{boss ? <Swords size={13} /> : <Flame size={13} />}{boss ? "Boss" : "Serie"}</span>
+                  <span>{r.dettaglio}</span>
+                </div>
+                <div className="mt-1 h-1.5 overflow-hidden rounded-full" style={{ background: rgba(col, 0.2) }}>
+                  <div className="h-full rounded-full" style={{ width: `${Math.max(0, Math.min(100, r.perc))}%`, background: rgba(col), transition: "width 1s" }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
 
         {tutto && (
           <div className="mt-1 font-bold" style={{ color: "#ffffff", textShadow: `0 0 8px ${rgba(rgb, 0.9)}` }}>
@@ -254,6 +342,14 @@ function Pannello({
             <span className="cursore">█</span>
           </div>
         )}
+
+        <button onClick={() => setDettagli((v) => !v)} className="mt-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-widest" style={{ color: rgba(rgb, 0.6) }}>
+          Dettagli <ChevronDown size={12} className={dettagli ? "rotate-180" : ""} />
+        </button>
+
+        {dettagli && righe.map((r) => (
+          <Riga key={r.etichetta} etichetta={r.etichetta} perc={r.perc} dettaglio={r.dettaglio} anima={false} col={r.rosso && !tutto ? CORALLO : rgb} evidenzia={r.rosso ? r.dettaglio === "KO!" : undefined} />
+        ))}
 
         {log.length > 0 && (
           <div className="mt-1.5 space-y-0.5 text-[10px]" style={{ color: rgba(rgb, 0.6) }}>
