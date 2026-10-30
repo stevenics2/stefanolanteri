@@ -64,9 +64,10 @@ export function tic() {
 //   livello  = livello nuovo               (arpeggio)
 //   vittoria = fine timer                  (fanfara)
 //   incasso  = straordinario / cambio turno (cassa da negozio: "CHA-CHING!")
-export type Suono = "via" | "indietro" | "pausa" | "riprendi" | "ok" | "livello" | "vittoria" | "incasso";
+//   calcolo  = apertura dell'app (un computer che elabora, poi un "ding" di approvazione)
+export type Suono = "via" | "indietro" | "pausa" | "riprendi" | "ok" | "livello" | "vittoria" | "incasso" | "calcolo";
 
-const NOTE: Record<Exclude<Suono, "incasso">, [freq: number, inizio: number, durata: number, volume?: number][]> = {
+const NOTE: Record<Exclude<Suono, "incasso" | "calcolo">, [freq: number, inizio: number, durata: number, volume?: number][]> = {
   via: [[587, 0, 0.09], [740, 0.1, 0.09], [880, 0.2, 0.18]],
   indietro: [[294, 0, 0.14, 0.18]],
   pausa: [[587, 0, 0.1], [440, 0.11, 0.16]],
@@ -139,11 +140,44 @@ function incasso() {
   campana(0.15, 2637, 0.17);
 }
 
+// Un computer che fa i conti: una raffica di bip brevi e secchi, sempre più fitti (~1 s), con un ronzio di fondo che sale.
+// Poi, quando i numeri sono pronti, un "ding" pulito di approvazione. Il ding cade a 1,1 s, insieme al lampo del recap.
+function calcolo() {
+  const note = [523, 659, 784, 988, 1175, 1319, 1568, 1976, 2349];
+  scivola(110, 260, 0, 1.05, 0.08, "sawtooth"); // il ronzio dell'elaborazione
+  let t = 0;
+  for (let i = 0; i < 18; i++) {
+    nota(note[(i * 7 + 3) % note.length] * (i % 5 === 0 ? 2 : 1), t, 0.035, 0.075, "square");
+    t += 0.075 - i * 0.0019; // sempre più veloci
+  }
+  // ding di approvazione
+  nota(2637, 1.1, 1.1, 0.12, "sine");
+  nota(2637 * 1.003, 1.1, 0.9, 0.06, "sine");
+  nota(5274, 1.1, 0.5, 0.04, "sine");
+  nota(7900, 1.1, 0.25, 0.02, "sine");
+}
+
+// All'apertura non c'è ancora stato un tocco: su iPhone (e Chrome) l'audio può essere bloccato. Si prova a riattivarlo
+// e, se entro un attimo non parte, si lascia perdere (niente suono "in ritardo" al primo tocco).
+export async function suonoApertura() {
+  try {
+    avviaAudio();
+    if (ctx && ctx.state !== "running") await Promise.race([ctx.resume().catch(() => {}), new Promise((r) => setTimeout(r, 250))]);
+    if (ctx && ctx.state === "running") calcolo();
+  } catch {
+    // niente audio disponibile
+  }
+}
+
 export function suono(tipo: Suono) {
   try {
     avviaAudio();
     if (tipo === "incasso") {
       incasso();
+      return;
+    }
+    if (tipo === "calcolo") {
+      calcolo();
       return;
     }
     for (const [freq, inizio, durata, volume] of NOTE[tipo]) nota(freq, inizio, durata, volume);

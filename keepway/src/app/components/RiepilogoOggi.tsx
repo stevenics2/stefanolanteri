@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { suonoApertura } from "@/lib/effetti";
 import { aperturaCorrente, èDaRiprodurre, iscriviApertura, segnaRiprodotta } from "@/lib/apertura";
 import { dataPiù, inizioSettimana } from "@/lib/date";
 import { èPrevista, livello, serie } from "@/lib/regole";
@@ -92,6 +93,7 @@ export default function RiepilogoOggi({ fatte, totale }: { fatte: number; totale
     <Pannello
       key={`${oggi}-${apertura}`}
       anima={anima}
+      suoni={stato.impostazioni.suoni}
       apertura={apertura}
       l={{ numero: l.numero, nome: l.nome, prossimo: !!l.prossimo, progresso: l.progresso, mancano: l.mancano }}
       xp={xp}
@@ -115,9 +117,10 @@ type RigaDati = { etichetta: string; perc: number; dettaglio: string };
 
 // Il riquadro vero e proprio. A ogni apertura dell'app fa il "ricalcolo": una riga luminosa lo attraversa mentre le barre si ricontano, e a conti finiti un lampo.
 function Pannello({
-  anima, apertura, l, xp, righe, piede,
+  anima, suoni, apertura, l, xp, righe, piede,
 }: {
   anima: boolean;
+  suoni: boolean;
   apertura: number;
   l: { numero: number; nome: string; prossimo: boolean; progresso: number; mancano: number };
   xp: number;
@@ -127,6 +130,10 @@ function Pannello({
   // Si decide una volta sola per apertura: cambiando scheda e tornando qui non riparte.
   const [ricalcolo] = useState(() => anima && èDaRiprodurre(apertura));
   useEffect(() => segnaRiprodotta(apertura), [apertura]);
+  // Il suono del computer che calcola parte insieme all'animazione (una volta per apertura)
+  useEffect(() => {
+    if (ricalcolo && suoni) void suonoApertura();
+  }, [ricalcolo, suoni]);
   return (
     <div
       className={`relative overflow-hidden rounded-2xl border bg-black p-3 font-mono text-[11px] ${ricalcolo ? "ricalcolo" : ""}`}
