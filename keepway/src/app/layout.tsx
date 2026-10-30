@@ -24,10 +24,11 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="it" className={`${geistSans.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">
-        {/* pb extra: spazio per la barra in basso e la safe area dell'iPhone */}
+      {/* Struttura "a schermo": alta quanto lo schermo, il contenuto scorre sopra e la barra in basso resta sempre lì,
+          anche quando la pagina è corta (un elemento "fisso" su iPhone a volte si sposta). */}
+      <body className="flex h-dvh flex-col overflow-hidden">
         <Providers>
-          <main className="flex-1 px-4 pt-[var(--pt-pagina)] pb-28">
+          <main className="flex-1 overflow-y-auto overscroll-contain px-4 pb-6 pt-[var(--pt-pagina)]">
             {children}
           </main>
           <BottomNav />

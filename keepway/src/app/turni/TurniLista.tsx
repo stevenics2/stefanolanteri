@@ -49,7 +49,7 @@ export default function TurniLista() {
 
   return (
     <section className="-mx-4 -mt-[var(--pt-pagina)]">
-      <header className="sticky top-0 z-10 border-b border-white/10 bg-background px-4 pb-3 pt-[calc(env(safe-area-inset-top)+1.5rem)]">
+      <header className="sticky top-[calc(var(--pt-pagina)*-1)] z-10 border-b border-white/10 bg-background px-4 pb-3 pt-[calc(env(safe-area-inset-top)+1.5rem)]">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Turni</h1>
           {vista === "lista" && (
@@ -59,7 +59,7 @@ export default function TurniLista() {
           )}
         </div>
         <div className="mt-3 grid grid-cols-3 gap-1 rounded-xl bg-white/10 p-1 text-sm font-medium">
-          {([["lista", "Lista"], ["mese", "Calendario"], ["recap", "Recap"]] as const).map(([v, nome]) => (
+          {([["lista", "Roster"], ["mese", "Calendario"], ["recap", "Recap"]] as const).map(([v, nome]) => (
             <button key={v} onClick={() => setVista(v)} className={`rounded-lg py-1.5 ${vista === v ? "bg-accent text-black" : "text-muted"}`}>
               {nome}
             </button>
