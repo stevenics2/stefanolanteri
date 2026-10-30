@@ -8,6 +8,7 @@ import { useStore } from "@/lib/store";
 export const EVENTO_FIAMMATA = "keepway-fiammata";
 export const EVENTO_COMBO = "keepway-combo"; // la combo compare nel riquadro di avanzamento
 const DURATA_COMBO_BOX_MS = 2400;
+const ANTICIPO_FLASH_MS = 300; // il flash oro (picco dopo ~0,2 s) coincide con la chiusura del popup
 const ATTESA_ANELLI_MS = 1500; // il tempo dell'animazione degli anelli, che parte per prima
 const ICONE = { forziere: Gift, record: Trophy, boss: Swords, combo: Zap } as const;
 const COLORI = { forziere: "#fcd34d", record: "#fcd34d", boss: "#fca5a5", combo: "#7dd3fc" } as const;
@@ -50,15 +51,16 @@ export default function FestaOverlay() {
       if (s) suono(tipo === "combo" || tipo === "boss" ? "vittoria" : "livello");
       if (anim) void (tipo === "forziere" ? monete() : tipo === "combo" ? Promise.resolve() : coriandoli(true));
     }, ATTESA_ANELLI_MS + (nelBox ? 0 : attesa));
-    const t2 = setTimeout(() => {
-      // a fine popup della combo: un flash oro su tutto il riquadro di avanzamento
+    // il flash oro su tutto il riquadro parte un attimo prima della chiusura: il picco cade proprio mentre il popup sparisce
+    const tFlash = setTimeout(() => {
       if (tipo === "combo" && ultimo.current.animazioni) window.dispatchEvent(new Event(EVENTO_FIAMMATA));
-      ultimo.current.chiudiFesta();
-    }, ATTESA_ANELLI_MS + durata);
+    }, ATTESA_ANELLI_MS + durata - ANTICIPO_FLASH_MS);
+    const t2 = setTimeout(() => ultimo.current.chiudiFesta(), ATTESA_ANELLI_MS + durata);
     return () => {
       clearTimeout(t0);
       clearTimeout(t1);
       clearTimeout(t2);
+      clearTimeout(tFlash);
     };
   }, [id, tipo]);
 

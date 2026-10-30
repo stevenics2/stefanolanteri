@@ -124,3 +124,5 @@
 - Combo: il popup compare nel box di avanzamento (stesso stile del messaggio dei punti), dura 2,4 s con la fanfara una sola volta; poi la fiammata. Se il box non c'è sullo schermo resta il popup a tutto schermo. Corretto il difetto per cui l'effetto ripartiva a ogni aggiornamento dello stato, facendo ripetere la fanfara e raddoppiando la durata (stesso rischio per forziere, record, boss).
 
 - Combo: popup nel box con la grafica di prima (fulmine, titolo azzurro, scheda con bordo e alone), testo solo "Stai andando a razzo!" (tolto "Punti x1.5"). A fine popup un flash oro su tutto il riquadro (al posto della fiammata).
+
+- Il flash oro parte 0,3 s prima della chiusura del popup combo, così il picco cade proprio mentre il popup sparisce (misurato: flash visibile da 3,69 s, popup sparito a 3,96 s).

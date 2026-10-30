@@ -219,6 +219,15 @@ html {
   72% { opacity: 1; }
   100% { opacity: 0; }
 }
+@keyframes risultatoCombo {
+  0% { transform: scale(0.8); opacity: 0; }
+  10% { transform: scale(1.05); opacity: 1; }
+  16% { transform: scale(1); }
+  90% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.risultato-combo { animation: risultatoCombo 2.4s ease-out both; }
+@media (prefers-reduced-motion: reduce) { .risultato-combo { animation: none; } }
 .risultato { animation: risultato 2.4s ease-out 1s both; } /* parte dopo il tremito e le scintille */
 @media (prefers-reduced-motion: reduce) { .risultato { animation: none; } }
 

@@ -261,7 +261,7 @@ function Pannello({
       {r && anima && <div key={r.id} className="lampo-ora" aria-hidden />}
       {combo && (
         <div className="pointer-events-none absolute inset-0 z-[4] flex items-center justify-center px-3">
-          <div key={combo.id} className="risultato w-full max-w-[17rem] rounded-3xl border bg-card px-4 py-3 text-center" style={{ animationDelay: "0s", animationDuration: "2.4s", borderColor: "#7dd3fc", boxShadow: "0 0 40px -6px #7dd3fc", color: "#7dd3fc" }}>
+          <div key={combo.id} className="risultato-combo w-full max-w-[17rem] rounded-3xl border bg-card px-4 py-3 text-center" style={{ borderColor: "#7dd3fc", boxShadow: "0 0 40px -6px #7dd3fc", color: "#7dd3fc" }}>
             <Zap size={40} strokeWidth={1.6} className="mx-auto" />
             <div className="mt-1 text-xl font-black tracking-wide">{combo.titolo}</div>
             <p className="mt-1 text-[13px] text-white">{combo.testo}</p>
