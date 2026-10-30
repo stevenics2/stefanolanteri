@@ -179,6 +179,43 @@ async function tick(env) {
   return `inviate ${esiti.filter((s) => s >= 200 && s < 300).length}/${dovute.length}`;
 }
 
+// --- Calendario Apple: un file .ics con un solo evento. Safari lo apre con "Aggiungi al calendario".
+// Orario "fluttuante" (senza fuso): lo legge nel fuso del telefono, come lo hai scritto in Keepway.
+const esc = (t) => String(t ?? '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+function ics(url) {
+  const q = url.searchParams;
+  const titolo = (q.get('t') || 'Appuntamento').slice(0, 200);
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(q.get('d') || '') ? q.get('d') : null;
+  if (!d) return err('Data non valida', 400);
+  const o = /^\d{2}:\d{2}$/.test(q.get('o') || '') ? q.get('o') : null; // senza ora = tutto il giorno
+  const durata = Math.min(24 * 60, Math.max(5, parseInt(q.get('m') || '60', 10) || 60));
+  const luogo = (q.get('l') || '').slice(0, 300);
+  const id = (q.get('id') || d).replace(/[^\w-]/g, '').slice(0, 60);
+  const giorno = d.replace(/-/g, '');
+  const aggiungi = (data, min) => { // data + minuti -> [AAAAMMGG, HHMM]
+    const [a, m, g] = data.split('-').map(Number);
+    const x = new Date(Date.UTC(a, m - 1, g, o ? Number(o.slice(0, 2)) : 0, o ? Number(o.slice(3)) : 0) + min * 60000);
+    const p2 = (n) => String(n).padStart(2, '0');
+    return [`${x.getUTCFullYear()}${p2(x.getUTCMonth() + 1)}${p2(x.getUTCDate())}`, `${p2(x.getUTCHours())}${p2(x.getUTCMinutes())}00`];
+  };
+  const righe = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Keepway//IT', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'BEGIN:VEVENT', `UID:keepway-${id}@keepway`, `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').slice(0, 15)}Z`];
+  if (o) {
+    const [dfine, hfine] = aggiungi(d, durata);
+    righe.push(`DTSTART:${giorno}T${o.replace(':', '')}00`, `DTEND:${dfine}T${hfine}`);
+  } else {
+    const [dfine] = aggiungi(d, 24 * 60);
+    righe.push(`DTSTART;VALUE=DATE:${giorno}`, `DTEND;VALUE=DATE:${dfine}`);
+  }
+  righe.push(`SUMMARY:${esc(titolo)}`);
+  if (luogo) righe.push(`LOCATION:${esc(luogo)}`);
+  // Due avvisi del Calendario: il giorno prima e due ore prima (per un evento "tutto il giorno": la sera prima)
+  for (const trigger of o ? ['-P1D', '-PT2H'] : ['-PT6H']) righe.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${esc(titolo)}`, `TRIGGER:${trigger}`, 'END:VALARM');
+  righe.push('END:VEVENT', 'END:VCALENDAR');
+  return new Response(righe.join('\r\n') + '\r\n', {
+    headers: { 'Content-Type': 'text/calendar; charset=utf-8', 'Content-Disposition': 'inline; filename="keepway.ics"', 'Cache-Control': 'no-store' },
+  });
+}
+
 const gestore = {
   async scheduled(_event, env, ctx) {
     if (!env.DB) return; // database non ancora collegato
@@ -188,6 +225,7 @@ const gestore = {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (!url.pathname.startsWith('/api/')) return new Response('Not found', { status: 404 });
+    if (url.pathname === '/api/ics' && request.method === 'GET') return ics(url); // non serve il database
     if (!env.DB) return err('Notifiche non ancora configurate (manca il database)', 503);
     try {
       await schema(env);

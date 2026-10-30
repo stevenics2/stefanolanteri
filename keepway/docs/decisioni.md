@@ -126,3 +126,5 @@
 - Combo: popup nel box con la grafica di prima (fulmine, titolo azzurro, scheda con bordo e alone), testo solo "Stai andando a razzo!" (tolto "Punti x1.5"). A fine popup un flash oro su tutto il riquadro (al posto della fiammata).
 
 - Il flash oro parte 0,3 s prima della chiusura del popup combo, così il picco cade proprio mentre il popup sparisce (misurato: flash visibile da 3,69 s, popup sparito a 3,96 s).
+
+- Calendario Apple (solo appuntamenti): nel modulo «Nuovo appuntamento» c'è «Salva anche su Calendario Apple» (icona mela, ricorda l'ultima scelta). Dopo «Salva» si apre /api/ics (Worker) che restituisce un .ics con un evento (orario "fluttuante" nel fuso del telefono, due avvisi: 1 giorno e 2 ore prima, luogo, durata, UID stabile per aggiornare invece di duplicare); iOS mostra «Aggiungi al calendario». Non c'è accesso diretto al Calendario (impossibile da una app web). Promemoria Apple e abbonamento ai turni: rimandati.
