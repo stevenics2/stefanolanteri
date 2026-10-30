@@ -134,8 +134,9 @@ export type ConsiglioSonno = {
   sveglia: string;
   ultimoLetto?: string;
   oreTxt: string;
-  frase: string; // la frase che introduce l'orario: "Per fare il turno 3 domani, dovresti andare a dormire alle"
-  dettaglio: string; // sveglia e ore di sonno, dopo l'orario
+  riga1: string; // "Domani hai il 3° turno"
+  riga2: string; // "Dovresti addormentarti entro le 01:30"
+  dettaglio: string; // sveglia e ore di sonno
 };
 
 const MAX_ANTICIPO_MIN = 24 * 60; // non mostrare sonni oltre le prossime 24 ore
@@ -148,6 +149,9 @@ function giornoTurno(inizio: number, ora: number): string {
   if (diff === 1) return oraInizio < 5 * 60 ? "stanotte" : "domani"; // il turno 1 inizia all'1:00 della data indicata
   return diff === 2 ? "dopodomani" : `tra ${diff} giorni`;
 }
+
+const maiuscola = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+const nomeTurno = (codice: string) => (codice.includes("+") ? `il doppio turno ${codice}` : `il ${codice}° turno`);
 
 export function consiglioSonno(adesso: Date): ConsiglioSonno | null {
   const p = (x: number) => String(x).padStart(2, "0");
@@ -165,38 +169,68 @@ export function consiglioSonno(adesso: Date): ConsiglioSonno | null {
   const oreTxt = (Math.round(ore * 2) / 2).toString().replace(".", ",");
   const aLetto = hhmm(s.aLetto);
   const sveglia = hhmm(s.sveglia);
-  const turno = s.inizio !== undefined ? `${s.turno} ${giornoTurno(s.inizio, ora)}` : s.turno;
+  const turnoRiga = s.inizio !== undefined ? `${maiuscola(giornoTurno(s.inizio, ora))} hai ${nomeTurno(s.turno)}` : "";
 
-  let frase: string;
+  let riga1: string;
+  let riga2: string;
   let dettaglio: string;
   if (s.tipo === "dopo_notte") {
-    frase = "Finito il turno di notte, dovresti andare a dormire alle";
+    riga1 = "Dopo il turno di notte, riposati";
+    riga2 = `Dovresti addormentarti entro le ${aLetto}`;
     dettaglio = `Sveglia verso le ${sveglia}: circa ${oreTxt} ore di sonno. Stasera non fare tardi.`;
   } else if (s.tipo === "riposino") {
-    frase = `Per fare il turno ${turno}, dovresti riposare dalle`;
-    dettaglio = `Fino alle ${sveglia}: circa ${oreTxt} ore di sonno, poi preparati.`;
+    riga1 = turnoRiga;
+    riga2 = `Dovresti riposare dalle ${aLetto} alle ${sveglia}`;
+    dettaglio = `Circa ${oreTxt} ore di sonno, poi preparati.`;
   } else if (s.corto) {
-    frase = `Per fare il turno ${turno}, puoi andare a dormire alle`;
+    riga1 = turnoRiga;
+    riga2 = `Puoi addormentarti alle ${aLetto}`;
     dettaglio = `Sveglia alle ${sveglia}: dormi solo circa ${oreTxt} ore. Giornata leggera.`;
   } else {
-    frase = `Per fare il turno ${turno}, dovresti andare a dormire alle`;
+    riga1 = turnoRiga;
+    riga2 = `Dovresti addormentarti entro le ${aLetto}`;
     dettaglio = s.ultimoLetto
       ? `Sveglia alle ${sveglia}: ${oreTxt} ore di sonno. Al più tardi alle ${hhmm(s.ultimoLetto)}, per arrivare a 7 ore.`
       : `Sveglia alle ${sveglia}: ${oreTxt} ore di sonno.`;
   }
 
-  return { sonno: s, quando, aLetto, sveglia, ultimoLetto: s.ultimoLetto ? hhmm(s.ultimoLetto) : undefined, oreTxt, frase, dettaglio };
+  return { sonno: s, quando, aLetto, sveglia, ultimoLetto: s.ultimoLetto ? hhmm(s.ultimoLetto) : undefined, oreTxt, riga1, riga2, dettaglio };
 }
 
 // --- Silenzio per le notifiche: durante i turni (mezz'ora prima compresa) e durante il sonno ---
 const blocchiTutti = costruisciBlocchi();
 
-// `ms` = istante reale (ms dal 1970). I conti del calendario usano minuti "locali": si converte l'ora locale del telefono.
+// `m` = minuti assoluti "locali" (come nel resto del calendario).
+const silenzioMin = (m: number) =>
+  blocchiTutti.some((b) => m >= b.inizio - 30 && m < b.fine) || // in turno, o in procinto di andarci
+  sonni.some((x) => m >= x.aLetto && m < x.sveglia);
+
+// `ms` = istante reale (ms dal 1970): si converte l'ora locale del telefono.
 export function èInSilenzio(ms: number): boolean {
   const d = new Date(ms);
-  const m = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 60000 + d.getHours() * 60 + d.getMinutes();
-  return (
-    blocchiTutti.some((b) => m >= b.inizio - 30 && m < b.fine) || // in turno, o in procinto di andarci
-    sonni.some((x) => m >= x.aLetto && m < x.sveglia)
-  );
+  return silenzioMin(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 60000 + d.getHours() * 60 + d.getMinutes());
+}
+
+// --- Momenti liberi della giornata (né in turno, né a dormire) ---
+export type Finestra = { da: number; a: number }; // minuti dalla mezzanotte
+
+export function finestreLibere(data: string, da = 8 * 60, a = 22 * 60 + 30, minDurata = 30): Finestra[] {
+  const base = mezzanotte(data);
+  const out: Finestra[] = [];
+  let inizio: number | null = null;
+  for (let t = da; t <= a; t += 15) {
+    const libero = t < a && !silenzioMin(base + t);
+    if (libero && inizio === null) inizio = t;
+    if (!libero && inizio !== null) {
+      if (t - inizio >= minDurata) out.push({ da: inizio, a: t });
+      inizio = null;
+    }
+  }
+  return out;
+}
+
+// Il momento libero più lungo della giornata (almeno 45 minuti): quello giusto per una task che richiede tempo.
+export function finestraMigliore(data: string): Finestra | null {
+  const tutte = finestreLibere(data, 8 * 60, 22 * 60 + 30, 45);
+  return tutte.reduce<Finestra | null>((m, f) => (!m || f.a - f.da > m.a - m.da ? f : m), null);
 }

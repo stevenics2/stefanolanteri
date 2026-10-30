@@ -1,8 +1,8 @@
 import { dataPiù } from "./date";
 import { èIgnorata, èPrevista } from "./regole";
-import { èInSilenzio } from "./sonno";
+import { èInSilenzio, finestraMigliore, hhmm } from "./sonno";
 import { titoloTask } from "./stanze";
-import type { Stato } from "./tipi";
+import type { Stato, Task } from "./tipi";
 
 // Una notifica da consegnare: l'app decide cosa e quando, il server la spedisce all'ora giusta.
 export type Notifica = {
@@ -25,6 +25,19 @@ function istante(data: string, hhmm: string): number {
   return new Date(a, m - 1, g, h, min).getTime();
 }
 
+// Gli orari dei promemoria di una task in un dato giorno. Se la task "si adatta ai turni", si scelgono nel momento libero
+// più lungo della giornata (tra turni e sonno): uno poco dopo l'inizio, uno a metà, uno prima della fine. Se non c'è nessun
+// momento libero, niente promemoria.
+function orariPerGiorno(task: Task, giorno: string): string[] {
+  if (!task.adattaATurni) return [...task.promemoria].sort();
+  const f = finestraMigliore(giorno);
+  if (!f) return [];
+  const candidati = [f.da + 15, f.da + 15 + 180, f.a - 45].filter((m) => m >= f.da && m <= f.a - 15).sort((a, b) => a - b);
+  const scelti: number[] = [];
+  for (const m of candidati) if (!scelti.length || m - scelti[scelti.length - 1] >= 90) scelti.push(m);
+  return scelti.map((m) => hhmm(m));
+}
+
 // Il piano delle notifiche dei prossimi giorni, calcolato dallo stato dell'app:
 //  - fine del timer (se sta girando)
 //  - i promemoria delle task, ripetuti nella giornata fino a quando non sono fatte
@@ -43,7 +56,7 @@ export function pianoNotifiche(stato: Stato, ora: number, oggi: string): Notific
   }
 
   for (const task of stato.task) {
-    if (task.promemoria.length === 0) continue;
+    if (!task.adattaATurni && task.promemoria.length === 0) continue;
     for (let i = 0; i <= GIORNI_AVANTI; i++) {
       const giorno = dataPiù(oggi, i);
       if (!èPrevista(task, giorno, { vacanza: stato.vacanza })) continue;
@@ -56,7 +69,7 @@ export function pianoNotifiche(stato: Stato, ora: number, oggi: string): Notific
       const titolo = èOggi ? titoloTask(task, stato, oggi) : task.titolo;
       const rinvio = èOggi ? stato.rinvii.find((r) => r.taskId === task.id && r.data === oggi) : undefined;
 
-      const orari = [...task.promemoria].sort();
+      const orari = orariPerGiorno(task, giorno);
       orari.forEach((hhmm, n) => {
         const quando = istante(giorno, hhmm);
         if (quando <= ora) return;

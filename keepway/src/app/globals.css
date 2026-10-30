@@ -50,3 +50,27 @@ input, select, textarea {
 html {
   touch-action: manipulation;
 }
+
+/* Barra dei punti: un riflesso che scorre, per dare "vita" al progresso */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  animation: shimmer 2.4s ease-in-out infinite;
+}
+
+@keyframes fiamma {
+  0%, 100% { transform: scale(1) rotate(-3deg); }
+  50% { transform: scale(1.18) rotate(3deg); }
+}
+.fiamma { animation: fiamma 1.6s ease-in-out infinite; transform-origin: bottom center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer::after, .fiamma { animation: none; }
+}

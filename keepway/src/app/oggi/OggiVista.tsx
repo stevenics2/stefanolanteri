@@ -1,6 +1,6 @@
 "use client";
 
-import { Moon, Plane, Undo2 } from "lucide-react";
+import { ListChecks, Moon, Plane, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { caricoGiorno } from "@/lib/carico";
@@ -8,20 +8,15 @@ import { dataLunga } from "@/lib/date";
 import { èIgnorata, èPrevista, inVacanza } from "@/lib/regole";
 import { titoloTask } from "@/lib/stanze";
 import { useStore } from "@/lib/store";
-import type { Fascia } from "@/lib/tipi";
-import Livello from "../components/Livello";
+import type { Task } from "@/lib/tipi";
+import RiepilogoOggi from "../components/RiepilogoOggi";
 import SonnoCard from "../components/SonnoCard";
 import TaskCard from "../components/TaskCard";
 
-const FASCE: { id: Fascia; etichetta: string }[] = [
-  { id: "mattina", etichetta: "Mattina" },
-  { id: "pomeriggio", etichetta: "Pomeriggio" },
-  { id: "sera", etichetta: "Sera" },
-  { id: "qualsiasi", etichetta: "Quando vuoi" },
-];
+const ORA_SERA = 18; // dalle 18 le task non fatte passano in "prima di dormire"
 
 export default function OggiVista() {
-  const { pronto, stato, oggi, setVacanza, ripristina } = useStore();
+  const { pronto, stato, oggi, adesso, setVacanza, ripristina } = useStore();
   const [mostraTutte, setMostraTutte] = useState(false);
   if (!pronto) return null;
 
@@ -30,10 +25,23 @@ export default function OggiVista() {
   const previste = stato.task.filter((t) => èPrevista(t, oggi, { vacanza: stato.vacanza, ignoraCarico: mostraTutte }));
   const ignorate = previste.filter((t) => èIgnorata(stato.ignorati, t.id, oggi));
   const daFare = previste.filter((t) => !èIgnorata(stato.ignorati, t.id, oggi));
-  const fatte = daFare.filter((t) => stato.completamenti.some((c) => c.taskId === t.id && c.data === oggi)).length;
+  const èFatta = (t: Task) => stato.completamenti.some((c) => c.taskId === t.id && c.data === oggi);
+  const fatte = daFare.filter(èFatta).length;
+
+  // Si parte dalla pulizia (la stanza del giorno, poi il resto della casa), poi le altre; le fatte vanno in fondo.
+  const peso = (t: Task) => (t.tipo === "stanza" ? 0 : t.areaId === "casa" ? 1 : 2);
+  const ordina = (a: Task, b: Task) => Number(èFatta(a)) - Number(èFatta(b)) || peso(a) - peso(b);
+
+  // "Prima di dormire": le task della sera (piatti) e, dalle 18 in poi, tutto quello che non è ancora fatto.
+  const èSera = adesso > 0 && new Date(adesso).getHours() >= ORA_SERA;
+  const primaDiDormire = (t: Task) => t.fascia === "sera" || (èSera && !èFatta(t));
+  const cosaOggi = daFare.filter((t) => !primaDiDormire(t)).sort(ordina);
+  const mustPrimaDiDormire = daFare.filter(primaDiDormire).sort(ordina);
+
+  const soloMinima = carico === "essenziale" && !mostraTutte;
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-5">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold">Oggi</h1>
@@ -50,6 +58,8 @@ export default function OggiVista() {
         )}
       </div>
 
+      <RiepilogoOggi fatte={fatte} totale={daFare.length} />
+
       {fuoriCasa && (
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-violet-500/40 bg-violet-500/10 p-4 text-sm">
           <span className="inline-flex items-center gap-2">
@@ -61,11 +71,9 @@ export default function OggiVista() {
         </div>
       )}
 
-      <Livello />
-
       {carico === "essenziale" && !mostraTutte && (
         <div className="flex items-start gap-2 rounded-2xl border border-sky-500/40 bg-sky-500/10 p-4 text-sm">
-          <Moon size={18} className="mt-0.5 shrink-0" /> Giorno dopo la notte: solo l&apos;essenziale, in versione minima. Il resto può aspettare.
+          <Moon size={18} className="mt-0.5 shrink-0" /> Giornata pesante: solo l&apos;essenziale, in versione minima. Il resto può aspettare.
         </div>
       )}
       {carico === "nessuna" && !mostraTutte && (
@@ -79,24 +87,27 @@ export default function OggiVista() {
         </button>
       )}
 
-      {daFare.length > 0 && (
-        <div className="text-sm text-muted">
-          {fatte}/{daFare.length} fatte oggi
+      {cosaOggi.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="flex items-center gap-2 text-lg font-bold">
+            <ListChecks size={20} className="text-accent" /> Cosa devi fare oggi:
+          </h2>
+          {cosaOggi.map((t) => (
+            <TaskCard key={t.id} task={t} soloMinima={soloMinima} />
+          ))}
         </div>
       )}
 
-      {FASCE.map((f) => {
-        const lista = daFare.filter((t) => t.fascia === f.id);
-        if (lista.length === 0) return null;
-        return (
-          <div key={f.id} className="space-y-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">{f.etichetta}</h2>
-            {lista.map((t) => (
-              <TaskCard key={t.id} task={t} soloMinima={carico === "essenziale" && !mostraTutte} />
-            ))}
-          </div>
-        );
-      })}
+      {mustPrimaDiDormire.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="flex items-center gap-2 text-lg font-extrabold uppercase tracking-wide text-amber-300">
+            <Moon size={20} /> Must before sleep:
+          </h2>
+          {mustPrimaDiDormire.map((t) => (
+            <TaskCard key={t.id} task={t} soloMinima={soloMinima} />
+          ))}
+        </div>
+      )}
 
       {ignorate.length > 0 && (
         <div className="space-y-1 rounded-2xl bg-card p-4 text-sm">
@@ -112,14 +123,14 @@ export default function OggiVista() {
         </div>
       )}
 
-      {/* Il sonno non è la prima cosa da vedere: sta in fondo, dopo le task */}
-      <SonnoCard />
-
       {previste.length === 0 && carico === "normale" && (
         <p className="text-muted">
           Nessuna task per oggi. <Link href="/task" className="text-accent underline">Aggiungine una</Link>.
         </p>
       )}
+
+      {/* Il sonno chiude la giornata: sta in fondo, dopo tutto il resto */}
+      <SonnoCard />
     </section>
   );
 }

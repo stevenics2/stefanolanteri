@@ -24,6 +24,7 @@ export type Task = {
   soloACasa: boolean; // in modalità fuori casa (vacanza/trasferta) non viene proposta
   promemoria: string[]; // orari "HH:MM" dei promemoria, ripetuti fino a quando non è fatta (partono con le notifiche)
   tipo?: "stanza"; // "stanza" = ogni giorno una stanza diversa, a rotazione
+  adattaATurni?: boolean; // il momento giusto e i promemoria si scelgono nei momenti liberi tra turni e sonno
   attiva: boolean;
   creatoIl: string;
 };

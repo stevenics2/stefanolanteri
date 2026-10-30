@@ -1,8 +1,9 @@
 "use client";
 
-import { AlarmClock, Check, Flame, SkipForward, Timer, Undo2 } from "lucide-react";
+import { AlarmClock, Check, Clock, Flame, SkipForward, Timer, Undo2 } from "lucide-react";
 import { useState } from "react";
 import { serie } from "@/lib/regole";
+import { finestraMigliore, hhmm } from "@/lib/sonno";
 import { stanzaDelGiorno, titoloTask } from "@/lib/stanze";
 import { useStore } from "@/lib/store";
 import type { Task } from "@/lib/tipi";
@@ -21,6 +22,9 @@ export default function TaskCard({ task, soloMinima }: { task: Task; soloMinima:
   const giorni = serie(task, stato.completamenti, oggi, { vacanza: stato.vacanza }, stato.ignorati);
   const colore = area?.colore ?? "#888";
   const minima = task.minimaMin;
+  // Task che si adatta ai turni: il momento libero più lungo di oggi (né in turno, né a dormire)
+  const finestra = task.adattaATurni && !fatto ? finestraMigliore(oggi) : null;
+  const senzaTempo = task.adattaATurni && !fatto && !finestra;
   const stanza = task.tipo === "stanza" ? stanzaDelGiorno(stato.stanze, stato.completamenti, task.id, oggi) : null;
 
   const rimandaDi = (minuti: number) => {
@@ -45,6 +49,12 @@ export default function TaskCard({ task, soloMinima }: { task: Task; soloMinima:
             {task.durataMin ? ` · ${task.durataMin} min` : ""}
             {minima ? ` (minima ${minima})` : ""}
           </div>
+          {finestra && (
+            <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-300">
+              <Clock size={12} /> Momento giusto: {hhmm(finestra.da)}–{hhmm(finestra.a)}
+            </div>
+          )}
+          {senzaTempo && <div className="mt-1 text-xs text-amber-300">Oggi sei molto impegnato: se riesci, solo la versione minima.</div>}
           {stanza && stanza.totale > 0 && (
             <div className="mt-0.5 text-xs text-muted">
               {stanza.giroCompletato ? "Giro completato: ricominci da capo" : `Stanze del giro: ${stanza.fatteNelGiro}/${stanza.totale}`}

@@ -27,7 +27,7 @@ function precaricate(): Task[] {
 export function taskStanza(creatoIl: string): Task {
   return {
     id: "stanza", titolo: "Sistema una stanza", tipo: "stanza", areaId: "casa",
-    durataMin: 15, minimaMin: 5, ricorrenza: { tipo: "giornaliera" }, fascia: "pomeriggio", solo: "sempre",
+    durataMin: 15, minimaMin: 5, ricorrenza: { tipo: "giornaliera" }, fascia: "qualsiasi", solo: "sempre", adattaATurni: true,
     soloACasa: true, essenziale: false, punti: puntiAuto(15), promemoria: ["10:00", "14:00", "18:00", "20:30"],
     attiva: true, creatoIl,
   };

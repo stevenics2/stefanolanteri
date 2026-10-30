@@ -25,6 +25,7 @@ type Contesto = {
   pronto: boolean;
   stato: Stato;
   oggi: string;
+  adesso: number; // ora corrente (ms), aggiornata ogni 30 secondi; 0 finché i dati non sono pronti
   xp: number;
   completa: (taskId: string, opzioni: { minima: boolean; minuti?: number; daTimer?: boolean }) => void;
   annulla: (completamentoId: string) => void;
@@ -69,10 +70,11 @@ function carica(): Stato {
       if (s.versione === 1) {
         const base = statoIniziale();
         // I dati salvati prima di questa versione non hanno i campi nuovi: li aggiungo.
-        const task = (s.task ?? base.task).map((t) => ({
+        const task: Task[] = (s.task ?? base.task).map((t) => ({
           ...t,
           soloACasa: (t as Partial<Task>).soloACasa ?? t.areaId === "casa",
           promemoria: (t as Partial<Task>).promemoria ?? [],
+          adattaATurni: (t as Partial<Task>).adattaATurni ?? t.tipo === "stanza",
         }));
         if (!task.some((t) => t.id === "stanza")) task.push(taskStanza(oggiLocale()));
         return {
@@ -97,6 +99,7 @@ function carica(): Stato {
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [stato, setStato] = useState<Stato>(statoVuoto);
   const [pronto, setPronto] = useState(false);
+  const [adesso, setAdesso] = useState(0);
   const [oggi, setOggi] = useState(""); // si imposta nel browser: sul server la data sarebbe quella della build
   const [ricompensa, setRicompensa] = useState<Ricompensa | null>(null);
   const ref = useRef(stato); // sempre l'ultimo stato, anche dentro timer e callback
@@ -111,6 +114,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     ref.current = carica();
     setStato(ref.current);
     setOggi(oggiLocale());
+    setAdesso(Date.now());
     setPronto(true);
   }, []);
 
@@ -125,7 +129,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // A mezzanotte "oggi" cambia da solo.
   useEffect(() => {
-    const id = setInterval(() => setOggi(oggiLocale()), 30_000);
+    const id = setInterval(() => {
+      setOggi(oggiLocale());
+      setAdesso(Date.now());
+    }, 30_000);
     return () => clearInterval(id);
   }, []);
 
@@ -169,6 +176,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       pronto,
       stato,
       oggi,
+      adesso,
       xp: xpTotali(stato.completamenti),
       completa,
       annulla: (cid) => {
@@ -227,7 +235,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       ricompensa,
       chiudiRicompensa: () => setRicompensa(null),
     }),
-    [stato, pronto, oggi, ricompensa, completa, aggiorna],
+    [stato, pronto, oggi, adesso, ricompensa, completa, aggiorna],
   );
 
   return <Ctx.Provider value={valore}>{children}</Ctx.Provider>;

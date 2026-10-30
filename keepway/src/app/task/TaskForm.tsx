@@ -33,6 +33,7 @@ export default function TaskForm({ iniziale, onClose }: { iniziale: Task | null;
   const [punti, setPunti] = useState(iniziale ? iniziale.punti.toString() : "");
   const [essenziale, setEssenziale] = useState(iniziale?.essenziale ?? false);
   const [soloACasa, setSoloACasa] = useState(iniziale?.soloACasa ?? false);
+  const [adatta, setAdatta] = useState(iniziale?.adattaATurni ?? false);
   const [promemoria, setPromemoria] = useState((iniziale?.promemoria ?? []).join(", "));
 
   const puntiFinali = num(punti) ?? puntiAuto(num(durata));
@@ -59,6 +60,7 @@ export default function TaskForm({ iniziale, onClose }: { iniziale: Task | null;
       punti: puntiFinali,
       essenziale,
       soloACasa,
+      adattaATurni: adatta,
       promemoria: promemoria.split(/[,\s]+/).filter((o) => /^\d{1,2}:\d{2}$/.test(o)).map((o) => o.padStart(5, "0")),
       tipo: iniziale?.tipo,
       attiva: iniziale?.attiva ?? true,
@@ -172,6 +174,11 @@ export default function TaskForm({ iniziale, onClose }: { iniziale: Task | null;
           Promemoria (orari, es. 10:00, 18:00)
           <input value={promemoria} onChange={(e) => setPromemoria(e.target.value)} placeholder="10:00, 18:00" className={campo} />
           <span className="mt-1 block text-xs">Ripetuti fino a quando non la fai. Partiranno con le notifiche.</span>
+        </label>
+
+        <label className="flex items-center gap-3 text-sm">
+          <input type="checkbox" checked={adatta} onChange={(e) => setAdatta(e.target.checked)} className="h-5 w-5" />
+          Adatta ai turni: suggerisce il momento libero e manda i promemoria solo lì
         </label>
 
         <label className="flex items-center gap-3 text-sm">
