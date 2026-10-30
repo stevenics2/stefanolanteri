@@ -102,10 +102,14 @@ export function pianoNotifiche(stato: Stato, ora: number, oggi: string): Notific
   return out.sort((a, b) => a.quando - b.quando).slice(0, MAX_NOTIFICHE);
 }
 
-// Sposta un orario fuori dal silenzio (turno o sonno), al massimo di 6 ore in avanti; null se non si trova posto.
+// Sposta un orario fuori dal silenzio (turno o sonno), al massimo di 6 ore in avanti, e mai di notte (solo tra le 8:00 e le 22:30).
+// Se non si trova posto restituisce null: quell'avviso salta.
 function fuoriDalSilenzio(quando: number): number | null {
   for (let i = 0; i <= 12; i++) {
     const q = quando + i * 30 * 60_000;
+    const d = new Date(q);
+    const minuti = d.getHours() * 60 + d.getMinutes();
+    if (minuti < 8 * 60 || minuti > 22 * 60 + 30) continue;
     if (!èInSilenzio(q)) return q;
   }
   return null;
@@ -144,7 +148,7 @@ function notificheEventi(stato: Stato, ora: number, oggi: string): Notifica[] {
   return out;
 }
 
-// Finché ci sono turni da sistemare (meno di 12 ore di riposo, doppio non consentito) ti avviso ogni mattina e ogni sera.
+// Finché ci sono turni da sistemare (meno di 12 ore di riposo, doppio non consentito) ti avviso ogni mattina, a mezzogiorno e ogni sera.
 function notificheTurniDaSistemare(ora: number, oggi: string): Notifica[] {
   const lista = violazioniDa(oggi);
   if (lista.length === 0) return [];
@@ -152,7 +156,7 @@ function notificheTurniDaSistemare(ora: number, oggi: string): Notifica[] {
   const out: Notifica[] = [];
   for (let i = 0; i <= GIORNI_AVANTI; i++) {
     const giorno = dataPiù(oggi, i);
-    for (const hhmm of ["09:30", "19:00"]) {
+    for (const hhmm of ["09:30", "12:00", "19:00"]) {
       const q = fuoriDalSilenzio(istante(giorno, hhmm));
       if (q === null || q <= ora) continue;
       out.push({ id: `turni-${giorno}-${hhmm}`, quando: q, titolo: "Turni da sistemare", testo, url: "/turni/", tag: "turni", urgente: true });
