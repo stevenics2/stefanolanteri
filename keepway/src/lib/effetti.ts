@@ -52,7 +52,7 @@ export function tic() {
 //   ok       = task fatta                  (2 note brillanti)
 //   livello  = livello nuovo               (arpeggio)
 //   vittoria = fine timer                  (fanfara)
-//   incasso  = straordinario confermato    (cassa da negozio: "ka-ching")
+//   incasso  = straordinario / cambio turno (cassa da negozio: "CHA-CHING!")
 export type Suono = "via" | "indietro" | "pausa" | "riprendi" | "ok" | "livello" | "vittoria" | "incasso";
 
 const NOTE: Record<Exclude<Suono, "incasso">, [freq: number, inizio: number, durata: number, volume?: number][]> = {
@@ -105,34 +105,27 @@ function scivola(f0: number, f1: number, inizio: number, durata: number, volume:
 
 // La campana d'ottone: tante note NON armoniche insieme, ognuna con la sua durata (le acute si spengono prima),
 // ognuna doppiata con una di pochissimo più alta: il "battimento" dà il luccichio metallico.
-function campana(inizio: number, base: number, volume: number) {
+function campana(inizio: number, base: number, volume: number, scala = 1) {
   const parziali: [rapporto: number, peso: number, durata: number][] = [
     [1, 1, 1.7], [2, 0.5, 1.3], [2.76, 0.6, 1.0], [4.07, 0.35, 0.65], [5.4, 0.25, 0.45], [6.8, 0.12, 0.3],
   ];
   for (const [r, v, d] of parziali) {
-    nota(base * r, inizio, d, volume * v, "sine");
-    nota(base * r * 1.004, inizio, d * 0.9, volume * v * 0.5, "sine");
+    nota(base * r, inizio, d * scala, volume * v, "sine");
+    nota(base * r * 1.004, inizio, d * scala * 0.9, volume * v * 0.5, "sine");
   }
 }
 
-// Il tintinnio delle monete nel cassetto: tanti "ping" brevissimi, acuti, un po' sparsi.
-function tintinnio(inizio: number, quanti: number) {
-  const freq = [3520, 4186, 3136, 4699, 5274, 3951, 4400];
-  for (let i = 0; i < quanti; i++) nota(freq[i % freq.length] * (1 + 0.012 * (i % 3)), inizio + i * 0.055 + (i % 2) * 0.02, 0.09, 0.045, "sine");
-}
-
-// Una vecchia cassa da negozio, in tre tempi:
-//  1) il tasto: tic-tic meccanico e un colpo sordo
-//  2) "CHING!": il campanello d'ottone, lungo e brillante
-//  3) il cassetto che scorre, un tonfo di legno e il tintinnio delle monete
+// "CHA-CHING!": due colpi di cassa.
+//  CHA   = un colpo secco e basso: un click metallico con un colpo sordo, che si spegne subito
+//  CHING = il campanello d'ottone, più alto di una quinta, che suona a lungo
 function incasso() {
-  rumore(0, 0.025, 3800, 0.35);
-  rumore(0.05, 0.025, 3000, 0.3);
-  scivola(190, 55, 0, 0.14, 0.4, "triangle");
-  campana(0.13, 2349, 0.13);
-  rumore(0.36, 0.34, 650, 0.14);
-  scivola(110, 60, 0.68, 0.12, 0.22, "sine");
-  tintinnio(0.52, 7);
+  // CHA
+  rumore(0, 0.055, 3200, 0.45);
+  scivola(220, 70, 0, 0.1, 0.35, "triangle");
+  campana(0, 1760, 0.1, 0.16);
+  // CHING
+  rumore(0.15, 0.03, 6500, 0.22);
+  campana(0.15, 2637, 0.17);
 }
 
 export function suono(tipo: Suono) {
