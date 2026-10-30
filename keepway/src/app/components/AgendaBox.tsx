@@ -7,7 +7,7 @@ import type { Evento } from "@/lib/tipi";
 import AreaIcona from "./AreaIcona";
 
 // Una riga: icona, titolo, ora e luogo, priorità. I promemoria si spuntano.
-export function RigaEvento({ e, oggi, conData = false, alTocco }: { e: Evento; oggi: string; conData?: boolean; alTocco?: () => void }) {
+export function RigaEvento({ e, oggi, conData = false, alTocco, senzaOra = false }: { e: Evento; oggi: string; conData?: boolean; alTocco?: () => void; senzaOra?: boolean }) {
   const { segnaEvento } = useStore();
   const pr = prioritaDi(e.priorita);
   const inRitardo = e.tipo === "promemoria" && !e.fatto && giorniTra(e.data, oggi) > 0;
@@ -25,7 +25,7 @@ export function RigaEvento({ e, oggi, conData = false, alTocco }: { e: Evento; o
         <AreaIcona nome={e.icona} colore={pr.colore} size={16} />
         <span className="min-w-0 flex-1">
           <span className={`block font-semibold ${e.fatto ? "line-through opacity-60" : ""}`}>
-            {e.ora && !conData && <span className="mr-2 font-extrabold text-accent">{e.ora}</span>}
+            {e.ora && !conData && !senzaOra && <span className="mr-2 font-extrabold text-accent">{e.ora}</span>}
             {e.titolo}
           </span>
           {quando.length > 0 && <span className={`block text-xs ${inRitardo ? "text-red-300" : "text-muted"}`}>{quando.join(" · ")}</span>}

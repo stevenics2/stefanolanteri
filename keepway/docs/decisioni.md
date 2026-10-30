@@ -134,3 +134,5 @@
 - Timer in alto a destra del box, vicino agli XP: quanto manca alla fine della giornata utile = fine dell'ultimo momento libero di oggi (tra turni e sonno, entro le 22:30). Sotto 1 ora diventa corallo; a fine giornata dice "finita".
 
 - Icone per tipo di task (AreaIcona.tsx, iconaTask): scelta a mano > riconosciuta dal nome (libro per lettura, fiore per meditazione, posate per piatti, scintille per pulizia/stanza, lavatrice, cucina, spesa, acqua, respiro, diario, corsa...) > icona dell'area. Vale per le task esistenti senza dover cambiare i dati. Lo yoga ora usa la figura in piedi (il fiore è della meditazione).
+
+- Timeline unica in Oggi (componente Timeline.tsx): turni, sonno, appuntamenti e task sugli orari consigliati in un'unica linea del tempo, con "adesso" che scorre; le task senza momento consigliato stanno sotto in «Quando vuoi». Si cambia vista con l'interruttore Lista | Timeline accanto al titolo (impostazione vistaOggi, ricordata; predefinita: timeline). La vista Lista è rimasta identica a prima, quindi si può sempre tornare indietro.

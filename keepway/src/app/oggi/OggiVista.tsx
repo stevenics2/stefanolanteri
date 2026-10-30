@@ -1,6 +1,6 @@
 "use client";
 
-import { ListChecks, Moon, Plane, Undo2 } from "lucide-react";
+import { CalendarClock, ListChecks, Moon, Plane, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { caricoGiorno } from "@/lib/carico";
@@ -15,6 +15,7 @@ import RiepilogoOggi from "../components/RiepilogoOggi";
 import SonnoCard from "../components/SonnoCard";
 import TurniDaSistemare from "../components/TurniDaSistemare";
 import TaskCard from "../components/TaskCard";
+import Timeline from "../components/Timeline";
 import FormEvento from "../task/FormEvento";
 
 // Dalle 18 le task non ancora fatte passano in "prima di dormire". Spenta durante lo sviluppo, per vedere tutto il resto.
@@ -22,7 +23,7 @@ const REGOLA_SERA_ATTIVA = false;
 const ORA_SERA = 18;
 
 export default function OggiVista() {
-  const { pronto, stato, oggi, adesso, setVacanza, ripristina } = useStore();
+  const { pronto, stato, oggi, adesso, setVacanza, ripristina, impostazioni } = useStore();
   const [mostraTutte, setMostraTutte] = useState(false);
   const [daModificare, setDaModificare] = useState<Evento | null>(null);
   if (!pronto) return null;
@@ -48,6 +49,7 @@ export default function OggiVista() {
   const mustPrimaDiDormire = daFare.filter(primaDiDormire).sort(ordina);
 
   const soloMinima = carico === "essenziale" && !mostraTutte;
+  const timeline = stato.impostazioni.vistaOggi === "timeline";
 
   return (
     <section className="space-y-5">
@@ -56,6 +58,7 @@ export default function OggiVista() {
           <h1 className="text-2xl font-bold">Oggi</h1>
           <p className="text-muted first-letter:uppercase">{dataLunga(oggi)}</p>
         </div>
+        <div className="flex flex-col items-end gap-2">
         {!fuoriCasa && (
           <button
             data-suono="via"
@@ -65,6 +68,20 @@ export default function OggiVista() {
             <Plane size={15} /> Fuori casa
           </button>
         )}
+        <div className="inline-flex rounded-full bg-white/10 p-0.5 text-xs" role="group" aria-label="Vista">
+          {([["lista", "Lista", ListChecks], ["timeline", "Timeline", CalendarClock]] as const).map(([v, nome, Icona]) => (
+            <button
+              key={v}
+              data-suono="via"
+              onClick={() => impostazioni({ vistaOggi: v })}
+              aria-pressed={stato.impostazioni.vistaOggi === v}
+              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-semibold ${stato.impostazioni.vistaOggi === v ? "bg-white text-black" : "text-muted"}`}
+            >
+              <Icona size={12} /> {nome}
+            </button>
+          ))}
+        </div>
+        </div>
       </div>
 
       <RiepilogoOggi fatte={fatte} totale={daFare.length} />
@@ -98,9 +115,18 @@ export default function OggiVista() {
         </button>
       )}
 
-      <AgendaOggi onModifica={setDaModificare} />
+      {!timeline && <AgendaOggi onModifica={setDaModificare} />}
 
-      {cosaOggi.length > 0 && (
+      {timeline && (
+        <div className="space-y-2">
+          <h2 className="flex items-center gap-2 text-lg font-bold">
+            <CalendarClock size={20} className="text-accent" /> La tua giornata
+          </h2>
+          <Timeline task={cosaOggi} soloMinima={soloMinima} onModificaEvento={setDaModificare} />
+        </div>
+      )}
+
+      {!timeline && cosaOggi.length > 0 && (
         <div className="space-y-2">
           <h2 className="flex items-center gap-2 text-lg font-bold">
             <ListChecks size={20} className="text-accent" /> Il piano di oggi

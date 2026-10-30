@@ -211,6 +211,23 @@ export function finestreLibere(data: string, da = 8 * 60, a = 22 * 60 + 30, minD
   return out;
 }
 
+// Turni e sonno di un giorno, in minuti dalla mezzanotte di quel giorno (ritagliati a 0–1440), per la timeline.
+export type ImpegnoGiorno = { tipo: "turno" | "sonno"; da: number; a: number; etichetta: string; daIeri: boolean; fineDopo: boolean };
+export function impegniGiorno(data: string): ImpegnoGiorno[] {
+  const base = mezzanotte(data);
+  const fineGiorno = base + MIN_GIORNO;
+  const out: ImpegnoGiorno[] = [];
+  for (const b of blocchiEffettivi()) {
+    if (b.fine <= base || b.inizio >= fineGiorno) continue;
+    out.push({ tipo: "turno", da: Math.max(0, b.inizio - base), a: Math.min(MIN_GIORNO, b.fine - base), etichetta: b.turno.includes("+") ? `Doppio turno ${b.turno}` : `Turno ${b.turno}`, daIeri: b.inizio < base, fineDopo: b.fine > fineGiorno });
+  }
+  for (const s of elencoSonni()) {
+    if (s.sveglia <= base || s.aLetto >= fineGiorno) continue;
+    out.push({ tipo: "sonno", da: Math.max(0, s.aLetto - base), a: Math.min(MIN_GIORNO, s.sveglia - base), etichetta: s.tipo === "riposino" ? "Riposino" : "Sonno", daIeri: s.aLetto < base, fineDopo: s.sveglia > fineGiorno });
+  }
+  return out.sort((x, y) => x.da - y.da);
+}
+
 // Dove finisce la giornata utile: la fine dell'ultimo momento libero (tra turni e sonno, entro le 22:30). Minuti dalla mezzanotte.
 export function fineGiornataMin(data: string): number | null {
   const f = finestreLibere(data, 8 * 60, 22 * 60 + 30, 15);

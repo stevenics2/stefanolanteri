@@ -55,14 +55,14 @@ export default function TaskCard({ task, soloMinima }: { task: Task; soloMinima:
       >
         <AreaIcona nome={iconaTask(task, area?.icona ?? "")} colore={colore} />
         <span className="min-w-0 flex-1">
-          <span className={`block truncate font-semibold leading-tight ${fatto ? "line-through" : ""}`}>{titoloTask(task, stato, oggi)}</span>
-          <span className="mt-0.5 flex items-center gap-2 text-xs text-muted">
+          <span className={`block font-semibold leading-tight ${fatto ? "line-through" : ""}`}>{titoloTask(task, stato, oggi)}</span>
+          <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted">
             {finestra ? (
               <span className="inline-flex items-center gap-1 whitespace-nowrap font-semibold text-emerald-300">
                 <Clock size={11} /> {hhmm(finestra.da)}–{hhmm(finestra.a)}
               </span>
             ) : null}
-            {dettaglio && <span className="truncate">{dettaglio}</span>}
+            {dettaglio && <span>{dettaglio}</span>}
             {rinvio && !fatto && (
               <span className="inline-flex items-center gap-1 whitespace-nowrap text-sky-300">
                 <AlarmClock size={11} /> {ora(rinvio.alle)}
