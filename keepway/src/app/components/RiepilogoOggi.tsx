@@ -12,6 +12,7 @@ type Rgb = [number, number, number];
 const FREDDO: Rgb = [205, 214, 224]; // argento freddo
 const CALDO: Rgb = [255, 233, 189]; // bianco caldo
 const CORALLO: Rgb = [255, 150, 134]; // il boss
+const VERDE: Rgb = [110, 231, 150]; // giornata completata
 const LARGHEZZA_BARRA = 10;
 const COMBO_PAUSA_MS = 60 * 60_000;
 
@@ -164,7 +165,9 @@ export default function RiepilogoOggi({ fatte, totale }: { fatte: number; totale
   const nudge = quasi ? `» manca ${totale - fatte === 1 ? "1 task" : `${totale - fatte} task`} per chiudere la giornata` : null;
 
   // il colore si scalda man mano che la giornata avanza: dall'argento al bianco caldo
-  const rgb = mescola(totale > 0 ? fatte / totale : 0);
+  // a giornata completata tutto diventa verde
+  const tutto = totale > 0 && fatte >= totale;
+  const rgb = tutto ? VERDE : mescola(totale > 0 ? fatte / totale : 0);
 
   const [apertura, setApertura] = useState(() => aperturaCorrente());
   useEffect(() => iscriviApertura(() => setApertura(aperturaCorrente())), []);
@@ -179,6 +182,7 @@ export default function RiepilogoOggi({ fatte, totale }: { fatte: number; totale
       l={{ numero: l.numero, nome: l.nome }}
       xp={xp}
       nudge={nudge}
+      tutto={tutto}
       log={log}
       righe={[
         { etichetta: "OGGI", perc: percOggi, dettaglio: totale > 0 ? `${fatte}/${totale}` : "libero", pulsa: quasi },
@@ -203,7 +207,7 @@ type RigaDati = { etichetta: string; perc: number; dettaglio: string; pulsa?: bo
 
 // Il riquadro vero e proprio. A ogni apertura fa il "ricalcolo": una riga luminosa lo attraversa mentre le barre si ricontano, e a conti finiti un lampo.
 function Pannello({
-  anima, suoni, apertura, rgb, l, xp, nudge, log, righe, piede,
+  anima, suoni, apertura, rgb, l, xp, nudge, tutto, log, righe, piede,
 }: {
   anima: boolean;
   suoni: boolean;
@@ -212,6 +216,7 @@ function Pannello({
   l: { numero: number; nome: string };
   xp: number;
   nudge: string | null;
+  tutto: boolean;
   log: string[];
   righe: RigaDati[];
   piede: { xpOggi: number; variazione: string; eta: string; combo: string; record: string };
@@ -241,8 +246,14 @@ function Pannello({
         </div>
 
         {righe.map((r) => (
-          <Riga key={r.etichetta} etichetta={r.etichetta} perc={r.perc} dettaglio={r.dettaglio} anima={anima} col={r.rosso ? CORALLO : rgb} pulsa={r.pulsa} evidenzia={r.rosso ? r.dettaglio === "KO!" : undefined} />
+          <Riga key={r.etichetta} etichetta={r.etichetta} perc={r.perc} dettaglio={r.dettaglio} anima={anima} col={r.rosso && !tutto ? CORALLO : rgb} pulsa={r.pulsa} evidenzia={r.rosso ? r.dettaglio === "KO!" : undefined} />
         ))}
+
+        {tutto && (
+          <div className="mt-1 font-bold" style={{ color: "#ffffff", textShadow: `0 0 8px ${rgba(rgb, 0.9)}` }}>
+            ✅ Hai completato tutte le task!
+          </div>
+        )}
 
         {nudge && (
           <div className="pulsa mt-1 font-bold" style={{ color: "#ffffff" }}>
