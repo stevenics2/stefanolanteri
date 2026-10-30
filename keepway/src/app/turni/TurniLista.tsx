@@ -49,7 +49,7 @@ export default function TurniLista() {
 
   return (
     <section className="-mx-4 -mt-[var(--pt-pagina)]">
-      <header className="sticky top-[calc(var(--pt-pagina)*-1)] z-10 border-b border-white/10 bg-background px-4 pb-3 pt-[calc(env(safe-area-inset-top)+1.5rem)]">
+      <header className="sticky top-0 z-10 border-b border-white/10 bg-background px-4 pb-3 pt-[calc(env(safe-area-inset-top)+1.5rem)]">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Turni</h1>
           {vista === "lista" && (

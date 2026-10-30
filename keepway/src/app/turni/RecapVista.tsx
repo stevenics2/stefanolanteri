@@ -45,11 +45,11 @@ export default function RecapVista() {
       <div className="space-y-2">
         {voci.map((x) => (
           <div key={x.nome} className="flex items-center gap-4 rounded-2xl bg-card p-3">
-            <span className={`${x.classe} flex h-12 min-w-12 items-center justify-center rounded-xl px-2 text-2xl font-black leading-none text-white`}>{x.n}</span>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="font-semibold leading-tight">{x.nome}</div>
               <div className="text-xs text-muted">{x.sotto}</div>
             </div>
+            <span className={`${x.classe} flex h-12 min-w-12 shrink-0 items-center justify-center rounded-xl px-2 text-2xl font-black leading-none text-white`}>{x.n}</span>
           </div>
         ))}
       </div>

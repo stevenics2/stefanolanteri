@@ -24,11 +24,11 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="it" className={`${geistSans.variable} h-full antialiased`}>
-      {/* Struttura "a schermo": alta quanto lo schermo, il contenuto scorre sopra e la barra in basso resta sempre lì,
-          anche quando la pagina è corta (un elemento "fisso" su iPhone a volte si sposta). */}
-      <body className="flex h-dvh flex-col overflow-hidden">
+      {/* Il body è sempre un po' più alto dello schermo (vedi globals.css): su iPhone la barra fissa in basso sta al bordo
+          solo se la pagina può scorrere, anche di poco, e con una pagina corta (es. Recap) altrimenti si alza. */}
+      <body className="flex flex-col">
         <Providers>
-          <main className="flex-1 overflow-y-auto overscroll-contain px-4 pb-6 pt-[var(--pt-pagina)]">
+          <main className="flex-1 px-4 pb-28 pt-[var(--pt-pagina)]">
             {children}
           </main>
           <BottomNav />

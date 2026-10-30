@@ -20,6 +20,17 @@
   --font-sans: var(--font-geist-sans);
 }
 
+/* La pagina è sempre appena più alta dello schermo (2px): così scorre sempre, anche con poco contenuto, e la barra in basso
+   resta al bordo anche nel Recap. Senza dvh (vecchi browser) si usa vh. */
+body {
+  min-height: calc(100vh + 2px);
+}
+@supports (height: 100dvh) {
+  body {
+    min-height: calc(100dvh + 2px);
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
