@@ -54,13 +54,33 @@ export default function TaskCard({ task, soloMinima }: { task: Task; soloMinima:
             {task.spostamentoMin ? ` · +${task.spostamentoMin * 2} min di spostamento` : ""}
             {minima ? ` (minima ${minima})` : ""}
           </div>
+          {senzaTempo && <div className="mt-1 text-xs text-amber-300">Oggi sei molto impegnato: se riesci, solo la versione minima.</div>}
+          {stanza && stanza.totale > 0 && (
+            <div className="mt-0.5 text-xs text-muted">
+              {stanza.giroCompletato ? "Giro completato: ricominci da capo" : `Stanze del giro: ${stanza.fatteNelGiro}/${stanza.totale}`}
+            </div>
+          )}
+        </div>
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <span className="rounded-full bg-accent/15 px-2.5 py-0.5 text-sm font-extrabold text-accent">
+            +{soloMinima && minima ? puntiMinima(task.punti) : task.punti} XP
+          </span>
+          {giorni > 0 && (
+            <span className="flex items-center gap-1 text-sm font-semibold text-accent">
+              <Flame size={16} /> {giorni}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {(finestra) && <div className="mt-2">
           {finestra && !modMomento && (
-            <button data-suono="via" onClick={() => setModMomento(true)} className="mt-1 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-300">
+            <button data-suono="via" onClick={() => setModMomento(true)} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-300">
               <Clock size={12} /> Momento giusto: {hhmm(finestra.da)}–{hhmm(finestra.a)} <Pencil size={11} />
             </button>
           )}
           {finestra && modMomento && (
-            <div className="mt-1 flex flex-nowrap items-center gap-1.5 whitespace-nowrap text-xs text-emerald-300">
+            <div className="flex flex-nowrap items-center gap-1.5 whitespace-nowrap text-xs text-emerald-300">
               <Clock size={12} />
               <input id={`da-${task.id}`} type="time" defaultValue={hhmm(finestra.da)} className="w-[5.2rem] rounded-lg bg-white/10 px-1.5 py-1 text-white" />
               –
@@ -88,24 +108,7 @@ export default function TaskCard({ task, soloMinima }: { task: Task; soloMinima:
               )}
             </div>
           )}
-          {senzaTempo && <div className="mt-1 text-xs text-amber-300">Oggi sei molto impegnato: se riesci, solo la versione minima.</div>}
-          {stanza && stanza.totale > 0 && (
-            <div className="mt-0.5 text-xs text-muted">
-              {stanza.giroCompletato ? "Giro completato: ricominci da capo" : `Stanze del giro: ${stanza.fatteNelGiro}/${stanza.totale}`}
-            </div>
-          )}
-        </div>
-        <div className="flex shrink-0 flex-col items-end gap-1">
-          <span className="rounded-full bg-accent/15 px-2.5 py-0.5 text-sm font-extrabold text-accent">
-            +{soloMinima && minima ? puntiMinima(task.punti) : task.punti} XP
-          </span>
-          {giorni > 0 && (
-            <span className="flex items-center gap-1 text-sm font-semibold text-accent">
-              <Flame size={16} /> {giorni}
-            </span>
-          )}
-        </div>
-      </div>
+      </div>}
 
       {fatto ? (
         <div className="mt-3 flex items-center justify-between text-sm">

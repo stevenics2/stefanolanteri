@@ -1,51 +1,19 @@
 "use client";
 
-import { Check, ChevronDown, Flame, Swords } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Check } from "lucide-react";
+import { useEffect, useState } from "react";
 import { aperturaCorrente, èDaRiprodurre, iscriviApertura, segnaRiprodotta } from "@/lib/apertura";
 import { dataPiù, inizioSettimana } from "@/lib/date";
 import { bossSettimana, èPrevista, livello, serie } from "@/lib/regole";
-import { titoloTask } from "@/lib/stanze";
 import { useStore } from "@/lib/store";
 
 type Rgb = [number, number, number];
 const FREDDO: Rgb = [205, 214, 224]; // argento freddo
 const CALDO: Rgb = [255, 233, 189]; // bianco caldo
-const CORALLO: Rgb = [255, 150, 134]; // il boss
-// I colori degli anelli (quelli dell'Apple Watch): rosso = oggi, verde = settimana, azzurro = livello
-const ANELLI = [
-  { etichetta: "OGGI", nome: "Oggi", colore: "#fa114f", traccia: "#3b0a1b" },
-  { etichetta: "SETTIMANALE", nome: "Settimana", colore: "#92f000", traccia: "#1f3200" },
-  { etichetta: "XP PROSSIMO LEVEL", nome: "Livello", colore: "#00d9e8", traccia: "#00323a" },
-];
 const VERDE: Rgb = [110, 231, 150]; // giornata completata
-const LARGHEZZA_BARRA = 10;
-const COMBO_PAUSA_MS = 60 * 60_000;
 
 const mescola = (k: number): Rgb => FREDDO.map((v, i) => Math.round(v + (CALDO[i] - v) * Math.max(0, Math.min(1, k)))) as Rgb;
 const rgba = (c: Rgb, a = 1) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
-
-// Un numero che "sale" fino al valore (parte da 0 la prima volta, poi da dove era).
-function useConteggio(valore: number, anima: boolean) {
-  const [v, setV] = useState(0);
-  const da = useRef(0);
-  useEffect(() => {
-    if (!anima) return;
-    const inizio = performance.now();
-    const partenza = da.current;
-    let raf = 0;
-    const passo = (t: number) => {
-      const k = Math.min(1, (t - inizio) / 900);
-      const x = Math.round(partenza + (valore - partenza) * (1 - Math.pow(1 - k, 3)));
-      da.current = x;
-      setV(x);
-      if (k < 1) raf = requestAnimationFrame(passo);
-    };
-    raf = requestAnimationFrame(passo);
-    return () => cancelAnimationFrame(raf);
-  }, [valore, anima]);
-  return anima ? v : valore;
-}
 
 // Gli XP come un contachilometri: ogni cifra scorre verso il suo valore.
 function Odometro({ valore, anima }: { valore: number; anima: boolean }) {
@@ -70,45 +38,11 @@ function Odometro({ valore, anima }: { valore: number; anima: boolean }) {
   );
 }
 
-// Una riga: ETICHETTA [████████░░] 67%  dettaglio. Quando il valore cambia lampeggia; a 100% si illumina d'oro.
-function Riga({
-  etichetta, perc, dettaglio, anima, col, pulsa = false, evidenzia,
-}: { etichetta: string; perc: number; dettaglio: string; anima: boolean; col: Rgb; pulsa?: boolean; evidenzia?: boolean }) {
-  const p = useConteggio(Math.max(0, Math.min(100, Math.round(perc))), anima);
-  const el = useRef<HTMLDivElement>(null);
-  const prec = useRef<number | null>(null);
-  useEffect(() => {
-    const e = el.current;
-    const prima = prec.current;
-    prec.current = perc;
-    if (!e || prima === null || !anima || Math.abs(perc - prima) < 0.4) return;
-    const classe = perc >= 100 && prima < 100 ? "riga-oro" : "riga-flash";
-    e.classList.remove("riga-flash", "riga-oro");
-    void e.offsetWidth; // fa ripartire l'animazione
-    e.classList.add(classe);
-  }, [perc, anima]);
-
-  const pieni = Math.round((p / 100) * LARGHEZZA_BARRA);
-  const fatto = evidenzia ?? p >= 100; // di solito a 100%; il boss si illumina da KO, non a vita piena
-  return (
-    <div ref={el} className={`grid grid-cols-[7.4rem_max-content_2.6rem_1fr] items-center gap-x-1.5 whitespace-nowrap leading-5 ${pulsa ? "pulsa" : ""}`}>
-      <span style={{ color: rgba(col, 0.7) }}>{etichetta}</span>
-      <span style={{ color: fatto ? "#ffffff" : rgba(col), textShadow: fatto ? `0 0 8px ${rgba(col, 0.9)}` : undefined }}>
-        [{"█".repeat(pieni)}
-        <span style={{ color: rgba(col, 0.22) }}>{"░".repeat(LARGHEZZA_BARRA - pieni)}</span>]
-      </span>
-      <span className="text-right font-bold tabular-nums" style={{ color: fatto ? "#ffffff" : rgba(col) }}>{p}%</span>
-      <span className="text-right text-[10px]" style={{ color: rgba(col, 0.55) }}>{dettaglio}</span>
-    </div>
-  );
-}
-
 const TRAGUARDI_SERIE = [3, 7, 14, 30, 60, 100];
-const ora2 = (n: number) => String(n).padStart(2, "0");
 
 // Il recap in cima a Oggi: una console da nerd. Barre e percentuali che avanzano, boss della settimana, combo, record.
 export default function RiepilogoOggi({ fatte, totale }: { fatte: number; totale: number }) {
-  const { stato, oggi, adesso, xp } = useStore();
+  const { stato, oggi, xp } = useStore();
   const anima = stato.impostazioni.animazioni;
   const l = livello(xp);
 
@@ -130,40 +64,6 @@ export default function RiepilogoOggi({ fatte, totale }: { fatte: number; totale
 
   // --- il boss della settimana ---
   const boss = bossSettimana(stato, oggi);
-
-  // --- XP: media, variazione, tempo al prossimo livello ---
-  const xpGiorno = (d: string) =>
-    stato.completamenti.filter((c) => c.data === d).reduce((t, c) => t + c.punti + c.bonus, 0) + stato.bonus.filter((b) => b.data === d).reduce((t, b) => t + b.xp, 0);
-  const xpOggi = xpGiorno(oggi);
-  const somma7 = (da: number) => Array.from({ length: 7 }, (_, i) => xpGiorno(dataPiù(oggi, -(i + da)))).reduce((a, b) => a + b, 0);
-  const mediaPrima = somma7(1) / 7;
-  const variazione = mediaPrima > 0 ? Math.round(((xpOggi - mediaPrima) / mediaPrima) * 100) : null;
-  const mediaRecente = somma7(0) / 7;
-  const eta = l.prossimo && mediaRecente > 0 ? Math.max(1, Math.ceil(l.mancano / mediaRecente)) : null;
-
-  // --- combo (task di fila, pause sotto l'ora) e record di task in un giorno ---
-  const oggiOrdinate = stato.completamenti.filter((c) => c.data === oggi).sort((a, b) => a.ts - b.ts);
-  let combo = 0;
-  let rif = adesso;
-  for (let i = oggiOrdinate.length - 1; i >= 0 && adesso > 0; i--) {
-    if (rif - oggiOrdinate[i].ts > COMBO_PAUSA_MS) break;
-    combo++;
-    rif = oggiOrdinate[i].ts;
-  }
-  const perGiorno = new Map<string, number>();
-  for (const c of stato.completamenti) perGiorno.set(c.data, (perGiorno.get(c.data) ?? 0) + 1);
-  const recordMax = Math.max(0, ...perGiorno.values());
-
-  // --- le ultime task fatte, come righe di log ---
-  const log = [...stato.completamenti]
-    .sort((a, b) => b.ts - a.ts)
-    .slice(0, 2)
-    .map((c) => {
-      const t = stato.task.find((x) => x.id === c.taskId);
-      const d = new Date(c.ts);
-      const nome = c.nota ? `sistema ${c.nota}` : t ? titoloTask(t, stato, oggi).toLowerCase() : "task";
-      return `[${c.data === oggi ? "" : `${ora2(d.getDate())}/${ora2(d.getMonth() + 1)} `}${ora2(d.getHours())}:${ora2(d.getMinutes())}] ${nome} OK +${c.punti + c.bonus}xp`;
-    });
 
   // --- "quasi ci sei": la riga di oggi pulsa e c'è un invito ---
   const percOggi = totale > 0 ? (fatte / totale) * 100 : 0;
@@ -188,93 +88,94 @@ export default function RiepilogoOggi({ fatte, totale }: { fatte: number; totale
       xp={xp}
       nudge={nudge}
       tutto={tutto}
-      log={log}
       centro={{ fatte, totale }}
-      righe={[
-        { etichetta: "OGGI", perc: percOggi, dettaglio: totale > 0 ? `${fatte}/${totale}` : "libero", pulsa: quasi },
-        { etichetta: "SETTIMANALE", perc: previsteSett > 0 ? (fatteSett / previsteSett) * 100 : 0, dettaglio: `${fatteSett}/${previsteSett}` },
-        { etichetta: "BOSS SETTIMANA", perc: boss.pianificate > 0 ? (boss.hp / boss.pianificate) * 100 : 0, dettaglio: boss.sconfitto ? "KO!" : `${boss.hp} hp`, rosso: true },
-        { etichetta: "SERIE COMPLETATE", perc: (giorniSerie / traguardo) * 100, dettaglio: `${giorniSerie}/${traguardo}g` },
-        { etichetta: "COSTANZA", perc: (attivi / finestra) * 100, dettaglio: `${attivi}/${finestra}g` },
-        { etichetta: "XP PROSSIMO LEVEL", perc: l.prossimo ? l.progresso * 100 : 100, dettaglio: l.prossimo ? `-${l.mancano}` : "MAX" },
+      stat={[
+        { id: "OGGI", nome: "Oggi", colore: "#fa114f", perc: percOggi, dettaglio: totale > 0 ? `${fatte}/${totale}` : "libero", pulsa: quasi },
+        { id: "SETTIMANA", nome: "Settimana", colore: "#92f000", perc: previsteSett > 0 ? (fatteSett / previsteSett) * 100 : 0, dettaglio: `${fatteSett}/${previsteSett}` },
+        { id: "LIVELLO", nome: "Livello", colore: "#00d9e8", perc: l.prossimo ? l.progresso * 100 : 100, dettaglio: l.prossimo ? `-${l.mancano}xp` : "MAX" },
+        { id: "BOSS", nome: "Boss", colore: tutto ? "#92f000" : "#ff9686", perc: boss.pianificate > 0 ? (boss.hp / boss.pianificate) * 100 : 0, dettaglio: boss.sconfitto ? "KO!" : `${boss.hp}hp` },
+        { id: "SERIE", nome: "Serie", colore: "#ffb340", perc: (giorniSerie / traguardo) * 100, dettaglio: `${giorniSerie}/${traguardo}g` },
+        { id: "COSTANZA", nome: "Costanza", colore: "#bf8cff", perc: (attivi / finestra) * 100, dettaglio: `${attivi}/${finestra}g` },
       ]}
-      piede={{
-        xpOggi,
-        variazione: variazione === null ? "n/d" : `${variazione >= 0 ? "+" : ""}${variazione}%`,
-        eta: l.prossimo ? (eta ? `lv.${l.numero + 1} ~${eta}g` : "n/d") : "max",
-        combo: combo >= 3 ? `COMBO x${combo} · xp x1.5` : combo > 0 ? `combo ${combo}/3` : "combo 0/3",
-        record: `record ${recordMax || 0} task/g`,
-      }}
     />
   );
 }
 
+type Stat = { id: string; nome: string; colore: string; perc: number; dettaglio: string; pulsa?: boolean };
 // Tre anelli concentrici come sull'Apple Watch: partono da zero e si riempiono con un'animazione morbida, con la punta tonda.
-function Anelli({ righe, anima, tutto, centro }: { righe: RigaDati[]; anima: boolean; tutto: boolean; centro: { fatte: number; totale: number } }) {
+const TRACCE: Record<string, string> = { OGGI: "#3b0a1b", SETTIMANA: "#1f3200", LIVELLO: "#00323a" };
+
+function Anelli({ stat, anima, tutto, centro }: { stat: Stat[]; anima: boolean; tutto: boolean; centro: { fatte: number; totale: number } }) {
   const [pieni, setPieni] = useState(!anima);
   useEffect(() => {
     if (!anima) return;
     const id = requestAnimationFrame(() => requestAnimationFrame(() => setPieni(true)));
     return () => cancelAnimationFrame(id);
   }, [anima]);
-  const dati = ANELLI.map((a) => ({ ...a, riga: righe.find((r) => r.etichetta === a.etichetta) })).filter((a) => a.riga);
-  const SPESSORE = 15;
-  const GIRO = 2 * Math.PI;
+  const SPESSORE = 8;
+  const DIM = 104;
+  const C = DIM / 2;
   return (
-    <div className="mt-1 flex items-center gap-4">
-      <div className="relative shrink-0" style={{ width: 132, height: 132 }}>
-        <svg width="132" height="132" viewBox="0 0 132 132" className="-rotate-90">
-          {dati.map((a, i) => {
-            const r = 58 - i * (SPESSORE + 2);
-            const lunghezza = GIRO * r;
-            const frazione = pieni ? Math.max(0, Math.min(1, (a.riga!.perc || 0) / 100)) : 0;
-            return (
-              <g key={a.etichetta}>
-                <circle cx="66" cy="66" r={r} fill="none" stroke={a.traccia} strokeWidth={SPESSORE} />
-                <circle
-                  cx="66" cy="66" r={r} fill="none" stroke={a.colore} strokeWidth={SPESSORE} strokeLinecap="round"
-                  strokeDasharray={lunghezza}
-                  strokeDashoffset={lunghezza * (1 - frazione)}
-                  style={{
-                    opacity: frazione > 0.005 ? 1 : 0,
-                    filter: frazione >= 1 ? `drop-shadow(0 0 5px ${a.colore})` : undefined,
-                    transition: `stroke-dashoffset 1.4s cubic-bezier(.3,.7,.2,1) ${i * 180}ms, filter .6s`,
-                  }}
-                />
-              </g>
-            );
-          })}
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          {tutto ? (
-            <Check size={30} strokeWidth={3.5} color="#92f000" />
-          ) : (
-            <>
-              <span className="text-[22px] font-black leading-none text-white">{centro.fatte}/{centro.totale}</span>
-              <span className="mt-0.5 text-[9px] uppercase tracking-widest" style={{ color: "rgba(255,255,255,.55)" }}>oggi</span>
-            </>
-          )}
-        </div>
-      </div>
-      <div className="min-w-0 flex-1 space-y-2">
-        {dati.map((a) => (
-          <div key={a.etichetta}>
-            <div className="text-[10px] uppercase tracking-widest" style={{ color: "rgba(255,255,255,.55)" }}>{a.nome}</div>
-            <div className="text-[17px] font-black leading-tight" style={{ color: a.colore }}>
-              {Math.round(a.riga!.perc)}%<span className="ml-1.5 text-[11px] font-semibold opacity-80">{a.riga!.dettaglio}</span>
-            </div>
-          </div>
-        ))}
+    <div className="relative shrink-0" style={{ width: DIM, height: DIM }}>
+      <svg width={DIM} height={DIM} viewBox={`0 0 ${DIM} ${DIM}`} className="-rotate-90">
+        {stat.slice(0, 3).map((a, i) => {
+          const r = C - SPESSORE / 2 - i * (SPESSORE + 1.5);
+          const lunghezza = 2 * Math.PI * r;
+          const frazione = pieni ? Math.max(0, Math.min(1, a.perc / 100)) : 0;
+          return (
+            <g key={a.id}>
+              <circle cx={C} cy={C} r={r} fill="none" stroke={TRACCE[a.id]} strokeWidth={SPESSORE} />
+              <circle
+                cx={C} cy={C} r={r} fill="none" stroke={a.colore} strokeWidth={SPESSORE} strokeLinecap="round"
+                strokeDasharray={lunghezza}
+                strokeDashoffset={lunghezza * (1 - frazione)}
+                style={{
+                  opacity: frazione > 0.005 ? 1 : 0,
+                  filter: frazione >= 1 ? `drop-shadow(0 0 4px ${a.colore})` : undefined,
+                  transition: `stroke-dashoffset 1.4s cubic-bezier(.3,.7,.2,1) ${i * 180}ms, filter .6s`,
+                }}
+              />
+            </g>
+          );
+        })}
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        {tutto ? (
+          <Check size={24} strokeWidth={3.5} color="#92f000" />
+        ) : (
+          <span className="text-[17px] font-black leading-none tracking-tight text-white">{centro.fatte}/{centro.totale}</span>
+        )}
       </div>
     </div>
   );
 }
 
-type RigaDati = { etichetta: string; perc: number; dettaglio: string; pulsa?: boolean; rosso?: boolean };
+// Un indicatore con la sua barretta: nome, valore e percentuale.
+function Cella({ s, anima }: { s: Stat; anima: boolean }) {
+  const [pieno, setPieno] = useState(!anima);
+  useEffect(() => {
+    if (!anima) return;
+    const id = requestAnimationFrame(() => requestAnimationFrame(() => setPieno(true)));
+    return () => cancelAnimationFrame(id);
+  }, [anima]);
+  const p = Math.max(0, Math.min(100, Math.round(s.perc)));
+  return (
+    <div className={`min-w-0 ${s.pulsa ? "pulsa" : ""}`}>
+      <div className="flex items-baseline justify-between gap-1 leading-none">
+        <span className="truncate text-[9px] font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,.6)" }}>{s.nome}</span>
+        <span className="text-[13px] font-black tabular-nums" style={{ color: s.colore }}>{p}%</span>
+      </div>
+      <div className="mt-1 h-1.5 overflow-hidden rounded-full" style={{ background: "rgba(255,255,255,.1)" }}>
+        <div className="h-full rounded-full" style={{ width: `${pieno ? p : 0}%`, background: s.colore, transition: "width 1.2s cubic-bezier(.3,.7,.2,1)" }} />
+      </div>
+      <div className="mt-0.5 text-[10px] font-semibold leading-none" style={{ color: "rgba(255,255,255,.45)" }}>{s.dettaglio}</div>
+    </div>
+  );
+}
 
-// Il riquadro vero e proprio. A ogni apertura fa il "ricalcolo": una riga luminosa lo attraversa mentre le barre si ricontano, e a conti finiti un lampo.
+// Il riquadro vero e proprio. A ogni apertura si ricalcola: una riga luminosa lo attraversa mentre gli anelli si riempiono.
 function Pannello({
-  anima, apertura, rgb, l, xp, nudge, tutto, centro, log, righe, piede,
+  anima, apertura, rgb, l, xp, nudge, tutto, centro, stat,
 }: {
   anima: boolean;
   apertura: number;
@@ -284,14 +185,11 @@ function Pannello({
   nudge: string | null;
   tutto: boolean;
   centro: { fatte: number; totale: number };
-  log: string[];
-  righe: RigaDati[];
-  piede: { xpOggi: number; variazione: string; eta: string; combo: string; record: string };
+  stat: Stat[];
 }) {
   // Si decide una volta sola per apertura: cambiando scheda e tornando qui non riparte.
   const [ricalcolo] = useState(() => anima && èDaRiprodurre(apertura));
   useEffect(() => segnaRiprodotta(apertura), [apertura]);
-  const [dettagli, setDettagli] = useState(false);
 
   return (
     <div
@@ -302,72 +200,33 @@ function Pannello({
       {ricalcolo && <div className="scansione" aria-hidden />}
 
       <div className="relative">
-        <div className="mb-1 flex items-baseline justify-between border-b pb-1" style={{ borderColor: rgba(rgb, 0.18) }}>
-          <span className="text-[13px] font-bold uppercase tracking-widest">LV.{l.numero} {l.nome}</span>
-          <span className="flex items-baseline gap-1 text-[15px] font-black" style={{ textShadow: `0 0 10px ${rgba(rgb, 0.6)}` }}>
-            <Odometro valore={xp} anima={anima} /> <span className="text-[11px]">XP</span>
+        <div className="mb-2 flex items-baseline justify-between border-b pb-1" style={{ borderColor: rgba(rgb, 0.18) }}>
+          <span className="text-[11px] font-bold uppercase tracking-widest">LV.{l.numero} {l.nome}</span>
+          <span className="flex items-baseline gap-1 text-[13px] font-black" style={{ textShadow: `0 0 10px ${rgba(rgb, 0.6)}` }}>
+            <Odometro valore={xp} anima={anima} /> <span className="text-[10px]">XP</span>
           </span>
         </div>
 
-        <Anelli righe={righe} anima={anima && ricalcolo} tutto={tutto} centro={centro} />
-
-        <div className="mt-2 grid grid-cols-2 gap-2 text-[11px]">
-          {righe.filter((r) => r.etichetta === "BOSS SETTIMANA" || r.etichetta === "SERIE COMPLETATE").map((r) => {
-            const boss = r.etichetta === "BOSS SETTIMANA";
-            const col = boss && !tutto ? CORALLO : rgb;
-            return (
-              <div key={r.etichetta} className="rounded-xl px-2.5 py-1.5" style={{ background: rgba(col, 0.1), color: rgba(col) }}>
-                <div className="flex items-center justify-between gap-1 font-bold">
-                  <span className="inline-flex items-center gap-1">{boss ? <Swords size={13} /> : <Flame size={13} />}{boss ? "Boss" : "Serie"}</span>
-                  <span>{r.dettaglio}</span>
-                </div>
-                <div className="mt-1 h-1.5 overflow-hidden rounded-full" style={{ background: rgba(col, 0.2) }}>
-                  <div className="h-full rounded-full" style={{ width: `${Math.max(0, Math.min(100, r.perc))}%`, background: rgba(col), transition: "width 1s" }} />
-                </div>
-              </div>
-            );
-          })}
+        <div className="flex items-center gap-3">
+          <Anelli stat={stat} anima={anima && ricalcolo} tutto={tutto} centro={centro} />
+          <div className="grid min-w-0 flex-1 grid-cols-2 gap-x-3 gap-y-2">
+            {stat.map((s) => (
+              <Cella key={s.id} s={s} anima={anima && ricalcolo} />
+            ))}
+          </div>
         </div>
 
-
         {tutto && (
-          <div className="mt-1 font-bold" style={{ color: "#ffffff", textShadow: `0 0 8px ${rgba(rgb, 0.9)}` }}>
+          <div className="mt-2 text-[12px] font-bold" style={{ color: "#ffffff", textShadow: `0 0 8px ${rgba(rgb, 0.9)}` }}>
             ✅ Hai completato tutte le task!
           </div>
         )}
-
         {nudge && (
-          <div className="pulsa mt-1 font-bold" style={{ color: "#ffffff" }}>
+          <div className="pulsa mt-2 font-bold" style={{ color: "#ffffff" }}>
             {nudge}
             <span className="cursore">█</span>
           </div>
         )}
-
-        <button onClick={() => setDettagli((v) => !v)} className="mt-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-widest" style={{ color: rgba(rgb, 0.6) }}>
-          Dettagli <ChevronDown size={12} className={dettagli ? "rotate-180" : ""} />
-        </button>
-
-        {dettagli && righe.map((r) => (
-          <Riga key={r.etichetta} etichetta={r.etichetta} perc={r.perc} dettaglio={r.dettaglio} anima={false} col={r.rosso && !tutto ? CORALLO : rgb} evidenzia={r.rosso ? r.dettaglio === "KO!" : undefined} />
-        ))}
-
-        {log.length > 0 && (
-          <div className="mt-1.5 space-y-0.5 text-[10px]" style={{ color: rgba(rgb, 0.6) }}>
-            {log.map((r, i) => (
-              <div key={r + i} className="break-words">{r}</div>
-            ))}
-          </div>
-        )}
-
-        <div className="mt-1.5 flex flex-wrap justify-between gap-x-3 border-t pt-1 text-[10px]" style={{ borderColor: rgba(rgb, 0.18), color: rgba(rgb, 0.65) }}>
-          <span>+{piede.xpOggi} xp oggi</span>
-          <span>Δ {piede.variazione} vs 7g prima</span>
-          <span>ETA {piede.eta}</span>
-        </div>
-        <div className="mt-0.5 flex justify-between gap-x-3 text-[10px]" style={{ color: rgba(rgb, 0.65) }}>
-          <span className={piede.combo.startsWith("COMBO") ? "font-bold" : ""} style={piede.combo.startsWith("COMBO") ? { color: "#ffffff" } : undefined}>{piede.combo}</span>
-          <span>{piede.record}</span>
-        </div>
       </div>
     </div>
   );
