@@ -399,6 +399,37 @@
     if (el) el.textContent = formatClock(new Date());
   }, 30000);
 
+  // Phones can keep serving a cached copy of this page indefinitely (a meta
+  // no-cache tag is not reliably honored for the top-level document on
+  // mobile browsers). To guarantee this page is never stuck on stale data,
+  // fetch data.js directly from the network (bypassing HTTP cache) and
+  // compare it to what's actually loaded in memory; if the server has newer
+  // entries, force a real reload via a cache-busting URL — the same trick
+  // that fixes a stuck phone manually, done automatically instead.
+  async function checkForFreshData() {
+    try {
+      const res = await fetch("data.js?check=" + Date.now(), { cache: "no-store" });
+      if (!res.ok) return;
+      const text = await res.text();
+      const match = text.match(/window\.DEFAULT_ENTRIES = (\[[\s\S]*\]);/);
+      if (!match) return;
+      const fresh = JSON.parse(match[1]);
+      const current = Array.isArray(window.DEFAULT_ENTRIES) ? window.DEFAULT_ENTRIES : [];
+      const freshLast = fresh.length ? fresh[fresh.length - 1].date : null;
+      const currentLast = current.length ? current[current.length - 1].date : null;
+      if (freshLast && freshLast !== currentLast) {
+        const guardKey = "myroster_reloaded_for_" + freshLast;
+        if (!sessionStorage.getItem(guardKey)) {
+          sessionStorage.setItem(guardKey, "1");
+          location.replace(location.pathname + "?t=" + Date.now());
+        }
+      }
+    } catch (err) {
+      console.warn("Controllo aggiornamenti turni fallito:", err);
+    }
+  }
+  checkForFreshData();
+
   if (!loadFromStorage()) {
     loadDefaultEntries();
   }
