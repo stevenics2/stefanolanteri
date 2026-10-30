@@ -9,7 +9,7 @@ import { hhmm } from "@/lib/sonno";
 import { stanzaDelGiorno, titoloTask } from "@/lib/stanze";
 import { useStore } from "@/lib/store";
 import type { Task } from "@/lib/tipi";
-import AreaIcona from "./AreaIcona";
+import AreaIcona, { iconaTask } from "./AreaIcona";
 
 const ora = (ms: number) => new Date(ms).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
 
@@ -53,7 +53,7 @@ export default function TaskCard({ task, soloMinima }: { task: Task; soloMinima:
         className={`flex w-full items-center gap-3 rounded-2xl bg-card px-3 py-2.5 text-left ${fatto ? "opacity-60" : ""}`}
         style={{ borderLeft: `4px solid ${colore}` }}
       >
-        <AreaIcona nome={task.icona ?? area?.icona ?? ""} colore={colore} />
+        <AreaIcona nome={iconaTask(task, area?.icona ?? "")} colore={colore} />
         <span className="min-w-0 flex-1">
           <span className={`block truncate font-semibold leading-tight ${fatto ? "line-through" : ""}`}>{titoloTask(task, stato, oggi)}</span>
           <span className="mt-0.5 flex items-center gap-2 text-xs text-muted">
@@ -92,7 +92,7 @@ export default function TaskCard({ task, soloMinima }: { task: Task; soloMinima:
   return (
     <div className={`rounded-2xl bg-card p-4 ${fatto ? "opacity-60" : ""}`} style={{ borderLeft: `4px solid ${colore}` }}>
       <div className="flex items-start gap-3">
-        <AreaIcona nome={task.icona ?? area?.icona ?? ""} colore={colore} />
+        <AreaIcona nome={iconaTask(task, area?.icona ?? "")} colore={colore} />
         <div className="flex-1">
           <div className={`flex items-start justify-between gap-2 font-semibold ${fatto ? "line-through" : ""}`}>
             <span>{titoloTask(task, stato, oggi)}</span>

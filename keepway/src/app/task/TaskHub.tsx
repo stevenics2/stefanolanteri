@@ -8,7 +8,7 @@ import { giorniTra } from "@/lib/eventi";
 import { useStore } from "@/lib/store";
 import type { Evento, Task } from "@/lib/tipi";
 import { RigaEvento } from "../components/AgendaBox";
-import AreaIcona from "../components/AreaIcona";
+import AreaIcona, { iconaTask } from "../components/AreaIcona";
 import FormAllenamento from "./FormAllenamento";
 import FormEvento from "./FormEvento";
 import FormTask from "./FormTask";
@@ -89,7 +89,7 @@ export default function TaskHub() {
             {lista.length === 0 && <p className="text-sm text-muted">Nessuna task.</p>}
             {lista.map((t) => (
               <div key={t.id} className={`flex items-center gap-3 rounded-2xl bg-card p-3 ${t.attiva ? "" : "opacity-50"}`}>
-                <AreaIcona nome={t.icona ?? a.icona} colore={a.colore} size={16} />
+                <AreaIcona nome={iconaTask(t, a.icona)} colore={a.colore} size={16} />
                 <button onClick={() => setModo({ tipo: "task", task: t })} className="flex-1 text-left">
                   <div className="font-medium">{t.tipo === "stanza" ? "Sistema una stanza (a rotazione)" : t.titolo}</div>
                   <div className="text-xs text-muted">

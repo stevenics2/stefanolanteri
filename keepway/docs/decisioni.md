@@ -132,3 +132,5 @@
 - Oggi come planner: le task sono righe compatte (icona, titolo, momento consigliato, durata, fascia, XP) ordinate per orario consigliato; toccandole si apre la scheda intera (con timer, Fatta, Più tardi, Salta). Dopo "Fatta" la riga si richiude. Sezione ora "Il piano di oggi".
 - Il commento all'apertura ("Si parte! Hai tutta la giornata davanti") è ora dentro il box di avanzamento e compare solo nella scheda Oggi (prima era un popup globale su tutte le schede).
 - Timer in alto a destra del box, vicino agli XP: quanto manca alla fine della giornata utile = fine dell'ultimo momento libero di oggi (tra turni e sonno, entro le 22:30). Sotto 1 ora diventa corallo; a fine giornata dice "finita".
+
+- Icone per tipo di task (AreaIcona.tsx, iconaTask): scelta a mano > riconosciuta dal nome (libro per lettura, fiore per meditazione, posate per piatti, scintille per pulizia/stanza, lavatrice, cucina, spesa, acqua, respiro, diario, corsa...) > icona dell'area. Vale per le task esistenti senza dover cambiare i dati. Lo yoga ora usa la figura in piedi (il fiore è della meditazione).
