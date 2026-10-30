@@ -2,7 +2,7 @@
 
 import { Check, Clover } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { EVENTO_FIAMMATA } from "./FestaOverlay";
+import { EVENTO_COMBO, EVENTO_FIAMMATA } from "./FestaOverlay";
 import { aperturaCorrente, èDaRiprodurre, iscriviApertura, segnaRiprodotta } from "@/lib/apertura";
 import { dataPiù, inizioSettimana } from "@/lib/date";
 import { bossSettimana, èPrevista, livello, serie } from "@/lib/regole";
@@ -228,6 +228,21 @@ function Pannello({
   const { ricompensa: r, festa } = useStore();
   // la fiammata di fine combo: si rilancia a ogni evento
   const [fiammata, setFiammata] = useState(0);
+  const [combo, setCombo] = useState<{ id: string; titolo: string; testo: string } | null>(null);
+  useEffect(() => {
+    let t: ReturnType<typeof setTimeout>;
+    const mostra = (e: Event) => {
+      const d = (e as CustomEvent<{ id: string; titolo: string; testo: string; durata: number }>).detail;
+      setCombo(d);
+      clearTimeout(t);
+      t = setTimeout(() => setCombo(null), d.durata);
+    };
+    window.addEventListener(EVENTO_COMBO, mostra);
+    return () => {
+      window.removeEventListener(EVENTO_COMBO, mostra);
+      clearTimeout(t);
+    };
+  }, []);
   useEffect(() => {
     const via = () => setFiammata((n) => n + 1);
     window.addEventListener(EVENTO_FIAMMATA, via);
@@ -238,12 +253,20 @@ function Pannello({
 
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl border bg-black p-3 font-mono text-[11px] ${ricalcolo ? "ricalcolo" : ""}`}
+      data-box-avanzamento="" className={`relative overflow-hidden rounded-2xl border bg-black p-3 font-mono text-[11px] ${ricalcolo ? "ricalcolo" : ""}`}
       style={{ borderColor: rgba(rgb, 0.35), boxShadow: `0 0 28px -10px ${rgba(rgb, 0.6)}, inset 0 0 24px ${rgba(rgb, 0.06)}`, color: rgba(rgb), transition: "color .8s, border-color .8s" }}
     >
       {ricalcolo && <div className="lampo" aria-hidden />}
       {ricalcolo && <div className="scansione" aria-hidden />}
       {r && anima && <div key={r.id} className="lampo-ora" aria-hidden />}
+      {combo && (
+        <div className="pointer-events-none absolute inset-0 z-[4] flex items-center justify-center px-3">
+          <div key={combo.id} className="risultato max-w-full rounded-2xl bg-black/80 px-5 py-3 text-center ring-1 ring-sky-300/40 backdrop-blur-sm" style={{ animationDelay: "0s", animationDuration: "2.4s", boxShadow: "0 0 30px -6px rgba(125,211,252,.7)" }}>
+            <div className="text-[20px] font-black leading-tight" style={{ color: "#7dd3fc" }}>{combo.titolo}</div>
+            <div className="mt-1 text-[12px] text-white/80">{combo.testo}</div>
+          </div>
+        </div>
+      )}
       {fiammata > 0 && <div key={fiammata} className="fiammata" aria-hidden />}
       {r && festa.length === 0 && (
         <div className="pointer-events-none absolute inset-0 z-[4] flex items-center justify-center px-3">

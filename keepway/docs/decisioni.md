@@ -120,3 +120,5 @@
 - Task completata: suono a scala in salita (do maggiore, due ottave, sempre più veloce e forte, accordo finale con campanella) e 44 scintille di tre dimensioni (prima 16).
 
 - Combo e altri popup di festa: prima l'animazione degli anelli (1,5 s), poi il popup. Per la combo: 'N Task completate!' con la fanfara di vittoria e, a fine popup, una leggera fiammata su tutto il riquadro di avanzamento. Con un popup di festa in coda il messaggio '+XP' nel riquadro non compare (per non sovrapporsi).
+
+- Combo: il popup compare nel box di avanzamento (stesso stile del messaggio dei punti), dura 2,4 s con la fanfara una sola volta; poi la fiammata. Se il box non c'è sullo schermo resta il popup a tutto schermo. Corretto il difetto per cui l'effetto ripartiva a ogni aggiornamento dello stato, facendo ripetere la fanfara e raddoppiando la durata (stesso rischio per forziere, record, boss).
