@@ -114,7 +114,13 @@ async function salvaPiano(env, request) {
   return json({ ok: true, programmate: righe.length });
 }
 
-const topicDa = (tag) => String(tag || 'keepway').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 32) || 'keepway';
+// Apple accetta come "topic" solo un codice base64url valido (max 32 caratteri): un'etichetta qualsiasi, come "prova", viene rifiutata
+// (BadWebPushTopic). Lo si ricava dall'etichetta con un'impronta: 22 caratteri validi, sempre uguali per la stessa etichetta,
+// così una notifica nuova sostituisce quella precedente non ancora consegnata.
+const topicDa = async (tag) => {
+  const impronta = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(tag || 'keepway')));
+  return b64u.enc(new Uint8Array(impronta).slice(0, 16));
+};
 
 // Spedisce una notifica e aggiorna lo stato dell'iscrizione. Ritorna { stato, dettaglio }: stato = risposta del servizio push (201 = accettata),
 // dettaglio = il motivo se non è andata (o l'errore, se non si è nemmeno arrivati ad Apple).
@@ -123,7 +129,7 @@ async function spedisci(env, vapid, sub, n) {
     sub,
     { title: n.titolo, body: n.testo || '', url: n.url || '/oggi/', tag: n.tag || 'keepway' },
     vapid,
-    { ttl: 1800, topic: topicDa(n.tag), urgency: n.urgente ? 'high' : 'normal' },
+    { ttl: 1800, topic: await topicDa(n.tag), urgency: n.urgente ? 'high' : 'normal' },
   ).catch((e) => ({ status: 0, text: String(e && e.message ? e.message : e).slice(0, 200) }));
   if (stato >= 200 && stato < 300) {
     await env.DB.prepare('UPDATE subs SET fallimenti = 0 WHERE device_id = ? AND fallimenti > 0').bind(sub.device_id).run();
