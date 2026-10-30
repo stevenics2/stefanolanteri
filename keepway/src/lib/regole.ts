@@ -7,13 +7,15 @@ export const puntiAuto = (durataMin: number | null) => (durataMin ? Math.max(5, 
 export const puntiMinima = (punti: number) => Math.max(3, Math.round(punti / 2));
 
 // --- Livelli (nomi provvisori: seguono le sei stagioni del percorso) ---
+// Un livello a settimana, più o meno: con le task di base (circa 110 XP al giorno se fai tutto, 60-70% nella vita vera)
+// servono circa 500 XP per il primo salto, poi i passi crescono un po' (500, 700, 900, 1100, 1300).
 export const LIVELLI = [
   { nome: "Vedere", da: 0 },
-  { nome: "Regolare", da: 150 },
-  { nome: "Smontare", da: 400 },
-  { nome: "Agire", da: 800 },
-  { nome: "Allenare", da: 1400 },
-  { nome: "Diventare", da: 2200 },
+  { nome: "Regolare", da: 500 },
+  { nome: "Smontare", da: 1200 },
+  { nome: "Agire", da: 2100 },
+  { nome: "Allenare", da: 3200 },
+  { nome: "Diventare", da: 4500 },
 ];
 
 export const xpTotali = (cs: Completamento[], bonus: Bonus[] = []) =>
