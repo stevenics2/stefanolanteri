@@ -154,11 +154,13 @@ function notificheTurniDaSistemare(ora: number, oggi: string): Notifica[] {
   if (lista.length === 0) return [];
   const testo = lista.length === 1 ? lista[0].testo : `${lista.length} problemi nei turni. ${lista[0].testo}`;
   const out: Notifica[] = [];
+  const usati = new Set<number>(); // due orari spostati nello stesso momento diventerebbero un doppione
   for (let i = 0; i <= GIORNI_AVANTI; i++) {
     const giorno = dataPiù(oggi, i);
     for (const hhmm of ["09:30", "12:00", "19:00"]) {
       const q = fuoriDalSilenzio(istante(giorno, hhmm));
-      if (q === null || q <= ora) continue;
+      if (q === null || q <= ora || usati.has(q)) continue;
+      usati.add(q);
       out.push({ id: `turni-${giorno}-${hhmm}`, quando: q, titolo: "Turni da sistemare", testo, url: "/turni/", tag: "turni", urgente: true });
     }
   }
