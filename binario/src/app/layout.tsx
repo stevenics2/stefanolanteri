@@ -10,7 +10,8 @@ export const metadata: Metadata = {
   title: "Binario",
   description: "La struttura del porto, anche fuori dal porto.",
   appleWebApp: { capable: true, title: "Binario", statusBarStyle: "black-translucent" },
-  icons: { apple: "/icons/180" },
+  manifest: "/manifest.webmanifest",
+  icons: { icon: "/icons/192.png", apple: "/icons/180.png" },
 };
 
 export const viewport: Viewport = {

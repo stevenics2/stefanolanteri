@@ -1,9 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  // Sito statico: si genera la cartella `out/` e si pubblica su Cloudflare Pages.
+  output: "export",
+  trailingSlash: true, // /oggi/ -> oggi/index.html, funziona su qualunque hosting statico
   turbopack: {
     rules: {
       "*.css": {
