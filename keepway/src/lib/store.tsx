@@ -7,7 +7,8 @@ import { nuovoId, statoIniziale, statoVuoto, taskStanza } from "./seed";
 import { stanzaDelGiorno } from "./stanze";
 import type { Impostazioni, Stato, Task, Vacanza } from "./tipi";
 
-const CHIAVE = "binario.v1";
+const CHIAVE = "keepway.v1";
+const CHIAVE_VECCHIA = "binario.v1"; // il nome precedente: se ci sono dati salvati lì li si recupera
 
 export type Ricompensa = {
   id: string;
@@ -62,7 +63,7 @@ const ICONE_VECCHIE: Record<string, string> = { "💪": "dumbbell", "🎯": "tar
 // Legge i dati dal telefono e li porta all'ultima forma (aggiunge i campi nuovi senza perdere nulla).
 function carica(): Stato {
   try {
-    const raw = localStorage.getItem(CHIAVE);
+    const raw = localStorage.getItem(CHIAVE) ?? localStorage.getItem(CHIAVE_VECCHIA);
     if (raw) {
       const s = JSON.parse(raw) as Partial<Stato> & { versione?: number };
       if (s.versione === 1) {

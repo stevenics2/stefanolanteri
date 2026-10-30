@@ -1,4 +1,4 @@
-// I dati di Binario. Per ora stanno nel telefono (localStorage); stessa forma delle tabelle del database che arriverà.
+// I dati di Keepway. Per ora stanno nel telefono (localStorage); stessa forma delle tabelle del database che arriverà.
 
 // icona = chiave di un'icona (vedi components/AreaIcona.tsx), non un'emoji
 export type Area = { id: string; nome: string; colore: string; icona: string; frase: string };

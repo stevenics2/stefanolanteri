@@ -1,6 +1,6 @@
 """Converte il file Excel dei turni in src/data/roster.json.
 
-Uso (dalla cartella binario/):
+Uso (dalla cartella keepway/):
     python3 scripts/importa_turni.py percorso/Turni.xlsx
 
 Il foglio deve avere le colonne: Data, Giorno settimana, Turno, Orario, Unità operativa.

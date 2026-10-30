@@ -18,7 +18,7 @@ export default function ImpostazioniVista() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "binario-dati.json";
+    a.download = "keepway-dati.json";
     a.click();
     URL.revokeObjectURL(url);
   };

@@ -7,9 +7,9 @@ import Providers from "./components/Providers";
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Binario",
+  title: "Keepway",
   description: "La struttura del porto, anche fuori dal porto.",
-  appleWebApp: { capable: true, title: "Binario", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: "Keepway", statusBarStyle: "black-translucent" },
   manifest: "/manifest.webmanifest",
   icons: { icon: "/icons/192.png", apple: "/icons/180.png" },
 };
