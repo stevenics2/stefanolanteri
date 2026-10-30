@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { coriandoli, monete, suono } from "@/lib/effetti";
 import { useStore } from "@/lib/store";
 
+export const EVENTO_FIAMMATA = "keepway-fiammata";
+const ATTESA_ANELLI_MS = 1500; // il tempo dell'animazione degli anelli, che parte per prima
 const ICONE = { forziere: Gift, record: Trophy, boss: Swords, combo: Zap } as const;
 const COLORI = { forziere: "#fcd34d", record: "#fcd34d", boss: "#fca5a5", combo: "#7dd3fc" } as const;
 
@@ -13,27 +15,34 @@ export default function FestaOverlay() {
   const { festa, chiudiFesta, stato } = useStore();
   const f = festa[0];
   const [apertoId, setApertoId] = useState<string | null>(null);
+  const [visibileId, setVisibileId] = useState<string | null>(null);
   const { suoni, animazioni } = stato.impostazioni;
 
   const id = f?.id;
   const tipo = f?.tipo;
   useEffect(() => {
     if (!id || !tipo) return;
-    // il forziere prima trema (chiuso), poi si apre; gli altri partono subito
+    // prima gli anelli (tremito e scintille), poi il popup; il forziere prima trema (chiuso), poi si apre
     const attesa = tipo === "forziere" ? 900 : 150;
+    const t0 = setTimeout(() => setVisibileId(id), ATTESA_ANELLI_MS);
     const t1 = setTimeout(() => {
       setApertoId(id);
-      if (suoni) suono(tipo === "combo" ? "via" : tipo === "boss" ? "vittoria" : "livello");
+      if (suoni) suono(tipo === "combo" || tipo === "boss" ? "vittoria" : "livello");
       if (animazioni) void (tipo === "forziere" ? monete() : tipo === "combo" ? Promise.resolve() : coriandoli(true));
-    }, attesa);
-    const t2 = setTimeout(chiudiFesta, attesa + 3600);
+    }, ATTESA_ANELLI_MS + attesa);
+    const t2 = setTimeout(() => {
+      // a fine popup della combo: una fiammata su tutto il riquadro di avanzamento
+      if (tipo === "combo" && animazioni) window.dispatchEvent(new Event(EVENTO_FIAMMATA));
+      chiudiFesta();
+    }, ATTESA_ANELLI_MS + attesa + 3600);
     return () => {
+      clearTimeout(t0);
       clearTimeout(t1);
       clearTimeout(t2);
     };
   }, [id, tipo, suoni, animazioni, chiudiFesta]);
 
-  if (!f) return null;
+  if (!f || visibileId !== f.id) return null;
   const aperto = apertoId === f.id;
   const Icona = f.tipo === "forziere" && aperto ? PackageOpen : ICONE[f.tipo];
   const colore = COLORI[f.tipo];

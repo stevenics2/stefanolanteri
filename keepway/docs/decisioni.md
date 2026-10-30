@@ -118,3 +118,5 @@
 - Task completata: niente coriandoli (restano per livello nuovo e boss). L'anello avanza e trema, con 16 scintille nei colori degli anelli e un suono da slot machine (rulli, tre colpi, vincita). Il messaggio dei punti compare un secondo dopo, così non copre gli anelli.
 
 - Task completata: suono a scala in salita (do maggiore, due ottave, sempre più veloce e forte, accordo finale con campanella) e 44 scintille di tre dimensioni (prima 16).
+
+- Combo e altri popup di festa: prima l'animazione degli anelli (1,5 s), poi il popup. Per la combo: 'N Task completate!' con la fanfara di vittoria e, a fine popup, una leggera fiammata su tutto il riquadro di avanzamento. Con un popup di festa in coda il messaggio '+XP' nel riquadro non compare (per non sovrapporsi).

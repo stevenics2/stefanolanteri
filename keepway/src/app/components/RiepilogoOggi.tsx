@@ -2,6 +2,7 @@
 
 import { Check, Clover } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { EVENTO_FIAMMATA } from "./FestaOverlay";
 import { aperturaCorrente, èDaRiprodurre, iscriviApertura, segnaRiprodotta } from "@/lib/apertura";
 import { dataPiù, inizioSettimana } from "@/lib/date";
 import { bossSettimana, èPrevista, livello, serie } from "@/lib/regole";
@@ -224,7 +225,14 @@ function Pannello({
   stat: Stat[];
 }) {
   // Si decide una volta sola per apertura: cambiando scheda e tornando qui non riparte.
-  const { ricompensa: r } = useStore();
+  const { ricompensa: r, festa } = useStore();
+  // la fiammata di fine combo: si rilancia a ogni evento
+  const [fiammata, setFiammata] = useState(0);
+  useEffect(() => {
+    const via = () => setFiammata((n) => n + 1);
+    window.addEventListener(EVENTO_FIAMMATA, via);
+    return () => window.removeEventListener(EVENTO_FIAMMATA, via);
+  }, []);
   const [ricalcolo] = useState(() => anima && èDaRiprodurre(apertura));
   useEffect(() => segnaRiprodotta(apertura), [apertura]);
 
@@ -236,7 +244,8 @@ function Pannello({
       {ricalcolo && <div className="lampo" aria-hidden />}
       {ricalcolo && <div className="scansione" aria-hidden />}
       {r && anima && <div key={r.id} className="lampo-ora" aria-hidden />}
-      {r && (
+      {fiammata > 0 && <div key={fiammata} className="fiammata" aria-hidden />}
+      {r && festa.length === 0 && (
         <div className="pointer-events-none absolute inset-0 z-[4] flex items-center justify-center px-3">
           <div key={r.id} className="risultato max-w-full rounded-2xl bg-black/75 px-5 py-2.5 text-center ring-1 ring-white/20 backdrop-blur-sm">
             <div className="text-[22px] font-black leading-tight" style={{ color: "#fa114f" }}>
