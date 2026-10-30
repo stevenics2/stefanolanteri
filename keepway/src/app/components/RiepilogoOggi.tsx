@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Clover } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { aperturaCorrente, èDaRiprodurre, iscriviApertura, segnaRiprodotta } from "@/lib/apertura";
 import { dataPiù, inizioSettimana } from "@/lib/date";
 import { bossSettimana, èPrevista, livello, serie } from "@/lib/regole";
@@ -105,7 +105,16 @@ type Stat = { id: string; nome: string; colore: string; perc: number; dettaglio:
 // Tre anelli concentrici come sull'Apple Watch: partono da zero e si riempiono con un'animazione morbida, con la punta tonda.
 const TRACCE: Record<string, string> = { OGGI: "#3b0a1b", SETTIMANA: "#1f3200", LIVELLO: "#00323a" };
 
-function Anelli({ stat, anima, tutto, centro }: { stat: Stat[]; anima: boolean; tutto: boolean; centro: { fatte: number; totale: number } }) {
+function Anelli({ stat, anima, tutto, centro, evento }: { stat: Stat[]; anima: boolean; tutto: boolean; centro: { fatte: number; totale: number }; evento: string | null }) {
+  const gruppo = useRef<HTMLDivElement>(null);
+  // a ogni task completata l'anello trema (si rilancia l'animazione anche se la classe c'è già)
+  useEffect(() => {
+    const e = gruppo.current;
+    if (!e || !evento) return;
+    e.classList.remove("trema");
+    void e.offsetWidth;
+    e.classList.add("trema");
+  }, [evento]);
   const [pieni, setPieni] = useState(!anima);
   useEffect(() => {
     if (!anima) return;
@@ -117,6 +126,7 @@ function Anelli({ stat, anima, tutto, centro }: { stat: Stat[]; anima: boolean; 
   const C = DIM / 2;
   return (
     <div className="relative shrink-0" style={{ width: DIM, height: DIM }}>
+      <div ref={gruppo} className="absolute inset-0">
       <svg width={DIM} height={DIM} viewBox={`0 0 ${DIM} ${DIM}`} className="-rotate-90">
         {stat.slice(0, 3).map((a, i) => {
           const r = C - SPESSORE / 2 - i * (SPESSORE + 1.5);
@@ -139,6 +149,23 @@ function Anelli({ stat, anima, tutto, centro }: { stat: Stat[]; anima: boolean; 
           );
         })}
       </svg>
+      </div>
+      {evento && (
+        <div key={evento} className="pointer-events-none absolute inset-0" aria-hidden>
+          {Array.from({ length: 16 }, (_, i) => {
+            const ang = (i / 16) * 2 * Math.PI + (i % 3) * 0.12;
+            const dist = 46 + ((i * 37) % 28);
+            const colore = ["#fa114f", "#92f000", "#00d9e8"][i % 3];
+            return (
+              <span
+                key={i}
+                className="scintilla"
+                style={{ color: colore, "--dx": `${Math.cos(ang) * dist}px`, "--dy": `${Math.sin(ang) * dist}px`, "--d": `${0.55 + (i % 4) * 0.12}s`, "--ritardo": `${(i % 5) * 45}ms` } as React.CSSProperties}
+              />
+            );
+          })}
+        </div>
+      )}
       <div className="absolute inset-0 flex items-center justify-center">
         {tutto ? (
           <Check size={24} strokeWidth={3.5} color="#92f000" />
@@ -224,7 +251,7 @@ function Pannello({
         </div>
 
         <div className="flex items-center gap-3">
-          <Anelli stat={stat} anima={anima && ricalcolo} tutto={tutto} centro={centro} />
+          <Anelli stat={stat} anima={anima && ricalcolo} tutto={tutto} centro={centro} evento={anima && r ? r.id : null} />
           <div className="grid min-w-0 flex-1 grid-cols-2 gap-x-3 gap-y-2">
             {stat.map((s) => (
               <Cella key={s.id} s={s} anima={anima && ricalcolo} />

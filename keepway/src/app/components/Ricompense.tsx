@@ -11,8 +11,8 @@ export default function Ricompense() {
 
   useEffect(() => {
     if (!r) return;
-    if (animazioni) void coriandoli(!!r.nuovoLivello);
-    if (suoni) suono(r.nuovoLivello ? "livello" : r.daTimer ? "vittoria" : "ok");
+    if (animazioni && r.nuovoLivello) void coriandoli(true); // i coriandoli solo per il livello nuovo: per le task ci sono le scintille negli anelli
+    if (suoni) suono(r.nuovoLivello ? "livello" : r.daTimer ? "vittoria" : "slot");
     const id = setTimeout(chiudiRicompensa, r.nuovoLivello ? 5000 : 4000);
     return () => clearTimeout(id);
     // Parte una volta sola per ricompensa

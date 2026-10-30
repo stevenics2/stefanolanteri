@@ -64,10 +64,11 @@ export function tic() {
 //   livello  = livello nuovo               (arpeggio)
 //   vittoria = fine timer                  (fanfara)
 //   incasso  = straordinario / cambio turno (cassa da negozio: "CHA-CHING!")
+//   slot     = task completata: rulli di slot machine che girano, si fermano uno a uno e il jackpot
 //   calcolo  = apertura dell'app (un computer che elabora, poi un "ding" di approvazione)
-export type Suono = "via" | "indietro" | "pausa" | "riprendi" | "ok" | "livello" | "vittoria" | "incasso" | "calcolo";
+export type Suono = "via" | "indietro" | "pausa" | "riprendi" | "ok" | "livello" | "vittoria" | "incasso" | "calcolo" | "slot";
 
-const NOTE: Record<Exclude<Suono, "incasso" | "calcolo">, [freq: number, inizio: number, durata: number, volume?: number][]> = {
+const NOTE: Record<Exclude<Suono, "incasso" | "calcolo" | "slot">, [freq: number, inizio: number, durata: number, volume?: number][]> = {
   via: [[587, 0, 0.09], [740, 0.1, 0.09], [880, 0.2, 0.18]],
   indietro: [[294, 0, 0.14, 0.18]],
   pausa: [[587, 0, 0.1], [440, 0.11, 0.16]],
@@ -157,11 +158,32 @@ function calcolo() {
   nota(7900, 1.1, 0.25, 0.02, "sine");
 }
 
+// Slot machine (~1,6 s): i rulli girano con scatti sempre più lenti, tre "clunk" quando si fermano uno dopo l'altro, poi la vincita.
+function slot() {
+  let t = 0;
+  for (let i = 0; i < 16; i++) {
+    rumore(t, 0.02, 2200 + (i % 4) * 500, 0.18);
+    nota(900 + (i % 5) * 140, t, 0.025, 0.045, "square");
+    t += 0.03 + i * 0.0045;
+  }
+  for (const [n, quando] of [[0, 0.78], [1, 0.95], [2, 1.12]] as const) {
+    scivola(320 + n * 60, 110, quando, 0.1, 0.28, "triangle"); // il rullo si blocca
+    rumore(quando, 0.03, 3000, 0.2);
+  }
+  // vincita: arpeggio di monete e campanella
+  [1047, 1319, 1568, 2093, 2637].forEach((f, i) => nota(f, 1.3 + i * 0.055, 0.22, 0.09, "triangle"));
+  campana(1.3, 1568, 0.1, 0.55);
+}
+
 export function suono(tipo: Suono) {
   try {
     avviaAudio();
     if (tipo === "incasso") {
       incasso();
+      return;
+    }
+    if (tipo === "slot") {
+      slot();
       return;
     }
     if (tipo === "calcolo") {

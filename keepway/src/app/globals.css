@@ -164,6 +164,36 @@ html {
 }
 .feedback { animation: feedback 2.9s ease-out forwards; }
 
+/* L'anello che avanza trema e sprizza scintille */
+@keyframes trema {
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  10% { transform: translate(-3px, 1px) rotate(-6deg) scale(1.04); }
+  20% { transform: translate(3px, -1px) rotate(5deg) scale(1.05); }
+  30% { transform: translate(-2px, 2px) rotate(-5deg) scale(1.05); }
+  40% { transform: translate(2px, -2px) rotate(4deg) scale(1.04); }
+  55% { transform: translate(-1px, 1px) rotate(-3deg) scale(1.03); }
+  70% { transform: translate(1px, 0) rotate(2deg) scale(1.02); }
+  85% { transform: translate(0, 0) rotate(-1deg); }
+}
+.trema { animation: trema 0.9s ease-in-out; }
+@keyframes scintilla {
+  0% { transform: translate(-50%, -50%) translate(0, 0) scale(1.1); opacity: 1; }
+  100% { transform: translate(-50%, -50%) translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+}
+.scintilla {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: currentColor;
+  box-shadow: 0 0 7px 1px currentColor;
+  pointer-events: none;
+  animation: scintilla var(--d) cubic-bezier(.1, .7, .3, 1) var(--ritardo) both;
+}
+@media (prefers-reduced-motion: reduce) { .trema, .scintilla { animation: none; opacity: 0; } }
+
 /* Il messaggio dei punti nel riquadro di avanzamento: rimbalza dentro, resta un attimo e svanisce (gli anelli si vedono avanzare) */
 @keyframes risultato {
   0% { transform: scale(0.8); opacity: 0; }
@@ -172,7 +202,7 @@ html {
   72% { opacity: 1; }
   100% { opacity: 0; }
 }
-.risultato { animation: risultato 2.6s ease-out forwards; }
+.risultato { animation: risultato 2.4s ease-out 1s both; } /* parte dopo il tremito e le scintille */
 @media (prefers-reduced-motion: reduce) { .risultato { animation: none; } }
 
 /* Una riga della console che reagisce a un cambiamento: lampo dall'interno */
