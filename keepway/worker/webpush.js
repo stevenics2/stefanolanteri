@@ -49,8 +49,9 @@ export async function encryptPayload(sub, payload) {
   return concat(head, asPublic, cipher);
 }
 
-// Sends one notification. Returns the HTTP status of the push service (201 = accepted, 404/410 = subscription gone).
-export async function sendWebPush(sub, payload, vapid, { ttl = 86400, topic = 'keepway', urgency = 'normal', timeoutMs = 8000 } = {}) {
+// Sends one notification. Returns { status, text }: status = HTTP status of the push service (201 = accepted, 404/410 = subscription gone),
+// text = the service's reply when it is not a success (it says why, e.g. "BadJwtToken").
+export async function sendWebPushDetailed(sub, payload, vapid, { ttl = 86400, topic = 'keepway', urgency = 'normal', timeoutMs = 8000 } = {}) {
   const body = await encryptPayload(sub, JSON.stringify(payload));
   const r = await fetch(sub.endpoint, {
     method: 'POST',
@@ -65,7 +66,12 @@ export async function sendWebPush(sub, payload, vapid, { ttl = 86400, topic = 'k
     body,
     signal: AbortSignal.timeout(timeoutMs),
   });
-  return r.status;
+  const ok = r.status >= 200 && r.status < 300;
+  return { status: r.status, text: ok ? '' : (await r.text().catch(() => '')).slice(0, 200) };
+}
+
+export async function sendWebPush(sub, payload, vapid, opts) {
+  return (await sendWebPushDetailed(sub, payload, vapid, opts)).status;
 }
 
 // Generates a VAPID key pair: { publicKey (base64url), privateJwk }.

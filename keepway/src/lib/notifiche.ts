@@ -79,9 +79,10 @@ export async function disattivaPush() {
   await chiama("/api/push/unsubscribe", "POST", { deviceId: deviceId() }).catch(() => {});
 }
 
-export async function inviaProva(): Promise<boolean> {
-  const r = await chiama("/api/push/test", "POST", { deviceId: deviceId() });
-  return !!r?.ok;
+export type EsitoProva = { ok: boolean; stato: number; dettaglio?: string };
+
+export async function inviaProva(): Promise<EsitoProva> {
+  return chiama("/api/push/test", "POST", { deviceId: deviceId() });
 }
 
 // Rimanda l'iscrizione al server (a volte il server la perde, o cambia): si fa una volta al giorno.

@@ -73,7 +73,14 @@ export default function NotificheImpostazioni() {
           <div className="grid grid-cols-2 gap-2">
             <button
               disabled={occupato}
-              onClick={() => esegui(async () => ((await inviaProva()) ? "Prova inviata: dovrebbe arrivare tra pochi secondi." : "Non sono riuscito a inviarla. Riprova."))}
+              onClick={() =>
+                esegui(async () => {
+                  const r = await inviaProva();
+                  return r.ok
+                    ? `Apple ha accettato la notifica (${r.stato}): dovrebbe arrivare tra pochi secondi.`
+                    : `Non inviata. Risposta: ${r.stato || "nessuna"}${r.dettaglio ? ` — ${r.dettaglio}` : ""}`;
+                })
+              }
               className="rounded-xl bg-white/10 py-2.5 disabled:opacity-50"
             >
               Invia una prova

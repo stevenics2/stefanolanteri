@@ -4,7 +4,7 @@
 //    (PUT /api/piano): l'app decide cosa avvisare e quando, il server si limita a consegnarle all'ora giusta.
 //  - Ogni minuto `scheduled` prende le notifiche scadute e le spedisce.
 //  - Il database (D1) è il binding `DB`. Se manca, le API rispondono 503 e il resto del sito funziona lo stesso.
-import { generateVapid, sendWebPush, b64u } from './webpush.js';
+import { generateVapid, sendWebPushDetailed, b64u } from './webpush.js';
 
 const SCHEMA = [
   'CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)',
@@ -116,14 +116,15 @@ async function salvaPiano(env, request) {
 
 const topicDa = (tag) => String(tag || 'keepway').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 32) || 'keepway';
 
-// Spedisce una notifica e aggiorna lo stato dell'iscrizione. Ritorna lo stato HTTP del servizio push (201 = accettata).
+// Spedisce una notifica e aggiorna lo stato dell'iscrizione. Ritorna { stato, dettaglio }: stato = risposta del servizio push (201 = accettata),
+// dettaglio = il motivo se non è andata (o l'errore, se non si è nemmeno arrivati ad Apple).
 async function spedisci(env, vapid, sub, n) {
-  const stato = await sendWebPush(
+  const { status: stato, text: dettaglio } = await sendWebPushDetailed(
     sub,
     { title: n.titolo, body: n.testo || '', url: n.url || '/oggi/', tag: n.tag || 'keepway' },
     vapid,
     { ttl: 1800, topic: topicDa(n.tag), urgency: n.urgente ? 'high' : 'normal' },
-  ).catch(() => 0);
+  ).catch((e) => ({ status: 0, text: String(e && e.message ? e.message : e).slice(0, 200) }));
   if (stato >= 200 && stato < 300) {
     await env.DB.prepare('UPDATE subs SET fallimenti = 0 WHERE device_id = ? AND fallimenti > 0').bind(sub.device_id).run();
   } else if (stato === 404 || stato === 410) { // il telefono ha tolto l'iscrizione
@@ -137,7 +138,8 @@ async function spedisci(env, vapid, sub, n) {
       env.DB.prepare('DELETE FROM subs WHERE device_id = ? AND fallimenti >= ?').bind(sub.device_id, MAX_FALLIMENTI),
     ]);
   }
-  return stato;
+  if (dettaglio) console.log(`push ${stato}: ${dettaglio}`);
+  return { stato, dettaglio };
 }
 
 async function prova(env, request) {
@@ -147,8 +149,8 @@ async function prova(env, request) {
   const sub = await env.DB.prepare('SELECT * FROM subs WHERE device_id = ?').bind(device).first();
   if (!sub) return err('Questo telefono non è iscritto alle notifiche', 404);
   const vapid = await chiavi(env, new URL(request.url).origin);
-  const stato = await spedisci(env, vapid, sub, { titolo: 'Keepway', testo: 'Le notifiche funzionano. Si parte.', tag: 'prova', urgente: true });
-  return json({ ok: stato >= 200 && stato < 300, stato });
+  const { stato, dettaglio } = await spedisci(env, vapid, sub, { titolo: 'Keepway', testo: 'Le notifiche funzionano. Si parte.', tag: 'prova', urgente: true });
+  return json({ ok: stato >= 200 && stato < 300, stato, dettaglio });
 }
 
 // Ogni minuto: prende le notifiche scadute (le "reclama" cancellandole, così due esecuzioni non le mandano due volte) e le spedisce.
@@ -166,7 +168,7 @@ async function tick(env) {
   for (const n of dovute) {
     const sub = await env.DB.prepare('SELECT * FROM subs WHERE device_id = ?').bind(n.device_id).first();
     if (!sub) continue;
-    esiti.push(await spedisci(env, vapid, sub, n));
+    esiti.push((await spedisci(env, vapid, sub, n)).stato);
   }
   return `inviate ${esiti.filter((s) => s >= 200 && s < 300).length}/${dovute.length}`;
 }
