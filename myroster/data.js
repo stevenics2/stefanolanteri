@@ -1,5 +1,6 @@
-// Turni precaricati, generati da Turni_2026.xlsx (31 ago - 31 dic 2026).
-// Per aggiornare: manda un nuovo file .xls a Claude e chiedi di rigenerare questo file,
+// Turni precaricati per MyRoster.
+// Set-Dic 2026: generati da Turni_2026.xlsx. Gennaio 2027: estratto dal cartellino mensile INTELCO (PDF).
+// Per aggiornare: manda un nuovo file/cartellino a Claude e chiedi di rigenerare questo file,
 // oppure carica il file direttamente dall'app (icona menu / +).
 window.DEFAULT_ENTRIES = [
   {
@@ -739,5 +740,191 @@ window.DEFAULT_ENTRIES = [
     "turno": "3 (13:00-19:00)",
     "desc": "112323 - Operativi",
     "isRest": false
+  },
+  {
+    "date": "2027-01-01",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-01-02",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-01-03",
+    "turno": "1 (01:00-07:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-01-04",
+    "turno": "R",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-01-05",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-01-06",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-01-07",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-01-08",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-01-09",
+    "turno": "1 + 4 (01:00-07:00 / 19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-01-10",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-01-11",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-01-12",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-01-13",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-01-14",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-01-15",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-01-16",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-01-17",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-01-18",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-01-19",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-01-20",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-01-21",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-01-22",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-01-23",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-01-24",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-01-25",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-01-26",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-01-27",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-01-28",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-01-29",
+    "turno": "1 + 4 (01:00-07:00 / 19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-01-30",
+    "turno": "R",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-01-31",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
   }
 ];
