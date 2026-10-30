@@ -220,3 +220,12 @@ export function violazioni(): Violazione[] {
 // Quelle ancora sistemabili: il turno più avanti è oggi o nel futuro.
 export const violazioniDa = (oggi: string) => violazioni().filter((v) => v.secondo.data >= oggi);
 export const formatoGiornoMese = gm;
+
+// Una riga che dice cosa non va in quel giorno, per la striscia rossa.
+export function notaGiorno(v: Violazione, data: string): string {
+  if (v.tipo === "doppio") return `Il doppio turno ${v.primo.turno} non è consentito`;
+  const ore = oreTesto(v.ore);
+  return data === v.primo.data
+    ? `Solo ${ore} ore di riposo prima del turno ${v.secondo.turno} del ${gm(v.secondo.data)}`
+    : `Solo ${ore} ore di riposo dopo il turno ${v.primo.turno} del ${gm(v.primo.data)}`;
+}

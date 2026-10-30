@@ -2,7 +2,7 @@
 
 import { CalendarCheck } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { dateConCalendario, giornoEffettivo, violazioniDa, type GiornoEffettivo } from "@/lib/calendario";
+import { dateConCalendario, giornoEffettivo, notaGiorno, violazioniDa, type GiornoEffettivo } from "@/lib/calendario";
 import { GIORNI_BREVI, MESI_BREVI } from "@/lib/date";
 import { useStore } from "@/lib/store";
 import TurniDaSistemare from "../components/TurniDaSistemare";
@@ -42,7 +42,7 @@ export default function TurniLista() {
 
   // Giorni con meno di 12 ore di riposo (o un doppio non consentito): si segnano in rosso.
   const problemi = new Map<string, string>();
-  if (pronto) for (const v of violazioniDa(oggi)) for (const d of [v.primo.data, v.secondo.data]) problemi.set(d, v.tipo === "doppio" ? "DOPPIO TURNO NON CONSENTITO" : "MENO DI 12 ORE DI RIPOSO");
+  if (pronto) for (const v of violazioniDa(oggi)) for (const d of new Set([v.primo.data, v.secondo.data])) if (!problemi.has(d)) problemi.set(d, notaGiorno(v, d));
 
   const vaiAOggi = () => rigaOggi.current?.scrollIntoView({ block: "center", behavior: "smooth" });
   if (!pronto) return null;
@@ -129,7 +129,12 @@ function Blocco({ g, avviso }: { g: GiornoEffettivo; avviso?: string }) {
         {!g.riposo && g.unita && <div className="mt-0.5 text-xs opacity-75">{g.unita}</div>}
       </div>
       <Banda m={g.modifica} />
-      {avviso && <div className="bg-red-600 px-3 py-1.5 text-center text-[11px] font-extrabold uppercase tracking-wide text-white">⚠ {avviso}</div>}
+      {avviso && (
+        <div className="bg-red-600 px-3 py-1.5 text-center text-white">
+          <div className="text-[11px] font-extrabold uppercase tracking-wide">⚠ Attenzione: Conflitto turni</div>
+          <div className="text-[11px] opacity-90">{avviso}</div>
+        </div>
+      )}
     </div>
   );
 }

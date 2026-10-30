@@ -15,12 +15,12 @@ export async function coriandoli(grande: boolean) {
 
 let ctx: AudioContext | null = null;
 
-function nota(freq: number, inizio: number, durata: number, volume = 0.15) {
+function nota(freq: number, inizio: number, durata: number, volume = 0.15, onda: OscillatorType = "triangle") {
   if (!ctx) return;
   const osc = ctx.createOscillator();
   const g = ctx.createGain();
   osc.frequency.value = freq;
-  osc.type = "triangle";
+  osc.type = onda;
   g.gain.setValueAtTime(volume, ctx.currentTime + inizio);
   g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + inizio + durata);
   osc.connect(g).connect(ctx.destination);
@@ -52,9 +52,10 @@ export function tic() {
 //   ok       = task fatta                  (2 note brillanti)
 //   livello  = livello nuovo               (arpeggio)
 //   vittoria = fine timer                  (fanfara)
-export type Suono = "via" | "indietro" | "pausa" | "riprendi" | "ok" | "livello" | "vittoria";
+//   incasso  = straordinario confermato    (cassa da negozio: "ka-ching")
+export type Suono = "via" | "indietro" | "pausa" | "riprendi" | "ok" | "livello" | "vittoria" | "incasso";
 
-const NOTE: Record<Suono, [freq: number, inizio: number, durata: number, volume?: number][]> = {
+const NOTE: Record<Exclude<Suono, "incasso">, [freq: number, inizio: number, durata: number, volume?: number][]> = {
   via: [[587, 0, 0.09], [740, 0.1, 0.09], [880, 0.2, 0.18]],
   indietro: [[294, 0, 0.14, 0.18]],
   pausa: [[587, 0, 0.1], [440, 0.11, 0.16]],
@@ -68,11 +69,58 @@ const NOTE: Record<Suono, [freq: number, inizio: number, durata: number, volume?
   ],
 };
 
+// Un breve fruscio filtrato: lo scatto meccanico e il cassetto della cassa.
+function rumore(inizio: number, durata: number, freq: number, volume: number) {
+  if (!ctx) return;
+  const n = Math.floor(ctx.sampleRate * durata);
+  const buf = ctx.createBuffer(1, n, ctx.sampleRate);
+  const dati = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) dati[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  const filtro = ctx.createBiquadFilter();
+  filtro.type = "bandpass";
+  filtro.frequency.value = freq;
+  const g = ctx.createGain();
+  g.gain.value = volume;
+  src.connect(filtro).connect(g).connect(ctx.destination);
+  src.start(ctx.currentTime + inizio);
+}
+
+// Il campanello metallico: più note NON armoniche insieme (è quello che lo fa suonare "d'ottone") che si spengono piano.
+function campanello(inizio: number, base: number, volume: number) {
+  for (const [rapporto, v, durata] of [[1, 1, 1.1], [2.76, 0.55, 0.8], [5.4, 0.3, 0.5], [1.5, 0.35, 0.9]] as const) {
+    nota(base * rapporto, inizio, durata, volume * v, "sine");
+  }
+}
+
+// Una vecchia cassa da negozio: scatto del tasto, "ching" del campanello, cassetto che scorre.
+function incasso() {
+  rumore(0, 0.07, 2200, 0.4); // clack
+  nota(120, 0, 0.1, 0.35, "square"); // colpo grave
+  campanello(0.07, 2093, 0.16); // ching!
+  rumore(0.18, 0.28, 700, 0.18); // il cassetto scorre
+  campanello(0.5, 3136, 0.06); // ting finale, più piano
+}
+
 export function suono(tipo: Suono) {
   try {
     avviaAudio();
+    if (tipo === "incasso") {
+      incasso();
+      return;
+    }
     for (const [freq, inizio, durata, volume] of NOTE[tipo]) nota(freq, inizio, durata, volume);
   } catch {
     // niente audio disponibile: pazienza
   }
+}
+
+// Una piccola esplosione di monetine d'oro (al posto dei coriandoli): tonde, che girano mentre cadono.
+export async function monete() {
+  const confetti = (await import("canvas-confetti")).default;
+  const oro = ["#ffd700", "#f5c518", "#e6b800", "#fff1a8", "#c99700"];
+  const base = { shapes: ["circle" as const], colors: oro, gravity: 1.3, decay: 0.9, ticks: 110, scalar: 1.15 };
+  confetti({ ...base, particleCount: 26, spread: 70, startVelocity: 40, origin: { x: 0.5, y: 0.75 } });
+  setTimeout(() => confetti({ ...base, particleCount: 14, spread: 110, startVelocity: 30, origin: { x: 0.5, y: 0.72 } }), 130);
 }

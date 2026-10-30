@@ -161,7 +161,7 @@ function notificheTurniDaSistemare(ora: number, oggi: string): Notifica[] {
       const q = fuoriDalSilenzio(istante(giorno, hhmm));
       if (q === null || q <= ora || usati.has(q)) continue;
       usati.add(q);
-      out.push({ id: `turni-${giorno}-${hhmm}`, quando: q, titolo: "Turni da sistemare", testo, url: "/turni/", tag: "turni", urgente: true });
+      out.push({ id: `turni-${giorno}-${hhmm}`, quando: q, titolo: "Attenzione: Conflitto turni", testo, url: "/turni/", tag: "turni", urgente: true });
     }
   }
   return out;

@@ -17,7 +17,7 @@ export default function TurniDaSistemare({ className = "" }: { className?: strin
   return (
     <div className={`space-y-3 rounded-2xl border border-red-500/50 bg-red-500/10 p-4 ${className}`}>
       <div className="flex items-center gap-2 font-bold text-red-200">
-        <AlertTriangle size={20} /> Turni da sistemare
+        <AlertTriangle size={20} /> Attenzione: Conflitto turni
       </div>
       {lista.map((v, i) => {
         const date = [...new Set([v.primo.data, v.secondo.data])].filter((d) => d >= oggi);

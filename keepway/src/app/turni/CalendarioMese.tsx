@@ -121,7 +121,7 @@ export default function CalendarioMese() {
           </div>
 
           {problemiSel.map((v, i) => (
-            <p key={i} className="rounded-xl border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-100">⚠ {v.testo}</p>
+            <p key={i} className="rounded-xl border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-100"><b>⚠ Attenzione: Conflitto turni.</b> {v.testo}</p>
           ))}
 
           {geSel && (

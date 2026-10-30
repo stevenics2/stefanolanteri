@@ -4,6 +4,7 @@ import { AlertTriangle, ArrowLeftRight, CalendarOff, ChevronLeft, PlusCircle, Un
 import { useState } from "react";
 import { combinazioneValida, DOPPI_CONSENTITI, etichettaBase, etichettaCodici, extraConsentiti, formatoGiornoMese, giornoEffettivo, violazioni, type Violazione } from "@/lib/calendario";
 import { dataLunga, dataPiù } from "@/lib/date";
+import { monete, suono } from "@/lib/effetti";
 import { adessoMs, nuovoId } from "@/lib/seed";
 import { useStore } from "@/lib/store";
 import type { Assenza, Modifica } from "@/lib/tipi";
@@ -23,7 +24,7 @@ const unisci = (c: string[]) => [...c].sort();
 
 // Il menu che si apre toccando un giorno: cambio turno, straordinario, assenza. Tutto si può annullare.
 function MenuGiorno({ data, onClose, onVai }: { data: string; onClose: () => void; onVai: (data: string) => void }) {
-  const { salvaModifiche, annullaModifiche } = useStore();
+  const { stato, salvaModifiche, annullaModifiche } = useStore();
   const ge = giornoEffettivo(data);
   const [vista, setVista] = useState<Vista>("menu");
   const [attenzione, setAttenzione] = useState<{ lista: Violazione[]; modificate: string[] } | null>(null);
@@ -81,6 +82,9 @@ function MenuGiorno({ data, onClose, onVai }: { data: string; onClose: () => voi
   };
 
   const salvaStraordinario = () => {
+    // "Incasso": la cassa di un negozio e una piccola esplosione di monetine
+    if (stato.impostazioni.suoni) suono("incasso");
+    if (stato.impostazioni.animazioni) void monete();
     const codici = unisci([...new Set([...ge.codici, ...extra])]);
     conferma(
       [{ id: nuovoId(), data, tipo: "straordinario", codici, ex: base, mostraEx: false, extra: unisci(extra), creato: adessoMs() }],
@@ -121,7 +125,7 @@ function MenuGiorno({ data, onClose, onVai }: { data: string; onClose: () => voi
       {attenzione && (
         <div className="space-y-3 rounded-2xl border border-red-500/50 bg-red-500/10 p-4">
           <div className="flex items-center gap-2 text-lg font-bold text-red-200">
-            <AlertTriangle size={22} /> Attenzione: turni da sistemare
+            <AlertTriangle size={22} /> Attenzione: Conflitto turni
           </div>
           {attenzione.lista.map((v, i) => (
             <p key={i} className="text-sm">{v.testo}</p>
@@ -239,7 +243,7 @@ function MenuGiorno({ data, onClose, onVai }: { data: string; onClose: () => voi
           <p className="text-sm text-muted">
             {extra.length ? `Diventa: ${etichettaCodici(unisci([...ge.codici, ...extra]))} · ${extra.length * 6} ore di straordinario` : "Scegli il turno da aggiungere"}
           </p>
-          <button data-suono="via" disabled={extra.length === 0} onClick={salvaStraordinario} className="w-full rounded-2xl bg-accent py-3.5 text-lg font-bold text-black disabled:opacity-40">
+          <button data-suono="nessuno" disabled={extra.length === 0} onClick={salvaStraordinario} className="w-full rounded-2xl bg-accent py-3.5 text-lg font-bold text-black disabled:opacity-40">
             Salva straordinario
           </button>
         </div>
