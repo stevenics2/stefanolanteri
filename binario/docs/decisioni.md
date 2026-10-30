@@ -15,5 +15,6 @@
   - Dopo la notte (finisce alle 7:00): a letto alle 8:00, sveglia 14:30-15:00 (sonno corto, previsto).
   - Mattina (finisce 13:00) e il giorno dopo il turno "1" (che inizia all'1:00 *di quella stessa notte*): riposino 14:30 -> 18:00.
   - Il turno 1 / "1 + 4" è sempre preceduto da un turno 2: nel calendario sono due date diverse ma una sola nottata.
-- Task: da completare in giornata, senza orari fissi per ora. Giorni pesanti = anche il giorno della mattina seguita da notte, non solo la data del turno 1 (da decidere con Stefano).
+- Task: da completare in giornata, senza orari fissi per ora.
+- Carico per giorno (`src/lib/carico.ts`): turno "1" (dopo la notte) -> solo task essenziali; "1 + 4" (notte + sera) -> nessuna task; mattina + notte -> giorno normale (dalle 18 all'1 è in forma, di solito palestra). Da rivedere strada facendo.
 - Da fare: rendere questi parametri modificabili nelle Impostazioni.
