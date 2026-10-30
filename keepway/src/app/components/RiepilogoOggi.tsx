@@ -152,15 +152,24 @@ function Anelli({ stat, anima, tutto, centro, evento }: { stat: Stat[]; anima: b
       </div>
       {evento && (
         <div key={evento} className="pointer-events-none absolute inset-0" aria-hidden>
-          {Array.from({ length: 16 }, (_, i) => {
-            const ang = (i / 16) * 2 * Math.PI + (i % 3) * 0.12;
-            const dist = 46 + ((i * 37) % 28);
+          {Array.from({ length: 44 }, (_, i) => {
+            const ang = (i / 44) * 2 * Math.PI + (i % 3) * 0.14;
+            const dist = 42 + ((i * 37) % 52);
+            const lato = 5 + ((i * 7) % 6); // 5-10 px
             const colore = ["#fa114f", "#92f000", "#00d9e8"][i % 3];
             return (
               <span
                 key={i}
                 className="scintilla"
-                style={{ color: colore, "--dx": `${Math.cos(ang) * dist}px`, "--dy": `${Math.sin(ang) * dist}px`, "--d": `${0.55 + (i % 4) * 0.12}s`, "--ritardo": `${(i % 5) * 45}ms` } as React.CSSProperties}
+                style={{
+                  color: colore,
+                  width: lato,
+                  height: lato,
+                  "--dx": `${Math.cos(ang) * dist}px`,
+                  "--dy": `${Math.sin(ang) * dist}px`,
+                  "--d": `${0.6 + (i % 5) * 0.12}s`,
+                  "--ritardo": `${(i % 7) * 70}ms`,
+                } as React.CSSProperties}
               />
             );
           })}

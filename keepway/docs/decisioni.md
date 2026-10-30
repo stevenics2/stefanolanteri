@@ -116,3 +116,5 @@
 - Livelli più lenti, circa uno a settimana: soglie XP 0 / 500 / 1200 / 2100 / 3200 / 4500 (prima 0 / 150 / 400 / 800 / 1400 / 2200). Con circa 110 XP al giorno a task completate e un 60-70% reale si sale di livello ogni 7-10 giorni.
 
 - Task completata: niente coriandoli (restano per livello nuovo e boss). L'anello avanza e trema, con 16 scintille nei colori degli anelli e un suono da slot machine (rulli, tre colpi, vincita). Il messaggio dei punti compare un secondo dopo, così non copre gli anelli.
+
+- Task completata: suono a scala in salita (do maggiore, due ottave, sempre più veloce e forte, accordo finale con campanella) e 44 scintille di tre dimensioni (prima 16).

@@ -64,7 +64,7 @@ export function tic() {
 //   livello  = livello nuovo               (arpeggio)
 //   vittoria = fine timer                  (fanfara)
 //   incasso  = straordinario / cambio turno (cassa da negozio: "CHA-CHING!")
-//   slot     = task completata: rulli di slot machine che girano, si fermano uno a uno e il jackpot
+//   slot     = task completata: una scala in salita che arriva a un accordo brillante
 //   calcolo  = apertura dell'app (un computer che elabora, poi un "ding" di approvazione)
 export type Suono = "via" | "indietro" | "pausa" | "riprendi" | "ok" | "livello" | "vittoria" | "incasso" | "calcolo" | "slot";
 
@@ -158,21 +158,21 @@ function calcolo() {
   nota(7900, 1.1, 0.25, 0.02, "sine");
 }
 
-// Slot machine (~1,6 s): i rulli girano con scatti sempre più lenti, tre "clunk" quando si fermano uno dopo l'altro, poi la vincita.
+// Task completata (~1,2 s): una scala in salita (do maggiore, due ottave) sempre più veloce e più forte, che sfocia in un accordo brillante con la campanella.
 function slot() {
+  const scala = [523, 587, 659, 698, 784, 880, 988, 1047, 1175, 1319, 1397, 1568, 1760, 1976, 2093]; // do4 -> do6 (la scala sale di un gradino alla volta)
   let t = 0;
-  for (let i = 0; i < 16; i++) {
-    rumore(t, 0.02, 2200 + (i % 4) * 500, 0.18);
-    nota(900 + (i % 5) * 140, t, 0.025, 0.045, "square");
-    t += 0.03 + i * 0.0045;
-  }
-  for (const [n, quando] of [[0, 0.78], [1, 0.95], [2, 1.12]] as const) {
-    scivola(320 + n * 60, 110, quando, 0.1, 0.28, "triangle"); // il rullo si blocca
-    rumore(quando, 0.03, 3000, 0.2);
-  }
-  // vincita: arpeggio di monete e campanella
-  [1047, 1319, 1568, 2093, 2637].forEach((f, i) => nota(f, 1.3 + i * 0.055, 0.22, 0.09, "triangle"));
-  campana(1.3, 1568, 0.1, 0.55);
+  scala.forEach((f, i) => {
+    const volume = 0.07 + (i / scala.length) * 0.07; // cresce man mano che sale
+    nota(f, t, 0.16, volume, "triangle");
+    nota(f * 2, t, 0.08, volume * 0.35, "sine"); // un filo di brillantezza
+    t += 0.075 - i * 0.0022; // accelera
+  });
+  // arrivo: accordo di do maggiore + campanella
+  const fine = t + 0.04;
+  [1047, 1319, 1568, 2093].forEach((f) => nota(f, fine, 0.6, 0.1, "triangle"));
+  nota(4186, fine, 0.35, 0.04, "sine");
+  campana(fine, 2093, 0.08, 0.7);
 }
 
 export function suono(tipo: Suono) {
