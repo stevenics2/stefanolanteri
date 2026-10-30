@@ -1,4 +1,5 @@
 import { dataPiù } from "./date";
+import { violazioniDa } from "./calendario";
 import { giorniTra } from "./eventi";
 import { durataTotaleMin } from "./durata";
 import { èIgnorata, èPrevista } from "./regole";
@@ -96,6 +97,7 @@ export function pianoNotifiche(stato: Stato, ora: number, oggi: string): Notific
   }
 
   out.push(...notificheEventi(stato, ora, oggi));
+  out.push(...notificheTurniDaSistemare(ora, oggi));
 
   return out.sort((a, b) => a.quando - b.quando).slice(0, MAX_NOTIFICHE);
 }
@@ -138,6 +140,23 @@ function notificheEventi(stato: Stato, ora: number, oggi: string): Notifica[] {
     if (e.ora) aggiungi("ore", quandoEvento - 2 * 3_600_000, "Tra 2 ore");
     // promemoria senza orario: la mattina stessa
     if (!e.ora) aggiungi("giorno", istante(e.data, "09:00"), "Oggi");
+  }
+  return out;
+}
+
+// Finché ci sono turni da sistemare (meno di 12 ore di riposo, doppio non consentito) ti avviso ogni mattina e ogni sera.
+function notificheTurniDaSistemare(ora: number, oggi: string): Notifica[] {
+  const lista = violazioniDa(oggi);
+  if (lista.length === 0) return [];
+  const testo = lista.length === 1 ? lista[0].testo : `${lista.length} problemi nei turni. ${lista[0].testo}`;
+  const out: Notifica[] = [];
+  for (let i = 0; i <= GIORNI_AVANTI; i++) {
+    const giorno = dataPiù(oggi, i);
+    for (const hhmm of ["09:30", "19:00"]) {
+      const q = fuoriDalSilenzio(istante(giorno, hhmm));
+      if (q === null || q <= ora) continue;
+      out.push({ id: `turni-${giorno}-${hhmm}`, quando: q, titolo: "Turni da sistemare", testo, url: "/turni/", tag: "turni", urgente: true });
+    }
   }
   return out;
 }

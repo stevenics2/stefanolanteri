@@ -61,6 +61,14 @@ export const nomeAssenza = (a: Assenza) => NOMI_ASSENZA[a];
 
 const unisci = (codici: string[]) => ordina(codici).join("+");
 
+// --- Regole sui turni ---
+// Un solo doppio turno è possibile: 2+3 e 3+4 (attaccati) e 1+4 (stesso giorno, con 12 ore in mezzo). Mai 1+3, 4+1, 1+2, 2+4.
+export const DOPPI_CONSENTITI = ["2+3", "3+4", "1+4"];
+export const combinazioneValida = (codici: string[]) => codici.length <= 1 || DOPPI_CONSENTITI.includes(unisci(codici));
+// Quali turni si possono aggiungere a questo giorno senza fare un doppio non consentito.
+export const extraConsentiti = (codici: string[]) => CODICI_TURNO.filter((c) => !codici.includes(c) && combinazioneValida([...codici, c]));
+export const RIPOSO_MIN_ORE = 12; // tra un turno e l'altro devono passare almeno 12 ore
+
 // Orario leggibile di un insieme di turni: i turni attaccati diventano un solo intervallo (2+3 -> 07:00–19:00).
 function orarioDi(codici: string[]): string {
   const interv = ordina(codici).map((c) => TURNI[c]).filter(Boolean);
@@ -167,3 +175,48 @@ export function recapMese(lista: Modifica[], anno: number, mese0: number): Recap
     totale: del.length,
   };
 }
+
+// --- Controlli: 12 ore di riposo e doppi turni consentiti ---
+export type Violazione = {
+  tipo: "riposo" | "doppio";
+  ore: number; // ore di pausa tra i due turni (riposo)
+  primo: { data: string; turno: string };
+  secondo: { data: string; turno: string };
+  testo: string;
+};
+
+const dataDaMinuti = (min: number) => new Date(min * 60000).toISOString().slice(0, 10);
+const gm = (data: string) => data.split("-").reverse().slice(0, 2).join("/");
+const oreTesto = (ore: number) => String(Math.round(ore * 10) / 10).replace(".", ",");
+
+let violazioniVersione = -1;
+let violazioniCache: Violazione[] = [];
+
+export function violazioni(): Violazione[] {
+  if (violazioniVersione === versione) return violazioniCache;
+  const blocchi = blocchiEffettivi();
+  const out: Violazione[] = [];
+  blocchi.forEach((b, i) => {
+    const data = dataDaMinuti(b.inizio);
+    if (b.turno.includes("+") && !DOPPI_CONSENTITI.includes(b.turno)) {
+      out.push({ tipo: "doppio", ore: 0, primo: { data, turno: b.turno }, secondo: { data, turno: b.turno }, testo: `Il doppio turno ${b.turno} (${gm(data)}) non è consentito: si può fare solo 2+3, 3+4 o 1+4.` });
+    }
+    const p = i > 0 ? blocchi[i - 1] : null;
+    if (!p) return;
+    const ore = (b.inizio - p.fine) / 60;
+    if (ore < RIPOSO_MIN_ORE) {
+      const dp = dataDaMinuti(p.inizio);
+      out.push({
+        tipo: "riposo", ore, primo: { data: dp, turno: p.turno }, secondo: { data, turno: b.turno },
+        testo: `Tra il turno ${p.turno} del ${gm(dp)} e il turno ${b.turno} del ${gm(data)} passano solo ${oreTesto(ore)} ore: ne servono ${RIPOSO_MIN_ORE}.`,
+      });
+    }
+  });
+  violazioniCache = out;
+  violazioniVersione = versione;
+  return out;
+}
+
+// Quelle ancora sistemabili: il turno più avanti è oggi o nel futuro.
+export const violazioniDa = (oggi: string) => violazioni().filter((v) => v.secondo.data >= oggi);
+export const formatoGiornoMese = gm;

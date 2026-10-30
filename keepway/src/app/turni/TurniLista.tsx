@@ -2,9 +2,10 @@
 
 import { CalendarCheck } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { dateConCalendario, giornoEffettivo, type GiornoEffettivo } from "@/lib/calendario";
+import { dateConCalendario, giornoEffettivo, violazioniDa, type GiornoEffettivo } from "@/lib/calendario";
 import { GIORNI_BREVI, MESI_BREVI } from "@/lib/date";
 import { useStore } from "@/lib/store";
+import TurniDaSistemare from "../components/TurniDaSistemare";
 import { Banda } from "./banda";
 import CalendarioMese from "./CalendarioMese";
 import MenuTurno from "./MenuTurno";
@@ -39,6 +40,10 @@ export default function TurniLista() {
     }
   }, [oggi, visibili, vista]);
 
+  // Giorni con meno di 12 ore di riposo (o un doppio non consentito): si segnano in rosso.
+  const problemi = new Map<string, string>();
+  if (pronto) for (const v of violazioniDa(oggi)) for (const d of [v.primo.data, v.secondo.data]) problemi.set(d, v.tipo === "doppio" ? "DOPPIO TURNO NON CONSENTITO" : "MENO DI 12 ORE DI RIPOSO");
+
   const vaiAOggi = () => rigaOggi.current?.scrollIntoView({ block: "center", behavior: "smooth" });
   if (!pronto) return null;
 
@@ -71,6 +76,8 @@ export default function TurniLista() {
         )}
       </header>
 
+      <TurniDaSistemare className="mx-4 mt-4" />
+
       {vista === "mese" ? (
         <CalendarioMese />
       ) : (
@@ -91,7 +98,7 @@ export default function TurniLista() {
                       <div className="text-3xl font-light">{gg}</div>
                       <div className="text-sm">{MESI_BREVI[m - 1]}</div>
                     </div>
-                    <Blocco g={g} />
+                    <Blocco g={g} avviso={problemi.get(g.data)} />
                   </button>
                 </li>
               );
@@ -106,7 +113,7 @@ export default function TurniLista() {
 }
 
 // Il blocco colorato: blu = turno, viola = notte + sera, verde = riposo, ambra = assenza. Sotto, la striscia della modifica.
-function Blocco({ g }: { g: GiornoEffettivo }) {
+function Blocco({ g, avviso }: { g: GiornoEffettivo; avviso?: string }) {
   const assenza = g.modifica?.tipo === "assenza";
   let classe: string;
   if (assenza) classe = "border border-amber-500/60 bg-amber-500/15 text-amber-100";
@@ -122,6 +129,7 @@ function Blocco({ g }: { g: GiornoEffettivo }) {
         {!g.riposo && g.unita && <div className="mt-0.5 text-xs opacity-75">{g.unita}</div>}
       </div>
       <Banda m={g.modifica} />
+      {avviso && <div className="bg-red-600 px-3 py-1.5 text-center text-[11px] font-extrabold uppercase tracking-wide text-white">⚠ {avviso}</div>}
     </div>
   );
 }

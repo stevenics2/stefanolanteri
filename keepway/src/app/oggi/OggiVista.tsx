@@ -12,6 +12,7 @@ import type { Evento, Task } from "@/lib/tipi";
 import { AgendaDomani, AgendaOggi, InArrivo } from "../components/AgendaBox";
 import RiepilogoOggi from "../components/RiepilogoOggi";
 import SonnoCard from "../components/SonnoCard";
+import TurniDaSistemare from "../components/TurniDaSistemare";
 import TaskCard from "../components/TaskCard";
 import FormEvento from "../task/FormEvento";
 
@@ -64,6 +65,8 @@ export default function OggiVista() {
       </div>
 
       <RiepilogoOggi fatte={fatte} totale={daFare.length} />
+
+      <TurniDaSistemare />
 
       {fuoriCasa && (
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-violet-500/40 bg-violet-500/10 p-4 text-sm">

@@ -1,8 +1,8 @@
 "use client";
 
-import { ArrowLeftRight, CalendarOff, ChevronLeft, PlusCircle, Undo2 } from "lucide-react";
+import { AlertTriangle, ArrowLeftRight, CalendarOff, ChevronLeft, PlusCircle, Undo2 } from "lucide-react";
 import { useState } from "react";
-import { CODICI_TURNO, etichettaBase, etichettaCodici, giornoEffettivo } from "@/lib/calendario";
+import { combinazioneValida, DOPPI_CONSENTITI, etichettaBase, etichettaCodici, extraConsentiti, formatoGiornoMese, giornoEffettivo, violazioni, type Violazione } from "@/lib/calendario";
 import { dataLunga, dataPiù } from "@/lib/date";
 import { adessoMs, nuovoId } from "@/lib/seed";
 import { useStore } from "@/lib/store";
@@ -22,10 +22,11 @@ const ASSENZE: { id: Assenza; nome: string }[] = [
 const unisci = (c: string[]) => [...c].sort();
 
 // Il menu che si apre toccando un giorno: cambio turno, straordinario, assenza. Tutto si può annullare.
-export default function MenuTurno({ data, onClose }: { data: string; onClose: () => void }) {
+function MenuGiorno({ data, onClose, onVai }: { data: string; onClose: () => void; onVai: (data: string) => void }) {
   const { salvaModifiche, annullaModifiche } = useStore();
   const ge = giornoEffettivo(data);
   const [vista, setVista] = useState<Vista>("menu");
+  const [attenzione, setAttenzione] = useState<{ lista: Violazione[]; modificate: string[] } | null>(null);
 
   // cambio turno
   const [pagato, setPagato] = useState(true);
@@ -49,9 +50,13 @@ export default function MenuTurno({ data, onClose }: { data: string; onClose: ()
   const base = etichettaBase(data);
   const attivaCodice = (lista: string[], setLista: (l: string[]) => void, c: string) =>
     setLista(lista.includes(c) ? lista.filter((x) => x !== c) : [...lista, c]);
-  const fine = (testo: string) => {
-    onClose();
-    return testo;
+  // Salva e controlla subito le 12 ore di riposo e i doppi turni: se c'è un problema lo segnala, e ti porta a sistemare l'altro giorno.
+  const conferma = (mods: Modifica[], testo: string) => {
+    salvaModifiche(mods, testo);
+    const date = mods.map((m) => m.data);
+    const lista = violazioni().filter((v) => date.includes(v.primo.data) || date.includes(v.secondo.data));
+    if (lista.length) setAttenzione({ lista, modificate: date });
+    else onClose();
   };
 
   const salvaCambio = () => {
@@ -65,28 +70,28 @@ export default function MenuTurno({ data, onClose }: { data: string; onClose: ()
         { id: nuovoId(), data, tipo, codici: [], ex: base, mostraEx: true, gruppo, creato: adessoMs() },
         { id: nuovoId(), data: altroGiorno, tipo, codici: unisci([...new Set([...altro.codici, ...spostato])]), ex: etichettaCodici(altro.codici), mostraEx: false, gruppo, creato: adessoMs() },
       ];
-      salvaModifiche(mods, fine(`Turno ${base} spostato al ${altroGiorno.split("-").reverse().join("/")}.`));
+      conferma(mods, `Turno ${base} spostato al ${altroGiorno.split("-").reverse().join("/")}.`);
       return;
     }
     const codici = riposo ? [] : unisci(nuovi);
-    salvaModifiche(
+    conferma(
       [{ id: nuovoId(), data, tipo, codici, ex: base, mostraEx: true, creato: adessoMs() }],
-      fine(`Cambio turno salvato: ${etichettaCodici(codici)} (ex ${base}).`),
+      `Cambio turno salvato: ${etichettaCodici(codici)} (ex ${base}).`,
     );
   };
 
   const salvaStraordinario = () => {
     const codici = unisci([...new Set([...ge.codici, ...extra])]);
-    salvaModifiche(
+    conferma(
       [{ id: nuovoId(), data, tipo: "straordinario", codici, ex: base, mostraEx: false, extra: unisci(extra), creato: adessoMs() }],
-      fine(`Straordinario salvato: ${etichettaCodici(codici)}.`),
+      `Straordinario salvato: ${etichettaCodici(codici)}.`,
     );
   };
 
   const salvaAssenza = () => {
-    salvaModifiche(
+    conferma(
       [{ id: nuovoId(), data, tipo: "assenza", codici: [], ex: base, mostraEx: true, assenza, creato: adessoMs() }],
-      fine(`${ASSENZE.find((a) => a.id === assenza)?.nome} registrata.`),
+      `${ASSENZE.find((a) => a.id === assenza)?.nome} registrata.`,
     );
   };
 
@@ -97,8 +102,9 @@ export default function MenuTurno({ data, onClose }: { data: string; onClose: ()
       : nuovi.length
         ? `Diventa: ${etichettaCodici(unisci(nuovi))} - (ex ${base})`
         : "Scegli il nuovo turno";
-  const cambioValido = sposta ? !ge.riposo : riposo || nuovi.length > 0;
-  const disponibiliExtra = CODICI_TURNO.filter((c) => !ge.codici.includes(c));
+  const combinazioneOk = riposo || sposta || nuovi.length <= 1 || combinazioneValida(nuovi);
+  const cambioValido = sposta ? !ge.riposo : combinazioneOk && (riposo || nuovi.length > 0);
+  const disponibiliExtra = extraConsentiti(ge.codici); // solo i doppi consentiti: 2+3, 3+4, 1+4
 
   return (
     <Schermo titolo={dataLunga(data).replace(/^./, (c) => c.toUpperCase())} onClose={onClose}>
@@ -112,6 +118,30 @@ export default function MenuTurno({ data, onClose }: { data: string; onClose: ()
         <Banda m={ge.modifica} />
       </div>
 
+      {attenzione && (
+        <div className="space-y-3 rounded-2xl border border-red-500/50 bg-red-500/10 p-4">
+          <div className="flex items-center gap-2 text-lg font-bold text-red-200">
+            <AlertTriangle size={22} /> Attenzione: turni da sistemare
+          </div>
+          {attenzione.lista.map((v, i) => (
+            <p key={i} className="text-sm">{v.testo}</p>
+          ))}
+          <p className="text-sm text-muted">Devi modificare anche il turno del giorno vicino. Te lo ricordo finché non lo sistemi.</p>
+          <div className="grid gap-2">
+            {[...new Set(attenzione.lista.flatMap((v) => [v.primo.data, v.secondo.data]))]
+              .filter((d, _, tutte) => tutte.length < 2 || !attenzione.modificate.includes(d))
+              .map((d) => (
+                <button key={d} data-suono="via" onClick={() => onVai(d)} className="rounded-xl bg-accent py-3 font-bold text-black">
+                  Modifica il turno del {formatoGiornoMese(d)}
+                </button>
+              ))}
+            <button data-suono="indietro" onClick={onClose} className="rounded-xl bg-white/10 py-3">Lo faccio dopo</button>
+          </div>
+        </div>
+      )}
+
+      {!attenzione && (
+        <>
       {vista === "menu" && (
         <>
           {ge.modifica && (
@@ -172,13 +202,18 @@ export default function MenuTurno({ data, onClose }: { data: string; onClose: ()
               <Etichetta>Nuovo turno (puoi sceglierne più di uno, es. 2 e 3)</Etichetta>
               <div className="flex flex-wrap gap-2">
                 <Chip attivo={riposo} onClick={() => { setRiposo(!riposo); setNuovi([]); }}>Riposo</Chip>
-                {CODICI_TURNO.map((c) => (
+                {["1", "2", "3", "4"].map((c) => (
                   <Chip key={c} attivo={nuovi.includes(c)} onClick={() => { setRiposo(false); attivaCodice(nuovi, setNuovi, c); }}>{c}</Chip>
                 ))}
               </div>
             </div>
           )}
 
+          {!combinazioneOk && (
+            <p className="flex items-start gap-2 rounded-xl border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-200">
+              <AlertTriangle size={18} className="mt-0.5 shrink-0" /> {unisci(nuovi).join("+")} non si può: i doppi turni possibili sono {DOPPI_CONSENTITI.join(", ")}.
+            </p>
+          )}
           <p className="text-sm text-muted">{anteprimaCambio}</p>
           <button data-suono="via" disabled={!cambioValido} onClick={salvaCambio} className="w-full rounded-2xl bg-accent py-3.5 text-lg font-bold text-black disabled:opacity-40">
             Salva cambio turno
@@ -195,6 +230,11 @@ export default function MenuTurno({ data, onClose }: { data: string; onClose: ()
                 <Chip key={c} attivo={extra.includes(c)} onClick={() => attivaCodice(extra, setExtra, c)}>{c}</Chip>
               ))}
             </div>
+            <p className="mt-2 text-xs text-muted">
+              {disponibiliExtra.length === 0
+                ? "Questo giorno ha già un doppio turno: non se ne può aggiungere altri."
+                : `Doppi possibili: ${DOPPI_CONSENTITI.join(", ")}. Mai 1+3, 4+1 o altre combinazioni.`}
+            </p>
           </div>
           <p className="text-sm text-muted">
             {extra.length ? `Diventa: ${etichettaCodici(unisci([...ge.codici, ...extra]))} · ${extra.length * 6} ore di straordinario` : "Scegli il turno da aggiungere"}
@@ -218,6 +258,14 @@ export default function MenuTurno({ data, onClose }: { data: string; onClose: ()
           </button>
         </div>
       )}
+        </>
+      )}
     </Schermo>
   );
+}
+
+// Il menu di un giorno. Dopo una modifica può portarti a sistemare il giorno vicino (12 ore di riposo): per questo `onVai` cambia giorno.
+export default function MenuTurno({ data, onClose }: { data: string; onClose: () => void }) {
+  const [corrente, setCorrente] = useState(data);
+  return <MenuGiorno key={corrente} data={corrente} onClose={onClose} onVai={setCorrente} />;
 }

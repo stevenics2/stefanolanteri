@@ -2,7 +2,7 @@
 
 import { BellRing, CalendarPlus, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 import { useState } from "react";
-import { giornoEffettivo, type GiornoEffettivo } from "@/lib/calendario";
+import { giornoEffettivo, violazioniDa, type GiornoEffettivo } from "@/lib/calendario";
 import { dataLunga, MESI_LUNGHI } from "@/lib/date";
 import { eventiDelGiorno, prioritaDi } from "@/lib/eventi";
 import { finestreLibere, hhmm } from "@/lib/sonno";
@@ -58,6 +58,9 @@ export default function CalendarioMese() {
   const geSel = sel ? giornoEffettivo(sel) : undefined;
   const eventiSel = sel ? eventiDelGiorno(stato.eventi, sel, "0000-00-00") : [];
   const liberi = sel ? finestreLibere(sel, 8 * 60, 22 * 60 + 30, 30) : [];
+  const problemi = violazioniDa(oggi);
+  const giorniProblema = new Set(problemi.flatMap((v) => [v.primo.data, v.secondo.data]));
+  const problemiSel = sel ? problemi.filter((v) => v.primo.data === sel || v.secondo.data === sel) : [];
 
   return (
     <div className="space-y-4 px-4 pb-4 pt-4">
@@ -94,6 +97,7 @@ export default function CalendarioMese() {
                 ))}
               </span>
               {banda && <span className={`absolute inset-x-0 bottom-0 h-1 ${banda.classe}`} />}
+              {giorniProblema.has(d) && <span className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-black text-white">!</span>}
             </button>
           );
         })}
@@ -115,6 +119,10 @@ export default function CalendarioMese() {
               <div className="text-sm text-muted">Turni non disponibili per questo giorno</div>
             )}
           </div>
+
+          {problemiSel.map((v, i) => (
+            <p key={i} className="rounded-xl border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-100">⚠ {v.testo}</p>
+          ))}
 
           {geSel && (
             <button data-suono="via" onClick={() => setMenu(sel)} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white/10 py-2.5 text-sm font-semibold">
