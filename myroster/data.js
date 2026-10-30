@@ -1,7 +1,5 @@
 // Turni precaricati per MyRoster.
-// Set-Dic 2026 e Gen 2027: estratti dai file INTELCO forniti dall'utente.
-// Ago-Dic 2027: estratti dai cartellini mensili INTELCO (PDF).
-// NB: manca Feb-Lug 2027 (non ancora fornito).
+// Copertura completa: 31 ago 2026 - 31 dic 2027, estratti dai file/cartellini INTELCO forniti dall'utente.
 // Per aggiornare: manda un nuovo file/cartellino a Claude e chiedi di rigenerare questo file,
 // oppure carica il file direttamente dall'app (icona menu / +).
 window.DEFAULT_ENTRIES = [
@@ -928,6 +926,1092 @@ window.DEFAULT_ENTRIES = [
     "turno": "RD",
     "desc": "",
     "isRest": true
+  },
+  {
+    "date": "2027-02-01",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-02-02",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-02-03",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-02-04",
+    "turno": "1 + 4 (01:00-07:00 / 19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-02-05",
+    "turno": "R",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-02-06",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-02-07",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-02-08",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-02-09",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-02-10",
+    "turno": "1 (01:00-07:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-02-11",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-02-12",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-02-13",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-02-14",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-02-15",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-02-16",
+    "turno": "1 (01:00-07:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-02-17",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-02-18",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-02-19",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-02-20",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-02-21",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-02-22",
+    "turno": "1 (01:00-07:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-02-23",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-02-24",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-02-25",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-02-26",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-02-27",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-02-28",
+    "turno": "1 (01:00-07:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-03-01",
+    "turno": "R",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-03-02",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-03-03",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-03-04",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-03-05",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-03-06",
+    "turno": "1 + 4 (01:00-07:00 / 19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-03-07",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-03-08",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-03-09",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-03-10",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-03-11",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-03-12",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-03-13",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-03-14",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-03-15",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-03-16",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-03-17",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-03-18",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-03-19",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-03-20",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-03-21",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-03-22",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-03-23",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-03-24",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-03-25",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-03-26",
+    "turno": "1 + 4 (01:00-07:00 / 19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-03-27",
+    "turno": "R",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-03-28",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-03-29",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-03-30",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-03-31",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-04-01",
+    "turno": "1 + 4 (01:00-07:00 / 19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-04-02",
+    "turno": "R",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-04-03",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-04-04",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-04-05",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-04-06",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-04-07",
+    "turno": "1 (01:00-07:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-04-08",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-04-09",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-04-10",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-04-11",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-04-12",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-04-13",
+    "turno": "1 (01:00-07:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-04-14",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-04-15",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-04-16",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-04-17",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-04-18",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-04-19",
+    "turno": "1 (01:00-07:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-04-20",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-04-21",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-04-22",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-04-23",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-04-24",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-04-25",
+    "turno": "1 (01:00-07:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-04-26",
+    "turno": "R",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-04-27",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-04-28",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-04-29",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-04-30",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-05-01",
+    "turno": "1 + 4 (01:00-07:00 / 19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-05-02",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-05-03",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-05-04",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-05-05",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-05-06",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-05-07",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-05-08",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-05-09",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-05-10",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-05-11",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-05-12",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-05-13",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-05-14",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-05-15",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-05-16",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-05-17",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-05-18",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-05-19",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-05-20",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-05-21",
+    "turno": "1 + 4 (01:00-07:00 / 19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-05-22",
+    "turno": "R",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-05-23",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-05-24",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-05-25",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-05-26",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-05-27",
+    "turno": "1 + 4 (01:00-07:00 / 19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-05-28",
+    "turno": "R",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-05-29",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-05-30",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-05-31",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-06-01",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-06-02",
+    "turno": "1 (01:00-07:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-06-03",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-06-04",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-06-05",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-06-06",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-06-07",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-06-08",
+    "turno": "1 (01:00-07:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-06-09",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-06-10",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-06-11",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-06-12",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-06-13",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-06-14",
+    "turno": "1 (01:00-07:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-06-15",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-06-16",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-06-17",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-06-18",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-06-19",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-06-20",
+    "turno": "1 (01:00-07:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-06-21",
+    "turno": "R",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-06-22",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-06-23",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-06-24",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-06-25",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-06-26",
+    "turno": "1 + 4 (01:00-07:00 / 19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-06-27",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-06-28",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-06-29",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-06-30",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-07-01",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-07-02",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-07-03",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-07-04",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-07-05",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-07-06",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-07-07",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-07-08",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-07-09",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-07-10",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-07-11",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-07-12",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-07-13",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-07-14",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-07-15",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-07-16",
+    "turno": "1 + 4 (01:00-07:00 / 19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-07-17",
+    "turno": "R",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-07-18",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-07-19",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-07-20",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-07-21",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-07-22",
+    "turno": "1 + 4 (01:00-07:00 / 19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-07-23",
+    "turno": "R",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-07-24",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-07-25",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-07-26",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-07-27",
+    "turno": "2 (07:00-13:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-07-28",
+    "turno": "1 (01:00-07:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-07-29",
+    "turno": "RD",
+    "desc": "",
+    "isRest": true
+  },
+  {
+    "date": "2027-07-30",
+    "turno": "4 (19:00-01:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
+  },
+  {
+    "date": "2027-07-31",
+    "turno": "3 (13:00-19:00)",
+    "desc": "112323 - Operativi",
+    "isRest": false
   },
   {
     "date": "2027-08-01",
