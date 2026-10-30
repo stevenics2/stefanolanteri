@@ -98,3 +98,8 @@
 - "Momento giusto" su una sola riga e modificabile: tocchi l'etichetta, scegli inizio e fine per oggi (Ok) o torni ad "auto". Lo stesso orario guida i promemoria.
 
 - Tolto il suono del "computer che calcola" all'apertura (su iPhone non partiva senza un tocco). L'animazione resta.
+
+- Momento giusto per task (lib/momento.ts, regole in lib/sonno.ts):
+  - Meditazione: mattina (primo momento libero 08–12) se non c'è il turno 2; con turno 2 la sera (dalle 18); con 2 + notte, subito dopo il turno e prima del riposino (circa 13:30–14:30).
+  - Lettura: se lavori, 30 min dopo l'inizio del turno fino a 2 ore dopo (turno 3: 13:30–15:00, turno 4: 19:30–21:00, turno 2: 07:30–09:00, turno 1: 01:30–03:00); nei giorni liberi la sera.
+  - Il promemoria parte all'inizio del momento giusto (durante il turno le notifiche restano silenziate). Si può sempre cambiare a mano per il giorno.

@@ -3,8 +3,9 @@
 import { AlarmClock, Check, Clock, Pencil, Flame, Play, SkipForward, Undo2 } from "lucide-react";
 import { useState } from "react";
 import { puntiMinima, serie } from "@/lib/regole";
-import { durataMin, durataTotaleMin } from "@/lib/durata";
-import { finestraMigliore, hhmm } from "@/lib/sonno";
+import { durataMin } from "@/lib/durata";
+import { momentoGiusto } from "@/lib/momento";
+import { hhmm } from "@/lib/sonno";
 import { stanzaDelGiorno, titoloTask } from "@/lib/stanze";
 import { useStore } from "@/lib/store";
 import type { Task } from "@/lib/tipi";
@@ -26,7 +27,7 @@ export default function TaskCard({ task, soloMinima }: { task: Task; soloMinima:
   const minima = task.minimaMin;
   // Task che si adatta ai turni: il momento libero più lungo di oggi (né in turno, né a dormire)
   const scelto = stato.momenti.find((m) => m.taskId === task.id && m.data === oggi);
-  const finestra = task.adattaATurni && !fatto ? (scelto ?? finestraMigliore(oggi, durataTotaleMin(task))) : null;
+  const finestra = !fatto ? momentoGiusto(task, oggi, scelto) : null;
   const senzaTempo = task.adattaATurni && !fatto && !finestra;
   const stanza = task.tipo === "stanza" ? stanzaDelGiorno(stato.stanze, stato.completamenti, task.id, oggi) : null;
 

@@ -1,9 +1,9 @@
 import { dataPiù } from "./date";
 import { violazioniDa } from "./calendario";
 import { giorniTra } from "./eventi";
-import { durataTotaleMin } from "./durata";
 import { èIgnorata, èPrevista } from "./regole";
-import { èInSilenzio, finestraMigliore, hhmm } from "./sonno";
+import { momentoGiusto } from "./momento";
+import { èInSilenzio, hhmm } from "./sonno";
 import { titoloTask } from "./stanze";
 import type { Stato, Task } from "./tipi";
 
@@ -33,8 +33,11 @@ function istante(data: string, hhmm: string): number {
 // più lungo della giornata (tra turni e sonno): uno poco dopo l'inizio, uno a metà, uno prima della fine. Se non c'è nessun
 // momento libero, niente promemoria.
 function orariPerGiorno(task: Task, giorno: string, scelto?: { da: number; a: number }): string[] {
-  if (!task.adattaATurni) return [...task.promemoria].sort();
-  const f = scelto ?? finestraMigliore(giorno, durataTotaleMin(task));
+  const f = momentoGiusto(task, giorno, scelto);
+  if (!task.adattaATurni) {
+    if (!f) return [...task.promemoria].sort();
+    return [hhmm(f.da)]; // abitudini legate al turno (meditazione, lettura): un promemoria all'inizio del momento giusto
+  }
   if (!f) return [];
   const candidati = [f.da + 15, f.da + 15 + 180, f.a - 45].filter((m) => m >= f.da && m <= f.a - 15).sort((a, b) => a - b);
   const scelti: number[] = [];

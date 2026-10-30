@@ -238,3 +238,31 @@ export function conflittiAgenda(data: string, da: number, a: number, spostamento
   }
   return out;
 }
+
+// --- Il momento giusto per le abitudini che dipendono dal turno (minuti dalla mezzanotte di `data`) ---
+const INIZIO_TURNO: Record<string, number> = { "1": 60, "2": 7 * 60, "3": 13 * 60, "4": 19 * 60 }; // il turno 1 inizia all'1:00
+const MAX_FINESTRA_MIN = 120;
+const accorcia = (f: Finestra | undefined): Finestra | null => (f ? { da: f.da, a: Math.min(f.a, f.da + MAX_FINESTRA_MIN) } : null);
+
+// Meditazione: la mattina se il turno non è il 2; con il turno 2 la sera; con 2 + notte, prima del riposino pomeridiano.
+export function momentoMeditazione(data: string): Finestra | null {
+  const g = giornoEffettivo(data);
+  if (!g) return null;
+  const base = mezzanotte(data);
+  const riposino = elencoSonni().find((s) => s.tipo === "riposino" && s.aLetto >= base && s.aLetto < base + MIN_GIORNO);
+  if (riposino) {
+    const prima = finestreLibere(data, 8 * 60, riposino.aLetto - base, 15).pop();
+    if (prima) return { da: Math.max(prima.da, prima.a - 60), a: prima.a };
+  }
+  if (g.codici.includes("2")) return accorcia(finestreLibere(data, 18 * 60, 22 * 60 + 30, 15)[0]);
+  return accorcia(finestreLibere(data, 8 * 60, 12 * 60, 15)[0]);
+}
+
+// Lettura: se lavori, nelle prime ore del turno (dalle 13:00 -> 13:30–15:00); nei giorni liberi la sera.
+export function momentoLettura(data: string): Finestra | null {
+  const g = giornoEffettivo(data);
+  if (!g) return null;
+  const turno = ["3", "4", "2", "1"].find((c) => g.codici.includes(c));
+  if (turno) return { da: INIZIO_TURNO[turno] + 30, a: INIZIO_TURNO[turno] + 120 };
+  return accorcia(finestreLibere(data, 19 * 60, 22 * 60 + 30, 15)[0]);
+}
