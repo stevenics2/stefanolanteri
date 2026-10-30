@@ -24,7 +24,7 @@ function trascorsoLibero(oggi: string, ora: Date): number | null {
 }
 
 // Il commento all'apertura dell'app. Il giudizio dipende da quanto hai fatto RISPETTO a quanto tempo libero è passato:
-// a inizio giornata (o a inizio settimana) con zero task è normale, e non ti dice mai "pippa". La sgridata arriva solo
+// a inizio giornata (o a inizio settimana) con zero task è normale, e non ti sgrida mai. La sgridata arriva solo
 // quando la giornata è quasi finita e non hai fatto niente.
 export function feedbackApertura(stato: Stato, oggi: string, ora: Date): Feedback {
   const { previste, fatte } = giornata(stato, oggi);
@@ -65,9 +65,9 @@ export function feedbackApertura(stato: Stato, oggi: string, ora: Date): Feedbac
   // Niente di fatto: dipende da quanto è avanzata la giornata
   if (trasc < 0.35) return { tono: "bene", testo: scegli(["Si parte! Hai tutta la giornata davanti.", "Pagina bianca: dai il primo colpo, parti dalla più facile.", "Ancora niente, ed è giusto così. Comincia quando vuoi."]) };
   if (trasc < 0.7) return { tono: "medio", testo: scegli(["Ancora zero, ma c'è tempo: parti dalla più facile.", "Metà del tempo è andato: ora una, anche piccola."]) };
-  if (trasc < 0.9) return { tono: "male", testo: scegli(["Zero task e il tempo stringe. Una piccola, adesso!", "Siamo agli sgoccioli: fanne almeno una."]) };
+  if (trasc < 0.9) return { tono: "male", testo: "Ancora nessuna task! Ne facciamo una adesso?" };
 
   // la giornata è praticamente finita
   if (fatteIeri === 0 && gIeri.previste.length > 0 && stato.completamenti.length > 0) return { tono: "male", testo: "Ieri zero, oggi zero: così non si costruisce niente." };
-  return { tono: "male", testo: scegli(["Sei una pippa! Zero task e la giornata è finita.", "Zero task oggi. Una vera pippa.", "Ieri le promesse, oggi zero. Pippa!"]) };
+  return { tono: "male", testo: "Malissimo! Zero task e la giornata è finita." };
 }
