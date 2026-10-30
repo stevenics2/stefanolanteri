@@ -15,3 +15,10 @@ export function caricoGiorno(data: string): Carico {
   // Il turno 2 prima di una notte NON è pesante: dalle 18 all'1 sei in forma (palestra compresa).
   return "normale";
 }
+
+// "riposo" = RD o R; "lavoro" = tutti gli altri turni; "sconosciuto" = data fuori dal calendario importato.
+export function tipoGiorno(data: string): "lavoro" | "riposo" | "sconosciuto" {
+  const t = perData.get(data);
+  if (t === undefined) return "sconosciuto";
+  return t === "RD" || t === "R" ? "riposo" : "lavoro";
+}

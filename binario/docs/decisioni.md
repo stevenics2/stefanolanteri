@@ -18,3 +18,6 @@
 - Task: da completare in giornata, senza orari fissi per ora.
 - Carico per giorno (`src/lib/carico.ts`): turno "1" (dopo la notte) -> solo task essenziali; "1 + 4" (notte + sera) -> nessuna task; mattina + notte -> giorno normale (dalle 18 all'1 è in forma, di solito palestra). Da rivedere strada facendo.
 - Da fare: rendere questi parametri modificabili nelle Impostazioni.
+- Fase 1, passo "task" (fatto): task con versione minima, timer a schermo intero (ricalcolato dall'ora di inizio), punti, livelli provvisori, serie con 1 salvataggio a settimana, ricompense a sorpresa, archivio prove, frasi identitarie, esportazione dati. Dati per ora in localStorage (chiave `binario.v1`), stessa forma delle tabelle future.
+- Task precaricate: Meditazione (10/3 min, essenziale), Lettura (20/5, essenziale), Piatti (15/5, non essenziale: da rivedere). "Ordine in una stanza" = task "una volta" in una data, o ripetuta in un giorno della settimana.
+- Notifiche (fine timer in background, promemoria a orario): richiedono il server (Web Push) e quindi arrivano insieme a Supabase/Vercel. Ora il timer avvisa solo con suono/vibrazione se l'app è aperta.

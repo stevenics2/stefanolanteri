@@ -1,5 +1,5 @@
-import Placeholder from "../components/Placeholder";
+import ProgressiVista from "./ProgressiVista";
 
 export default function Pagina() {
-  return <Placeholder titolo="Progressi" nota="Qui vedrai grafici e sfide settimanali." />;
+  return <ProgressiVista />;
 }

@@ -1,5 +1,5 @@
-import Placeholder from "../components/Placeholder";
+import ImpostazioniVista from "./ImpostazioniVista";
 
 export default function Pagina() {
-  return <Placeholder titolo="Impostazioni" nota="Profilo, notifiche, suoni." />;
+  return <ImpostazioniVista />;
 }

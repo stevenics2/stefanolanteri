@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import BottomNav from "./components/BottomNav";
+import Providers from "./components/Providers";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
@@ -24,10 +25,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="it" className={`${geistSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         {/* pb extra: spazio per la barra in basso e la safe area dell'iPhone */}
-        <main className="flex-1 px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-28">
-          {children}
-        </main>
-        <BottomNav />
+        <Providers>
+          <main className="flex-1 px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-28">
+            {children}
+          </main>
+          <BottomNav />
+        </Providers>
       </body>
     </html>
   );

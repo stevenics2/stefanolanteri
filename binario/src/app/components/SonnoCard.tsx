@@ -1,16 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { consiglioSonno, type ConsiglioSonno } from "@/lib/sonno";
+import { useMemo } from "react";
+import { consiglioSonno } from "@/lib/sonno";
+import { useStore } from "@/lib/store";
 
 // Prossimo sonno consigliato, in base ai turni (dopo la notte, riposino prima della notte, notte normale).
 export default function SonnoCard() {
-  // undefined = non ancora calcolato (serve l'ora locale del telefono), null = nessun vincolo
-  const [c, setC] = useState<ConsiglioSonno | null | undefined>(undefined);
-
-  useEffect(() => {
-    setC(consiglioSonno(new Date()));
-  }, []);
+  const { pronto, oggi } = useStore();
+  // Si ricalcola quando cambia il giorno o i dati sono pronti (serve l'ora locale del telefono).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const c = useMemo(() => (pronto ? consiglioSonno(new Date()) : undefined), [pronto, oggi]);
 
   if (c === undefined) return null;
 
