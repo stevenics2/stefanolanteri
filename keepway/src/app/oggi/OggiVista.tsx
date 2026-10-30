@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { caricoGiorno } from "@/lib/carico";
 import { dataLunga } from "@/lib/date";
+import { momentoGiusto } from "@/lib/momento";
 import { èIgnorata, èPrevista, inVacanza } from "@/lib/regole";
 import { titoloTask } from "@/lib/stanze";
 import { useStore } from "@/lib/store";
@@ -34,9 +35,11 @@ export default function OggiVista() {
   const èFatta = (t: Task) => stato.completamenti.some((c) => c.taskId === t.id && c.data === oggi);
   const fatte = daFare.filter(èFatta).length;
 
-  // Si parte dalla pulizia (la stanza del giorno, poi il resto della casa), poi le altre; le fatte vanno in fondo.
+  // Planner: prima le task con un momento consigliato, in ordine di orario; poi le altre (si parte dalla pulizia: la stanza
+  // del giorno, poi il resto della casa). Le fatte vanno in fondo.
   const peso = (t: Task) => (t.tipo === "stanza" ? 0 : t.areaId === "casa" ? 1 : 2);
-  const ordina = (a: Task, b: Task) => Number(èFatta(a)) - Number(èFatta(b)) || peso(a) - peso(b);
+  const inizioMomento = (t: Task) => momentoGiusto(t, oggi, stato.momenti.find((m) => m.taskId === t.id && m.data === oggi))?.da ?? Infinity;
+  const ordina = (a: Task, b: Task) => Number(èFatta(a)) - Number(èFatta(b)) || (inizioMomento(a) === inizioMomento(b) ? 0 : inizioMomento(a) < inizioMomento(b) ? -1 : 1) || peso(a) - peso(b);
 
   // "Prima di dormire": le task della sera (piatti) e, dalle 18 in poi, tutto quello che non è ancora fatto.
   const èSera = REGOLA_SERA_ATTIVA && adesso > 0 && new Date(adesso).getHours() >= ORA_SERA;
@@ -100,7 +103,7 @@ export default function OggiVista() {
       {cosaOggi.length > 0 && (
         <div className="space-y-2">
           <h2 className="flex items-center gap-2 text-lg font-bold">
-            <ListChecks size={20} className="text-accent" /> Cosa devi fare oggi:
+            <ListChecks size={20} className="text-accent" /> Il piano di oggi
           </h2>
           {cosaOggi.map((t) => (
             <TaskCard key={t.id} task={t} soloMinima={soloMinima} />

@@ -1,10 +1,12 @@
 "use client";
 
-import { Check, Clover, Zap } from "lucide-react";
+import { Check, Clover, Hourglass, Zap } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import FeedbackBox from "./FeedbackBox";
 import { EVENTO_COMBO, EVENTO_FIAMMATA } from "./FestaOverlay";
 import { aperturaCorrente, èDaRiprodurre, iscriviApertura, segnaRiprodotta } from "@/lib/apertura";
 import { dataPiù, inizioSettimana } from "@/lib/date";
+import { fineGiornataMin } from "@/lib/sonno";
 import { bossSettimana, èPrevista, livello, serie } from "@/lib/regole";
 import { useStore } from "@/lib/store";
 
@@ -43,7 +45,7 @@ const TRAGUARDI_SERIE = [3, 7, 14, 30, 60, 100];
 
 // Il recap in cima a Oggi: una console da nerd. Barre e percentuali che avanzano, boss della settimana, combo, record.
 export default function RiepilogoOggi({ fatte, totale }: { fatte: number; totale: number }) {
-  const { stato, oggi, xp } = useStore();
+  const { stato, oggi, adesso, xp } = useStore();
   const anima = stato.impostazioni.animazioni;
   const l = livello(xp);
 
@@ -76,6 +78,15 @@ export default function RiepilogoOggi({ fatte, totale }: { fatte: number; totale
   const tutto = totale > 0 && fatte >= totale;
   const rgb = tutto ? VERDE : mescola(totale > 0 ? fatte / totale : 0);
 
+  // quanto manca alla fine della giornata utile (fine dell'ultimo momento libero di oggi)
+  let restante: { testo: string; poco: boolean } | null = null;
+  const fineG = fineGiornataMin(oggi);
+  if (fineG !== null && adesso > 0) {
+    const d = new Date(adesso);
+    const manca = fineG - (d.getHours() * 60 + d.getMinutes());
+    restante = manca <= 0 ? { testo: "finita", poco: true } : { testo: manca >= 60 ? `${Math.floor(manca / 60)}h ${String(manca % 60).padStart(2, "0")}m` : `${manca} min`, poco: manca < 60 };
+  }
+
   const [apertura, setApertura] = useState(() => aperturaCorrente());
   useEffect(() => iscriviApertura(() => setApertura(aperturaCorrente())), []);
 
@@ -89,6 +100,7 @@ export default function RiepilogoOggi({ fatte, totale }: { fatte: number; totale
       xp={xp}
       nudge={nudge}
       tutto={tutto}
+      restante={restante}
       centro={{ fatte, totale }}
       stat={[
         { id: "OGGI", nome: "Oggi", colore: "#fa114f", perc: percOggi, dettaglio: totale > 0 ? `${fatte}/${totale}` : "libero", pulsa: quasi },
@@ -212,7 +224,7 @@ function Cella({ s, anima }: { s: Stat; anima: boolean }) {
 
 // Il riquadro vero e proprio. A ogni apertura si ricalcola: una riga luminosa lo attraversa mentre gli anelli si riempiono.
 function Pannello({
-  anima, apertura, rgb, l, xp, nudge, tutto, centro, stat,
+  anima, apertura, rgb, l, xp, nudge, tutto, restante, centro, stat,
 }: {
   anima: boolean;
   apertura: number;
@@ -221,6 +233,7 @@ function Pannello({
   xp: number;
   nudge: string | null;
   tutto: boolean;
+  restante: { testo: string; poco: boolean } | null;
   centro: { fatte: number; totale: number };
   stat: Stat[];
 }) {
@@ -248,7 +261,8 @@ function Pannello({
     window.addEventListener(EVENTO_FIAMMATA, via);
     return () => window.removeEventListener(EVENTO_FIAMMATA, via);
   }, []);
-  const [ricalcolo] = useState(() => anima && èDaRiprodurre(apertura));
+  const [primaVolta] = useState(() => èDaRiprodurre(apertura)); // si decide una volta per apertura
+  const ricalcolo = anima && primaVolta;
   useEffect(() => segnaRiprodotta(apertura), [apertura]);
 
   return (
@@ -258,6 +272,7 @@ function Pannello({
     >
       {ricalcolo && <div className="lampo" aria-hidden />}
       {ricalcolo && <div className="scansione" aria-hidden />}
+      {primaVolta && anima && <FeedbackBox />}
       {r && anima && <div key={r.id} className="lampo-ora" aria-hidden />}
       {combo && (
         <div className="pointer-events-none absolute inset-0 z-[4] flex items-center justify-center px-3">
@@ -287,8 +302,15 @@ function Pannello({
       <div className="relative">
         <div className="mb-2 flex items-baseline justify-between border-b pb-1" style={{ borderColor: rgba(rgb, 0.18) }}>
           <span className="text-[11px] font-bold uppercase tracking-widest">LV.{l.numero} {l.nome}</span>
-          <span className="flex items-baseline gap-1 text-[13px] font-black" style={{ textShadow: `0 0 10px ${rgba(rgb, 0.6)}` }}>
-            <Odometro valore={xp} anima={anima} /> <span className="text-[10px]">XP</span>
+          <span className="flex items-baseline gap-3">
+            {restante && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold tabular-nums" style={{ color: restante.poco ? "#ff9686" : rgba(rgb, 0.75) }} title="Alla fine della giornata">
+                <Hourglass size={11} className="self-center" /> {restante.testo}
+              </span>
+            )}
+            <span className="flex items-baseline gap-1 text-[13px] font-black" style={{ textShadow: `0 0 10px ${rgba(rgb, 0.6)}` }}>
+              <Odometro valore={xp} anima={anima} /> <span className="text-[10px]">XP</span>
+            </span>
           </span>
         </div>
 

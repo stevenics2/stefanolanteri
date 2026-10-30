@@ -2,12 +2,11 @@
 
 import { Flame, Skull, Zap } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { aperturaCorrente, iscriviApertura } from "@/lib/apertura";
 import { feedbackApertura, type Feedback } from "@/lib/feedback";
 import { nuovoId } from "@/lib/seed";
 import { useStore } from "@/lib/store";
 
-const RITARDO_MS = 1600; // dopo il ricalcolo del recap
+const RITARDO_MS = 1600; // dopo il ricalcolo degli anelli
 const DURATA_MS = 2900;
 
 const STILE = {
@@ -16,12 +15,10 @@ const STILE = {
   male: { Icona: Skull, bordo: "rgba(248,113,113,0.65)", colore: "#fca5a5", ombra: "rgba(248,113,113,0.45)" },
 } as const;
 
-// A ogni apertura dell'app, subito dopo il ricalcolo: un popup di 2-3 secondi con un commento sulla tua giornata.
-export default function FeedbackApertura() {
+// Il commento all'apertura della scheda Oggi ("Si parte! Hai tutta la giornata davanti"): compare dentro il box di avanzamento,
+// subito dopo il ricalcolo degli anelli, per 2-3 secondi. Si monta una volta per apertura.
+export default function FeedbackBox() {
   const { pronto, oggi, stato } = useStore();
-  const [apertura, setApertura] = useState(() => aperturaCorrente());
-  useEffect(() => iscriviApertura(() => setApertura(aperturaCorrente())), []);
-
   const [mostra, setMostra] = useState<{ id: string; fb: Feedback } | null>(null);
   const ref = useRef(stato);
   useEffect(() => {
@@ -36,22 +33,21 @@ export default function FeedbackApertura() {
       clearTimeout(a);
       clearTimeout(b);
     };
-  }, [pronto, oggi, apertura]);
+  }, [pronto, oggi]);
 
-  // Non si sovrappone al timer a schermo intero, né alle feste (forziere, record...)
-  if (!mostra || stato.timer || !stato.impostazioni.animazioni) return null;
+  if (!mostra || stato.timer) return null;
   const st = STILE[mostra.fb.tono];
   const Icona = st.Icona;
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-[38%] z-50 flex justify-center px-4">
+    <div className="pointer-events-none absolute inset-0 z-[4] flex items-center justify-center px-3">
       <button
         key={mostra.id}
         onClick={() => setMostra(null)}
-        className="feedback pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-2xl border bg-black/90 p-4 text-left backdrop-blur"
+        className="feedback pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-2xl border bg-black/90 p-3.5 text-left backdrop-blur"
         style={{ borderColor: st.bordo, boxShadow: `0 0 36px -6px ${st.ombra}` }}
       >
-        <Icona size={30} style={{ color: st.colore }} className="shrink-0" />
-        <span className="text-lg font-extrabold leading-snug" style={{ color: st.colore }}>{mostra.fb.testo}</span>
+        <Icona size={28} style={{ color: st.colore }} className="shrink-0" />
+        <span className="font-sans text-[17px] font-extrabold leading-snug" style={{ color: st.colore }}>{mostra.fb.testo}</span>
       </button>
     </div>
   );

@@ -211,6 +211,12 @@ export function finestreLibere(data: string, da = 8 * 60, a = 22 * 60 + 30, minD
   return out;
 }
 
+// Dove finisce la giornata utile: la fine dell'ultimo momento libero (tra turni e sonno, entro le 22:30). Minuti dalla mezzanotte.
+export function fineGiornataMin(data: string): number | null {
+  const f = finestreLibere(data, 8 * 60, 22 * 60 + 30, 15);
+  return f.length ? f[f.length - 1].a : null;
+}
+
 // Il momento libero più lungo della giornata (almeno 45 minuti): quello giusto per una task che richiede tempo.
 export function finestraMigliore(data: string, minimo = 45): Finestra | null {
   const tutte = finestreLibere(data, 8 * 60, 22 * 60 + 30, Math.max(30, minimo));

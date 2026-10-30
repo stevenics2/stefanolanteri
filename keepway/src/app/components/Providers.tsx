@@ -2,7 +2,6 @@
 
 import { StoreProvider } from "@/lib/store";
 import AvvisoAnnulla from "./AvvisoAnnulla";
-import FeedbackApertura from "./FeedbackApertura";
 import FeedbackTocco from "./FeedbackTocco";
 import FestaOverlay from "./FestaOverlay";
 import RecapFlash from "./RecapFlash";
@@ -19,7 +18,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <Ricompense />
       <AvvisoAnnulla />
       <RecapFlash />
-      <FeedbackApertura />
       <FestaOverlay />
       <FeedbackTocco />
       <SincronizzaNotifiche />
