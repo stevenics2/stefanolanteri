@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { aperturaCorrente, èDaRiprodurre, iscriviApertura, segnaRiprodotta } from "@/lib/apertura";
 import { dataPiù, inizioSettimana } from "@/lib/date";
-import { suonoApertura } from "@/lib/effetti";
 import { bossSettimana, èPrevista, livello, serie } from "@/lib/regole";
 import { titoloTask } from "@/lib/stanze";
 import { useStore } from "@/lib/store";
@@ -176,7 +175,6 @@ export default function RiepilogoOggi({ fatte, totale }: { fatte: number; totale
     <Pannello
       key={`${oggi}-${apertura}`}
       anima={anima}
-      suoni={stato.impostazioni.suoni}
       apertura={apertura}
       rgb={rgb}
       l={{ numero: l.numero, nome: l.nome }}
@@ -207,10 +205,9 @@ type RigaDati = { etichetta: string; perc: number; dettaglio: string; pulsa?: bo
 
 // Il riquadro vero e proprio. A ogni apertura fa il "ricalcolo": una riga luminosa lo attraversa mentre le barre si ricontano, e a conti finiti un lampo.
 function Pannello({
-  anima, suoni, apertura, rgb, l, xp, nudge, tutto, log, righe, piede,
+  anima, apertura, rgb, l, xp, nudge, tutto, log, righe, piede,
 }: {
   anima: boolean;
-  suoni: boolean;
   apertura: number;
   rgb: Rgb;
   l: { numero: number; nome: string };
@@ -224,10 +221,6 @@ function Pannello({
   // Si decide una volta sola per apertura: cambiando scheda e tornando qui non riparte.
   const [ricalcolo] = useState(() => anima && èDaRiprodurre(apertura));
   useEffect(() => segnaRiprodotta(apertura), [apertura]);
-  // Il suono del computer che calcola parte insieme all'animazione (una volta per apertura)
-  useEffect(() => {
-    if (ricalcolo && suoni) void suonoApertura();
-  }, [ricalcolo, suoni]);
 
   return (
     <div

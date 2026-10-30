@@ -157,18 +157,6 @@ function calcolo() {
   nota(7900, 1.1, 0.25, 0.02, "sine");
 }
 
-// All'apertura non c'è ancora stato un tocco: su iPhone (e Chrome) l'audio può essere bloccato. Si prova a riattivarlo
-// e, se entro un attimo non parte, si lascia perdere (niente suono "in ritardo" al primo tocco).
-export async function suonoApertura() {
-  try {
-    avviaAudio();
-    if (ctx && ctx.state !== "running") await Promise.race([ctx.resume().catch(() => {}), new Promise((r) => setTimeout(r, 250))]);
-    if (ctx && ctx.state === "running") calcolo();
-  } catch {
-    // niente audio disponibile
-  }
-}
-
 export function suono(tipo: Suono) {
   try {
     avviaAudio();

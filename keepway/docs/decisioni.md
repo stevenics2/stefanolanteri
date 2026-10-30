@@ -96,3 +96,5 @@
 - Quando tutte le task del giorno sono fatte, la console "dopamina" diventa tutta verde (boss compreso) e compare "✅ Hai completato tutte le task!".
 
 - "Momento giusto" su una sola riga e modificabile: tocchi l'etichetta, scegli inizio e fine per oggi (Ok) o torni ad "auto". Lo stesso orario guida i promemoria.
+
+- Tolto il suono del "computer che calcola" all'apertura (su iPhone non partiva senza un tocco). L'animazione resta.
