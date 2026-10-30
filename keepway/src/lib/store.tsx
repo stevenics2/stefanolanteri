@@ -232,7 +232,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       if (g.previste.length > 0 && g.fatte.length === g.previste.length && !s.bonus.some((b) => b.tipo === "forziere" && b.data === data)) {
         const dentro = dentroForziere(s.aree);
         nuoviBonus.push({ id: nuovoId(), data, xp: dentro.xp, tipo: "forziere", testo: dentro.testo, da: id });
-        feste.push({ id: nuovoId(), tipo: "forziere", titolo: "FORZIERE APERTO", testo: dentro.testo, xp: dentro.xp });
+        feste.push({ id: nuovoId(), tipo: "forziere", titolo: "ECCELLENTE!!", testo: dentro.testo, xp: dentro.xp });
       }
       // Boss della settimana: sconfitto quando le task fatte arrivano a quelle previste
       const boss = bossSettimana(dopoS, data);
