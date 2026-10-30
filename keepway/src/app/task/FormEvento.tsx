@@ -218,7 +218,7 @@ export default function FormEvento({
           <span className="flex-1">
             <span className="block font-semibold">Salva anche su Calendario Apple</span>
             <span className={`block text-xs ${suApple ? "text-black/60" : "text-muted"}`}>
-              Dopo «Salva» si apre la conferma di iPhone: con un tocco finisce nel Calendario, con gli avvisi.
+              Dopo «Salva» si apre il foglio di iPhone: scegli «Calendario» e conferma. Ci sono gli avvisi.
             </span>
           </span>
           <span className={`flex h-6 w-6 items-center justify-center rounded-full border ${suApple ? "border-black bg-black text-white" : "border-white/30"}`}>
