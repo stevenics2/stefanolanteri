@@ -31,7 +31,8 @@ type Contesto = {
   eliminaTask: (id: string) => void;
   impostazioni: (p: Partial<Impostazioni>) => void;
   setFrase: (areaId: string, frase: string) => void;
-  avviaTimer: (taskId: string, minima: boolean, durataMin: number) => void;
+  apriTimer: (taskId: string, minima: boolean, durataMin: number) => void; // apre la schermata, senza far partire
+  partiTimer: () => void;
   pausaTimer: () => void;
   riprendiTimer: () => void;
   fermaTimer: () => void;
@@ -182,13 +183,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       impostazioni: (p) => aggiorna((x) => ({ ...x, impostazioni: { ...x.impostazioni, ...p } })),
       setFrase: (areaId, frase) =>
         aggiorna((x) => ({ ...x, aree: x.aree.map((a) => (a.id === areaId ? { ...a, frase } : a)) })),
-      avviaTimer: (taskId, minima, durataMin) =>
+      apriTimer: (taskId, minima, durataMin) =>
         aggiorna((x) => ({
           ...x,
-          timer: { taskId, minima, inizio: Date.now(), durataSec: durataMin * 60, pausaInizio: null, pausaTotale: 0 },
+          timer: { taskId, minima, inizio: null, durataSec: durataMin * 60, pausaInizio: null, pausaTotale: 0 },
         })),
+      partiTimer: () =>
+        aggiorna((x) => (x.timer && x.timer.inizio === null ? { ...x, timer: { ...x.timer, inizio: Date.now() } } : x)),
       pausaTimer: () =>
-        aggiorna((x) => (x.timer && !x.timer.pausaInizio ? { ...x, timer: { ...x.timer, pausaInizio: Date.now() } } : x)),
+        aggiorna((x) => (x.timer && x.timer.inizio !== null && !x.timer.pausaInizio ? { ...x, timer: { ...x.timer, pausaInizio: Date.now() } } : x)),
       riprendiTimer: () =>
         aggiorna((x) =>
           x.timer?.pausaInizio
@@ -196,9 +199,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             : x,
         ),
       fermaTimer: () => aggiorna((x) => ({ ...x, timer: null })),
-      // Ricomincia da capo: stessa task, tempo pieno, di nuovo in marcia.
+      // Reset: tempo pieno e timer fermo, pronto a ripartire con Start.
       resettaTimer: () =>
-        aggiorna((x) => (x.timer ? { ...x, timer: { ...x.timer, inizio: Date.now(), pausaInizio: null, pausaTotale: 0 } } : x)),
+        aggiorna((x) => (x.timer ? { ...x, timer: { ...x.timer, inizio: null, pausaInizio: null, pausaTotale: 0 } } : x)),
       ignoraOggi: (taskId) =>
         aggiorna((x) => ({
           ...x,

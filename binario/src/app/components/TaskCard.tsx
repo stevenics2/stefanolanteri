@@ -1,6 +1,6 @@
 "use client";
 
-import { AlarmClock, Check, Flame, Play, SkipForward, Undo2 } from "lucide-react";
+import { AlarmClock, Check, Flame, SkipForward, Timer, Undo2 } from "lucide-react";
 import { useState } from "react";
 import { serie } from "@/lib/regole";
 import { stanzaDelGiorno, titoloTask } from "@/lib/stanze";
@@ -13,7 +13,7 @@ const ora = (ms: number) => new Date(ms).toLocaleTimeString("it-IT", { hour: "2-
 // Una task nella schermata Oggi: avvia il timer, segna come fatta, fa la versione minima,
 // la rimanda a più tardi oppure la salta per oggi.
 export default function TaskCard({ task, soloMinima }: { task: Task; soloMinima: boolean }) {
-  const { stato, oggi, completa, annulla, avviaTimer, ignoraOggi, rimanda, annullaRinvio } = useStore();
+  const { stato, oggi, completa, annulla, apriTimer, ignoraOggi, rimanda, annullaRinvio } = useStore();
   const [piuTardi, setPiuTardi] = useState(false);
   const area = stato.aree.find((a) => a.id === task.areaId);
   const fatto = stato.completamenti.find((c) => c.taskId === task.id && c.data === oggi);
@@ -71,13 +71,13 @@ export default function TaskCard({ task, soloMinima }: { task: Task; soloMinima:
         <>
           <div className="mt-3 flex flex-wrap gap-2">
             {task.durataMin && !soloMinima && (
-              <button data-suono="via" onClick={() => avviaTimer(task.id, false, task.durataMin!)} className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-black">
-                <Play size={16} fill="currentColor" /> Avvia
+              <button onClick={() => apriTimer(task.id, false, task.durataMin!)} className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-black">
+                <Timer size={16} /> Timer
               </button>
             )}
             {soloMinima && minima && (
-              <button data-suono="via" onClick={() => avviaTimer(task.id, true, minima)} className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-black">
-                <Play size={16} fill="currentColor" /> Avvia ({minima} min)
+              <button onClick={() => apriTimer(task.id, true, minima)} className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-black">
+                <Timer size={16} /> Timer ({minima} min)
               </button>
             )}
             <button data-suono="nessuno" onClick={() => completa(task.id, { minima: soloMinima && !!minima })} className="inline-flex items-center gap-1.5 rounded-xl bg-white/10 px-4 py-2 text-sm">

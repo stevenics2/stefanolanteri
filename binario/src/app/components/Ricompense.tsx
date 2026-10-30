@@ -20,7 +20,7 @@ export default function Ricompense() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [r?.id]);
 
-  if (!r) return null;
+  if (!r || stato.timer) return null; // con il timer aperto non deve coprire nulla
   return (
     <div className="pointer-events-none fixed inset-x-0 top-[max(1rem,env(safe-area-inset-top))] z-50 flex flex-col items-center gap-2 px-4">
       {r.nuovoLivello && (

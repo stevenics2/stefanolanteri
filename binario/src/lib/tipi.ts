@@ -52,7 +52,7 @@ export type Impostazioni = { suoni: boolean; animazioni: boolean; vibrazione: bo
 export type TimerAttivo = {
   taskId: string;
   minima: boolean;
-  inizio: number; // ms: si ricalcola sempre da qui, così funziona anche con lo schermo spento
+  inizio: number | null; // ms; null = timer aperto ma non ancora partito. Si ricalcola sempre da qui, così funziona anche con lo schermo spento
   durataSec: number;
   pausaInizio: number | null;
   pausaTotale: number; // ms
