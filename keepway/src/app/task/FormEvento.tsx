@@ -1,8 +1,7 @@
 "use client";
 
-import { AlertTriangle, Apple, Check } from "lucide-react";
+import { AlertTriangle, Check } from "lucide-react";
 import { useState } from "react";
-import { apriInCalendarioApple, leggiScelta, salvaScelta } from "@/lib/calendarioApple";
 import { dataPiù } from "@/lib/date";
 import { dataBreve, PRIORITA } from "@/lib/eventi";
 import { nuovoId } from "@/lib/seed";
@@ -37,7 +36,6 @@ export default function FormEvento({
   const [luogo, setLuogo] = useState(iniziale?.luogo ?? "");
   const [avvisi, setAvvisi] = useState<number[]>(iniziale?.avvisi ?? (èApp ? [7] : []));
   const [spostamento, setSpostamento] = useState(iniziale?.spostamentoMin ?? (èApp ? 20 : 0));
-  const [suApple, setSuApple] = useState(() => èApp && leggiScelta()); // ricordo l'ultima scelta
   const attivaAvviso = (n: number) => setAvvisi((x) => (x.includes(n) ? x.filter((y) => y !== n) : [...x, n].sort((a, b) => b - a)));
 
   const scegliCategoria = (id: string, nome: string) => {
@@ -82,8 +80,6 @@ export default function FormEvento({
       creato: iniziale?.creato ?? Date.now(),
     };
     salvaEvento(evento);
-    if (èApp) salvaScelta(suApple);
-    if (èApp && suApple) apriInCalendarioApple(evento);
     onClose();
   };
 
@@ -205,26 +201,6 @@ export default function FormEvento({
           Dove (facoltativo)
           <input value={luogo} onChange={(e) => setLuogo(e.target.value)} placeholder="Es. Via Roma 12" className={campo} />
         </label>
-      )}
-
-      {èApp && (
-        <button
-          type="button"
-          onClick={() => setSuApple((v) => !v)}
-          aria-pressed={suApple}
-          className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm ${suApple ? "bg-white text-black" : "bg-white/10"}`}
-        >
-          <Apple size={22} fill="currentColor" />
-          <span className="flex-1">
-            <span className="block font-semibold">Salva anche su Calendario Apple</span>
-            <span className={`block text-xs ${suApple ? "text-black/60" : "text-muted"}`}>
-              Dopo «Salva» si apre il foglio di iPhone: scegli «Calendario» e conferma. Ci sono gli avvisi.
-            </span>
-          </span>
-          <span className={`flex h-6 w-6 items-center justify-center rounded-full border ${suApple ? "border-black bg-black text-white" : "border-white/30"}`}>
-            {suApple && <Check size={14} />}
-          </span>
-        </button>
       )}
 
       <button data-suono="via" onClick={salva} disabled={!valido} className="w-full rounded-2xl bg-accent py-3.5 text-lg font-bold text-black disabled:opacity-40">
