@@ -43,6 +43,14 @@ export default function ImpostazioniVista() {
           <input type="checkbox" className="h-5 w-5" checked={stato.impostazioni.suoni} onChange={(e) => impostazioni({ suoni: e.target.checked })} />
         </label>
         <label className={riga}>
+          <span>Suono a ogni tocco</span>
+          <input type="checkbox" className="h-5 w-5" checked={stato.impostazioni.suonoTocco} onChange={(e) => impostazioni({ suonoTocco: e.target.checked })} />
+        </label>
+        <label className={riga}>
+          <span>Vibrazione a ogni tocco</span>
+          <input type="checkbox" className="h-5 w-5" checked={stato.impostazioni.vibrazione} onChange={(e) => impostazioni({ vibrazione: e.target.checked })} />
+        </label>
+        <label className={riga}>
           <span>Animazioni e coriandoli</span>
           <input type="checkbox" className="h-5 w-5" checked={stato.impostazioni.animazioni} onChange={(e) => impostazioni({ animazioni: e.target.checked })} />
         </label>

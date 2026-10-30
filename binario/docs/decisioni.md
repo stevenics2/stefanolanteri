@@ -26,3 +26,4 @@
 - "Più tardi" (1 ora / 3 ore / stasera 20:30) e "Salta oggi" su ogni task. Il rinvio per ora è solo salvato e mostrato: l'avviso vero parte con le notifiche.
 - Promemoria per task (`promemoria`: orari HH:MM, ripetuti fino a quando non è fatta). Stanza: 10:00, 14:00, 18:00, 20:30. Da collegare alle notifiche push (serve un server che invii ogni pochi minuti: cron Vercel Hobby = 1 volta al giorno, quindi servirà Supabase o un cron esterno).
 - Modalità fuori casa (`vacanza`): dal/al, task con `soloACasa` nascoste, serie neutre. Si attiva da Oggi ("Fuori casa") o dalle Impostazioni con date.
+- Feedback al tocco (`FeedbackTocco`, `lib/vibrazione.ts`): "tic" e vibrazione su ogni pulsante/link, ognuno disattivabile dalle Impostazioni. Android: navigator.vibrate. iPhone: Safari non ha la Vibration API; si usa il trucco dell'interruttore (checkbox con attributo `switch`), che dà un leggero tocco su iOS recenti. DA VERIFICARE su iPhone reale.

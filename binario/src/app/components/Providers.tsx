@@ -1,6 +1,7 @@
 "use client";
 
 import { StoreProvider } from "@/lib/store";
+import FeedbackTocco from "./FeedbackTocco";
 import Ricompense from "./Ricompense";
 import TimerSchermo from "./TimerSchermo";
 
@@ -11,6 +12,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       {children}
       <TimerSchermo />
       <Ricompense />
+      <FeedbackTocco />
     </StoreProvider>
   );
 }

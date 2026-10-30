@@ -28,11 +28,25 @@ function nota(freq: number, inizio: number, durata: number, volume = 0.15) {
   osc.stop(ctx.currentTime + inizio + durata);
 }
 
+function avviaAudio() {
+  const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+  ctx ??= new AC();
+  if (ctx.state === "suspended") void ctx.resume();
+}
+
+// Un "tic" brevissimo per ogni tocco.
+export function tic() {
+  try {
+    avviaAudio();
+    nota(1500, 0, 0.04, 0.06);
+  } catch {
+    // niente audio disponibile
+  }
+}
+
 export function suono(tipo: "ok" | "livello" | "fine") {
   try {
-    const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    ctx ??= new AC();
-    if (ctx.state === "suspended") void ctx.resume();
+    avviaAudio();
     if (tipo === "ok") {
       nota(659, 0, 0.12);
       nota(880, 0.1, 0.2);

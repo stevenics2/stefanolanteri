@@ -74,6 +74,7 @@ function carica(): Stato {
         return {
           ...base,
           ...s,
+          impostazioni: { ...base.impostazioni, ...s.impostazioni }, // le opzioni nuove prendono il valore predefinito
           aree: (s.aree ?? base.aree).map((a) => ({ ...a, icona: ICONE_VECCHIE[a.icona] ?? a.icona })),
           task,
           stanze: s.stanze ?? base.stanze,

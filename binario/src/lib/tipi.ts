@@ -47,7 +47,7 @@ export type Rinvio = { taskId: string; data: string; alle: number };
 // Modalità fuori casa: dal giorno `dal` fino ad `al` (vuoto = finché non torno).
 export type Vacanza = { dal: string; al: string | null };
 
-export type Impostazioni = { suoni: boolean; animazioni: boolean };
+export type Impostazioni = { suoni: boolean; animazioni: boolean; vibrazione: boolean; suonoTocco: boolean };
 
 export type TimerAttivo = {
   taskId: string;
