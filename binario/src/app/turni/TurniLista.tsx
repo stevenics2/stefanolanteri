@@ -1,5 +1,6 @@
 "use client";
 
+import { CalendarCheck, Clock } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import roster from "@/data/roster.json";
 
@@ -66,9 +67,9 @@ export default function TurniLista() {
           <h1 className="text-2xl font-bold">Turni</h1>
           <button
             onClick={vaiAOggi}
-            className="rounded-full bg-accent/15 text-accent px-3 py-1.5 text-sm font-medium"
+            className="inline-flex items-center gap-1.5 rounded-full bg-accent/15 text-accent px-3 py-1.5 text-sm font-medium"
           >
-            📅 Oggi
+            <CalendarCheck size={16} /> Oggi
           </button>
         </div>
         <div className="mt-3 flex gap-2 text-sm">
@@ -111,7 +112,7 @@ export default function TurniLista() {
 
               {èOggi && (
                 <div className="shrink-0 text-center text-xs text-emerald-400">
-                  <div className="text-lg">🕐</div>
+                  <Clock size={22} className="mx-auto mb-0.5" />
                   {ora}
                 </div>
               )}

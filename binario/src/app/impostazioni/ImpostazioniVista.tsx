@@ -1,9 +1,16 @@
 "use client";
 
+import { Plane, Plus, X } from "lucide-react";
+import { useState } from "react";
+import { inVacanza } from "@/lib/regole";
 import { useStore } from "@/lib/store";
+import AreaIcona from "../components/AreaIcona";
 
 export default function ImpostazioniVista() {
-  const { pronto, stato, impostazioni, setFrase, azzera } = useStore();
+  const { pronto, stato, oggi, impostazioni, setFrase, setStanze, setVacanza, azzera } = useStore();
+  const [nuovaStanza, setNuovaStanza] = useState("");
+  const [dal, setDal] = useState("");
+  const [al, setAl] = useState("");
   if (!pronto) return null;
 
   const esporta = () => {
@@ -16,9 +23,18 @@ export default function ImpostazioniVista() {
     URL.revokeObjectURL(url);
   };
 
+  const aggiungiStanza = () => {
+    const nome = nuovaStanza.trim();
+    if (nome && !stato.stanze.includes(nome)) setStanze([...stato.stanze, nome]);
+    setNuovaStanza("");
+  };
+
+  const fuori = inVacanza(stato.vacanza, oggi);
   const riga = "flex items-center justify-between rounded-2xl bg-card p-4";
+  const campo = "mt-1 w-full rounded-xl bg-card px-3 py-2.5 text-foreground outline-none";
+  const titolo = "text-sm font-semibold uppercase tracking-wide text-muted";
   return (
-    <section className="space-y-5">
+    <section className="space-y-6">
       <h1 className="text-2xl font-bold">Impostazioni</h1>
 
       <div className="space-y-2">
@@ -33,22 +49,77 @@ export default function ImpostazioniVista() {
       </div>
 
       <div className="space-y-2">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">La persona che vuoi diventare</h2>
+        <h2 className={`${titolo} flex items-center gap-2`}><Plane size={15} /> Fuori casa (vacanza / trasferta)</h2>
+        <p className="text-sm text-muted">Quando non sei a casa le task &ldquo;solo a casa&rdquo; (stanze, piatti) spariscono. Le serie non si rompono.</p>
+        {stato.vacanza ? (
+          <div className="space-y-2 rounded-2xl bg-card p-4">
+            <div className="text-sm">
+              {fuori ? "Fuori casa" : "Programmato"}: dal {stato.vacanza.dal}
+              {stato.vacanza.al ? ` al ${stato.vacanza.al}` : ", finché non torni"}
+            </div>
+            <button onClick={() => setVacanza(null)} className="w-full rounded-xl bg-white/10 py-2.5">Sono a casa / annulla</button>
+          </div>
+        ) : (
+          <div className="space-y-2 rounded-2xl bg-card p-4">
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block text-sm text-muted">
+                Dal
+                <input type="date" value={dal || oggi} onChange={(e) => setDal(e.target.value)} className={campo.replace("bg-card", "bg-white/10")} />
+              </label>
+              <label className="block text-sm text-muted">
+                Al (facoltativo)
+                <input type="date" value={al} onChange={(e) => setAl(e.target.value)} className={campo.replace("bg-card", "bg-white/10")} />
+              </label>
+            </div>
+            <button onClick={() => setVacanza({ dal: dal || oggi, al: al || null })} className="w-full rounded-xl bg-accent py-2.5 font-bold text-black">
+              Attiva
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <h2 className={titolo}>Stanze da sistemare</h2>
+        <p className="text-sm text-muted">Una al giorno, a rotazione: non ricompare finché non le hai fatte tutte.</p>
+        <div className="space-y-2">
+          {stato.stanze.map((s) => (
+            <div key={s} className={riga}>
+              <span className="first-letter:uppercase">{s}</span>
+              <button onClick={() => setStanze(stato.stanze.filter((x) => x !== s))} aria-label={`Togli ${s}`} className="text-muted">
+                <X size={18} />
+              </button>
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <input
+            value={nuovaStanza}
+            onChange={(e) => setNuovaStanza(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && aggiungiStanza()}
+            placeholder="es. lo studio, la lavanderia"
+            className="flex-1 rounded-xl bg-card px-3 py-2.5 outline-none"
+          />
+          <button onClick={aggiungiStanza} aria-label="Aggiungi stanza" className="rounded-xl bg-accent px-4 text-black">
+            <Plus size={20} />
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <h2 className={titolo}>La persona che vuoi diventare</h2>
         <p className="text-sm text-muted">Una frase per area: compare ogni volta che completi una task di quell&apos;area.</p>
         {stato.aree.map((a) => (
           <label key={a.id} className="block text-sm text-muted">
-            {a.icona} {a.nome}
-            <input
-              value={a.frase}
-              onChange={(e) => setFrase(a.id, e.target.value)}
-              className="mt-1 w-full rounded-xl bg-card px-3 py-2.5 text-foreground outline-none"
-            />
+            <span className="flex items-center gap-2">
+              <AreaIcona nome={a.icona} colore={a.colore} size={14} badge={false} /> {a.nome}
+            </span>
+            <input value={a.frase} onChange={(e) => setFrase(a.id, e.target.value)} className={campo} />
           </label>
         ))}
       </div>
 
       <div className="space-y-2">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">I tuoi dati</h2>
+        <h2 className={titolo}>I tuoi dati</h2>
         <p className="text-sm text-muted">Per ora i dati restano su questo telefono. Con gli account arriverà il salvataggio online.</p>
         <button onClick={esporta} className="w-full rounded-2xl bg-white/10 py-3">Esporta i dati (JSON)</button>
         <button

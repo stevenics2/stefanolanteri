@@ -3,10 +3,10 @@ import { puntiAuto } from "./regole";
 import type { Area, Stato, Task } from "./tipi";
 
 export const AREE: Area[] = [
-  { id: "allenamento", nome: "Allenamento", colore: "#ef4444", icona: "💪", frase: "Sono uno che si allena" },
-  { id: "progetti", nome: "Progetti", colore: "#8b5cf6", icona: "🎯", frase: "Sono uno che porta a termine le cose" },
-  { id: "casa", nome: "Ordine in casa", colore: "#22c55e", icona: "🏠", frase: "Sono uno che tiene in ordine" },
-  { id: "abitudini", nome: "Abitudini quotidiane", colore: "#f5a524", icona: "🔁", frase: "Sono uno costante" },
+  { id: "allenamento", nome: "Allenamento", colore: "#ef4444", icona: "dumbbell", frase: "Sono uno che si allena" },
+  { id: "progetti", nome: "Progetti", colore: "#8b5cf6", icona: "target", frase: "Sono uno che porta a termine le cose" },
+  { id: "casa", nome: "Ordine in casa", colore: "#22c55e", icona: "casa", frase: "Sono uno che tiene in ordine" },
+  { id: "abitudini", nome: "Abitudini quotidiane", colore: "#f5a524", icona: "ripeti", frase: "Sono uno costante" },
 ];
 
 export const nuovoId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -14,13 +14,26 @@ export const nuovoId = () => Date.now().toString(36) + Math.random().toString(36
 // Task precaricate: le abitudini fisse della v1.
 function precaricate(): Task[] {
   const oggi = oggiLocale();
-  const base = { areaId: "abitudini", ricorrenza: { tipo: "giornaliera" } as const, solo: "sempre" as const, attiva: true, creatoIl: oggi };
+  const base = { areaId: "abitudini", ricorrenza: { tipo: "giornaliera" } as const, solo: "sempre" as const, soloACasa: false, promemoria: [], attiva: true, creatoIl: oggi };
   return [
     { ...base, id: "meditazione", titolo: "Meditazione", durataMin: 10, minimaMin: 3, fascia: "mattina", essenziale: true, punti: puntiAuto(10) },
     { ...base, id: "lettura", titolo: "Lettura", durataMin: 20, minimaMin: 5, fascia: "qualsiasi", essenziale: true, punti: puntiAuto(20) },
-    { ...base, id: "piatti", titolo: "Lavare i piatti", durataMin: 15, minimaMin: 5, fascia: "sera", essenziale: false, punti: puntiAuto(15) },
+    { ...base, id: "piatti", titolo: "Lavare i piatti", durataMin: 15, minimaMin: 5, fascia: "sera", essenziale: false, soloACasa: true, punti: puntiAuto(15) },
+    taskStanza(oggi),
   ];
 }
+
+// "Sistema una stanza": una al giorno, a rotazione, finché le hai fatte tutte (poi si ricomincia).
+export function taskStanza(creatoIl: string): Task {
+  return {
+    id: "stanza", titolo: "Sistema una stanza", tipo: "stanza", areaId: "casa",
+    durataMin: 15, minimaMin: 5, ricorrenza: { tipo: "giornaliera" }, fascia: "pomeriggio", solo: "sempre",
+    soloACasa: true, essenziale: false, punti: puntiAuto(15), promemoria: ["10:00", "14:00", "18:00", "20:30"],
+    attiva: true, creatoIl,
+  };
+}
+
+export const STANZE_INIZIALI = ["il soggiorno", "il bagno", "la camera", "la cucina", "l'ingresso", "il balcone"];
 
 export function statoIniziale(): Stato {
   return {
@@ -30,6 +43,10 @@ export function statoIniziale(): Stato {
     completamenti: [],
     impostazioni: { suoni: true, animazioni: true },
     timer: null,
+    stanze: STANZE_INIZIALI,
+    ignorati: [],
+    rinvii: [],
+    vacanza: null,
   };
 }
 
@@ -41,4 +58,8 @@ export const statoVuoto: Stato = {
   completamenti: [],
   impostazioni: { suoni: true, animazioni: true },
   timer: null,
+  stanze: STANZE_INIZIALI,
+  ignorati: [],
+  rinvii: [],
+  vacanza: null,
 };

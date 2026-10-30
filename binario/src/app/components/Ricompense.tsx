@@ -1,5 +1,6 @@
 "use client";
 
+import { Clover } from "lucide-react";
 import { useEffect } from "react";
 import { coriandoli, suono } from "@/lib/effetti";
 import { useStore } from "@/lib/store";
@@ -32,7 +33,7 @@ export default function Ricompense() {
         <div className="flex-1">
           <div className="font-semibold">
             <span className="text-accent">+{r.punti} XP</span>
-            {r.bonus > 0 && <span className="ml-2 text-emerald-400">🍀 +{r.bonus} colpo di fortuna!</span>}
+            {r.bonus > 0 && <span className="ml-2 inline-flex items-center gap-1 text-emerald-400"><Clover size={16} /> +{r.bonus} colpo di fortuna!</span>}
           </div>
           <div className="text-sm text-muted">{r.frase || r.titolo}</div>
         </div>

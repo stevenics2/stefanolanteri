@@ -1,8 +1,11 @@
 "use client";
 
+import { Pause, Play } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { titoloTask } from "@/lib/stanze";
 import { suono } from "@/lib/effetti";
 import { useStore } from "@/lib/store";
+import AreaIcona from "./AreaIcona";
 
 const R = 120;
 const CIRC = 2 * Math.PI * R;
@@ -15,7 +18,7 @@ const mmss = (sec: number) => {
 // Timer a schermo intero. Salva l'ora di inizio e ricalcola sempre da lì:
 // funziona anche se l'app va in background o lo schermo si spegne.
 export default function TimerSchermo() {
-  const { stato, completa, pausaTimer, riprendiTimer, fermaTimer } = useStore();
+  const { stato, oggi, completa, pausaTimer, riprendiTimer, fermaTimer } = useStore();
   const timer = stato.timer;
   const task = timer ? stato.task.find((t) => t.id === timer.taskId) : undefined;
   const [ora, setAdesso] = useState(0); // aggiornato dall'intervallo: niente Date.now() all'avvio
@@ -71,10 +74,10 @@ export default function TimerSchermo() {
   return (
     <div className="fixed inset-0 z-40 flex flex-col items-center justify-between bg-background px-6 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(3rem,env(safe-area-inset-top))]">
       <div className="text-center">
-        <div className="text-sm text-muted">
-          {area?.icona} {area?.nome}
+        <div className="flex items-center justify-center gap-2 text-sm text-muted">
+          <AreaIcona nome={area?.icona ?? ""} colore={colore} size={14} badge={false} /> {area?.nome}
         </div>
-        <h2 className="mt-1 text-2xl font-bold">{task.titolo}</h2>
+        <h2 className="mt-1 text-2xl font-bold">{titoloTask(task, stato, oggi)}</h2>
         {timer.minima && <div className="mt-1 text-sm text-accent">versione minima</div>}
       </div>
 
@@ -95,9 +98,9 @@ export default function TimerSchermo() {
       <div className="flex w-full max-w-sm flex-col gap-3">
         <button
           onClick={inPausa ? riprendiTimer : pausaTimer}
-          className="rounded-2xl bg-accent py-4 text-lg font-bold text-black"
+          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-accent py-4 text-lg font-bold text-black"
         >
-          {inPausa ? "▶ Riprendi" : "⏸ Pausa"}
+          {inPausa ? <><Play size={20} fill="currentColor" /> Riprendi</> : <><Pause size={20} fill="currentColor" /> Pausa</>}
         </button>
         <button onClick={termina} className="rounded-2xl bg-white/10 py-3">
           {minimoMin > 0 && trascorsiMin >= minimoMin ? "Termina ora (conta come minima)" : "Annulla timer"}

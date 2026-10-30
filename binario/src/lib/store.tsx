@@ -3,8 +3,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { oggiLocale } from "./date";
 import { livello, puntiMinima, xpTotali } from "./regole";
-import { nuovoId, statoIniziale, statoVuoto } from "./seed";
-import type { Impostazioni, Stato, Task } from "./tipi";
+import { nuovoId, statoIniziale, statoVuoto, taskStanza } from "./seed";
+import { stanzaDelGiorno } from "./stanze";
+import type { Impostazioni, Stato, Task, Vacanza } from "./tipi";
 
 const CHIAVE = "binario.v1";
 
@@ -33,6 +34,12 @@ type Contesto = {
   pausaTimer: () => void;
   riprendiTimer: () => void;
   fermaTimer: () => void;
+  ignoraOggi: (taskId: string) => void;
+  ripristina: (taskId: string) => void;
+  rimanda: (taskId: string, alle: number) => void;
+  annullaRinvio: (taskId: string) => void;
+  setStanze: (stanze: string[]) => void;
+  setVacanza: (v: Vacanza | null) => void;
   azzera: () => void;
   ricompensa: Ricompensa | null;
   chiudiRicompensa: () => void;
@@ -46,12 +53,35 @@ export function useStore(): Contesto {
   return c;
 }
 
+// Icone: prima erano emoji, ora sono chiavi di icone vere.
+const ICONE_VECCHIE: Record<string, string> = { "💪": "dumbbell", "🎯": "target", "🏠": "casa", "🔁": "ripeti" };
+
+// Legge i dati dal telefono e li porta all'ultima forma (aggiunge i campi nuovi senza perdere nulla).
 function carica(): Stato {
   try {
     const raw = localStorage.getItem(CHIAVE);
     if (raw) {
-      const s = JSON.parse(raw) as Stato;
-      if (s.versione === 1) return s;
+      const s = JSON.parse(raw) as Partial<Stato> & { versione?: number };
+      if (s.versione === 1) {
+        const base = statoIniziale();
+        // I dati salvati prima di questa versione non hanno i campi nuovi: li aggiungo.
+        const task = (s.task ?? base.task).map((t) => ({
+          ...t,
+          soloACasa: (t as Partial<Task>).soloACasa ?? t.areaId === "casa",
+          promemoria: (t as Partial<Task>).promemoria ?? [],
+        }));
+        if (!task.some((t) => t.id === "stanza")) task.push(taskStanza(oggiLocale()));
+        return {
+          ...base,
+          ...s,
+          aree: (s.aree ?? base.aree).map((a) => ({ ...a, icona: ICONE_VECCHIE[a.icona] ?? a.icona })),
+          task,
+          stanze: s.stanze ?? base.stanze,
+          ignorati: s.ignorati ?? [],
+          rinvii: s.rinvii ?? [],
+          vacanza: s.vacanza ?? null,
+        } as Stato;
+      }
     }
   } catch {
     // dati illeggibili: si riparte da zero
@@ -105,19 +135,20 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const punti = minima ? puntiMinima(t.punti) : t.punti;
       const bonus = Math.random() < 0.1 ? 5 + Math.floor(Math.random() * 11) : 0; // colpo di fortuna
       const durata = minuti ?? (minima ? t.minimaMin : t.durataMin) ?? 0;
+      const stanza = t.tipo === "stanza" ? stanzaDelGiorno(s.stanze, s.completamenti, t.id, data).stanza : null;
       const id = nuovoId();
       const prima = livello(xpTotali(s.completamenti));
       const dopo = livello(xpTotali(s.completamenti) + punti + bonus);
 
       aggiorna((x) => ({
         ...x,
-        completamenti: [...x.completamenti, { id, taskId, data, minuti: durata, minima, punti, bonus, ts: Date.now() }],
+        completamenti: [...x.completamenti, { id, taskId, data, minuti: durata, minima, punti, bonus, ts: Date.now(), ...(stanza ? { nota: stanza } : {}) }],
         timer: x.timer?.taskId === taskId ? null : x.timer,
       }));
       setRicompensa({
         id: nuovoId(),
         completamentoId: id,
-        titolo: t.titolo,
+        titolo: stanza ? `Sistema ${stanza}` : t.titolo,
         punti,
         bonus,
         frase: s.aree.find((a) => a.id === t.areaId)?.frase ?? "",
@@ -161,6 +192,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             : x,
         ),
       fermaTimer: () => aggiorna((x) => ({ ...x, timer: null })),
+      ignoraOggi: (taskId) =>
+        aggiorna((x) => ({
+          ...x,
+          ignorati: [...x.ignorati.filter((i) => !(i.taskId === taskId && i.data === oggiLocale())), { taskId, data: oggiLocale() }],
+          rinvii: x.rinvii.filter((r) => !(r.taskId === taskId && r.data === oggiLocale())),
+        })),
+      ripristina: (taskId) =>
+        aggiorna((x) => ({ ...x, ignorati: x.ignorati.filter((i) => !(i.taskId === taskId && i.data === oggiLocale())) })),
+      rimanda: (taskId, alle) =>
+        aggiorna((x) => ({
+          ...x,
+          rinvii: [...x.rinvii.filter((r) => !(r.taskId === taskId && r.data === oggiLocale())), { taskId, data: oggiLocale(), alle }],
+        })),
+      annullaRinvio: (taskId) =>
+        aggiorna((x) => ({ ...x, rinvii: x.rinvii.filter((r) => !(r.taskId === taskId && r.data === oggiLocale())) })),
+      setStanze: (stanze) => aggiorna((x) => ({ ...x, stanze })),
+      setVacanza: (vacanza) => aggiorna((x) => ({ ...x, vacanza })),
       azzera: () => {
         aggiorna(() => statoIniziale());
         setRicompensa(null);

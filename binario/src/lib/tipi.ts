@@ -1,5 +1,6 @@
 // I dati di Binario. Per ora stanno nel telefono (localStorage); stessa forma delle tabelle del database che arriverà.
 
+// icona = chiave di un'icona (vedi components/AreaIcona.tsx), non un'emoji
 export type Area = { id: string; nome: string; colore: string; icona: string; frase: string };
 
 export type Ricorrenza =
@@ -20,6 +21,9 @@ export type Task = {
   solo: "sempre" | "lavoro" | "riposo"; // nei giorni con turno / di riposo
   punti: number;
   essenziale: boolean; // resta anche nei giorni dopo la notte
+  soloACasa: boolean; // in modalità fuori casa (vacanza/trasferta) non viene proposta
+  promemoria: string[]; // orari "HH:MM" dei promemoria, ripetuti fino a quando non è fatta (partono con le notifiche)
+  tipo?: "stanza"; // "stanza" = ogni giorno una stanza diversa, a rotazione
   attiva: boolean;
   creatoIl: string;
 };
@@ -32,8 +36,16 @@ export type Completamento = {
   minima: boolean;
   punti: number;
   bonus: number; // "colpo di fortuna" a sorpresa
+  nota?: string; // per le task "stanza": quale stanza
   ts: number;
 };
+
+// "Salta oggi": la task sparisce per quel giorno e non rompe la serie.
+export type Ignorato = { taskId: string; data: string };
+// "Più tardi": ricordamela alle `alle` (ms).
+export type Rinvio = { taskId: string; data: string; alle: number };
+// Modalità fuori casa: dal giorno `dal` fino ad `al` (vuoto = finché non torno).
+export type Vacanza = { dal: string; al: string | null };
 
 export type Impostazioni = { suoni: boolean; animazioni: boolean };
 
@@ -53,4 +65,8 @@ export type Stato = {
   completamenti: Completamento[];
   impostazioni: Impostazioni;
   timer: TimerAttivo | null;
+  stanze: string[]; // le stanze da sistemare a rotazione, scritte per intero ("il soggiorno")
+  ignorati: Ignorato[];
+  rinvii: Rinvio[];
+  vacanza: Vacanza | null;
 };

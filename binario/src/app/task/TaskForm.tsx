@@ -32,6 +32,8 @@ export default function TaskForm({ iniziale, onClose }: { iniziale: Task | null;
   const [solo, setSolo] = useState<Task["solo"]>(iniziale?.solo ?? "sempre");
   const [punti, setPunti] = useState(iniziale ? iniziale.punti.toString() : "");
   const [essenziale, setEssenziale] = useState(iniziale?.essenziale ?? false);
+  const [soloACasa, setSoloACasa] = useState(iniziale?.soloACasa ?? false);
+  const [promemoria, setPromemoria] = useState((iniziale?.promemoria ?? []).join(", "));
 
   const puntiFinali = num(punti) ?? puntiAuto(num(durata));
   const valido = titolo.trim() !== "" && (tipo !== "settimana" || giorni.length > 0);
@@ -56,6 +58,9 @@ export default function TaskForm({ iniziale, onClose }: { iniziale: Task | null;
       solo,
       punti: puntiFinali,
       essenziale,
+      soloACasa,
+      promemoria: promemoria.split(/[,\s]+/).filter((o) => /^\d{1,2}:\d{2}$/.test(o)).map((o) => o.padStart(5, "0")),
+      tipo: iniziale?.tipo,
       attiva: iniziale?.attiva ?? true,
       creatoIl: iniziale?.creatoIl ?? oggi,
     });
@@ -73,7 +78,7 @@ export default function TaskForm({ iniziale, onClose }: { iniziale: Task | null;
 
         {!iniziale && (
           <div>
-            <div className="text-sm text-muted">Ordine in una stanza, al volo:</div>
+            <div className="text-sm text-muted">Una stanza in un giorno preciso (la rotazione quotidiana c&apos;è già):</div>
             <div className="mt-1 flex flex-wrap gap-2">
               {STANZE.map((s) => (
                 <button key={s.nome} onClick={() => stanza(s.titolo)} className="rounded-full bg-white/10 px-3 py-1 text-sm">
@@ -93,7 +98,7 @@ export default function TaskForm({ iniziale, onClose }: { iniziale: Task | null;
           Area
           <select value={areaId} onChange={(e) => setAreaId(e.target.value)} className={campo}>
             {stato.aree.map((a) => (
-              <option key={a.id} value={a.id}>{a.icona} {a.nome}</option>
+              <option key={a.id} value={a.id}>{a.nome}</option>
             ))}
           </select>
         </label>
@@ -161,6 +166,17 @@ export default function TaskForm({ iniziale, onClose }: { iniziale: Task | null;
         <label className="block text-sm text-muted">
           Punti (se vuoto: {puntiAuto(num(durata))})
           <input inputMode="numeric" value={punti} onChange={(e) => setPunti(e.target.value)} className={campo} />
+        </label>
+
+        <label className="block text-sm text-muted">
+          Promemoria (orari, es. 10:00, 18:00)
+          <input value={promemoria} onChange={(e) => setPromemoria(e.target.value)} placeholder="10:00, 18:00" className={campo} />
+          <span className="mt-1 block text-xs">Ripetuti fino a quando non la fai. Partiranno con le notifiche.</span>
+        </label>
+
+        <label className="flex items-center gap-3 text-sm">
+          <input type="checkbox" checked={soloACasa} onChange={(e) => setSoloACasa(e.target.checked)} className="h-5 w-5" />
+          Si fa solo a casa (in modalità fuori casa sparisce)
         </label>
 
         <label className="flex items-center gap-3 text-sm">

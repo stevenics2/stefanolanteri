@@ -1,5 +1,6 @@
 "use client";
 
+import { Flame } from "lucide-react";
 import { dataPiù, GIORNI_LUNGHI, giornoSettimana } from "@/lib/date";
 import { serie } from "@/lib/regole";
 import { useStore } from "@/lib/store";
@@ -7,6 +8,7 @@ import Livello from "../components/Livello";
 
 export default function ProgressiVista() {
   const { pronto, stato, oggi } = useStore();
+
   if (!pronto) return null;
 
   // Punti degli ultimi 7 giorni
@@ -18,7 +20,7 @@ export default function ProgressiVista() {
   const prove = stato.task
     .map((t) => {
       const fatte = stato.completamenti.filter((c) => c.taskId === t.id);
-      return { t, n: fatte.length, min: fatte.reduce((x, c) => x + c.minuti, 0), serie: serie(t, stato.completamenti, oggi) };
+      return { t, n: fatte.length, min: fatte.reduce((x, c) => x + c.minuti, 0), serie: serie(t, stato.completamenti, oggi, { vacanza: stato.vacanza }, stato.ignorati) };
     })
     .filter((x) => x.n > 0 || x.t.attiva)
     .sort((a, b) => b.n - a.n);
@@ -52,7 +54,7 @@ export default function ProgressiVista() {
               <div className="font-medium">{t.titolo}</div>
               <div className="text-xs text-muted">{n} {n === 1 ? "volta" : "volte"}{min ? ` · ${min} min` : ""}</div>
             </div>
-            {s > 0 && <div className="font-semibold text-accent">🔥 {s}</div>}
+            {s > 0 && <div className="flex items-center gap-1 font-semibold text-accent"><Flame size={18} /> {s}</div>}
           </div>
         ))}
       </div>

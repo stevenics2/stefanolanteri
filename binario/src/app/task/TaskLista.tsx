@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { GIORNI_LUNGHI } from "@/lib/date";
 import { useStore } from "@/lib/store";
+import AreaIcona from "../components/AreaIcona";
 import type { Task } from "@/lib/tipi";
 import TaskForm from "./TaskForm";
 
@@ -32,14 +33,14 @@ export default function TaskLista() {
         const lista = stato.task.filter((t) => t.areaId === a.id);
         return (
           <div key={a.id} className="space-y-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide" style={{ color: a.colore }}>
-              {a.icona} {a.nome}
+            <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide" style={{ color: a.colore }}>
+              <AreaIcona nome={a.icona} colore={a.colore} size={15} badge={false} /> {a.nome}
             </h2>
             {lista.length === 0 && <p className="text-sm text-muted">Nessuna task.</p>}
             {lista.map((t) => (
               <div key={t.id} className={`flex items-center gap-3 rounded-2xl bg-card p-3 ${t.attiva ? "" : "opacity-50"}`}>
                 <button onClick={() => setModifica(t)} className="flex-1 text-left">
-                  <div className="font-medium">{t.titolo}</div>
+                  <div className="font-medium">{t.tipo === "stanza" ? "Sistema una stanza (a rotazione)" : t.titolo}</div>
                   <div className="text-xs text-muted">
                     {quando(t)}
                     {t.durataMin ? ` · ${t.durataMin} min` : ""}

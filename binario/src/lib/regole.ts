@@ -1,6 +1,6 @@
 import { caricoGiorno, tipoGiorno } from "./carico";
 import { dataPiù, giornoSettimana, inizioSettimana } from "./date";
-import type { Completamento, Task } from "./tipi";
+import type { Completamento, Ignorato, Task, Vacanza } from "./tipi";
 
 // --- Punti ---
 export const puntiAuto = (durataMin: number | null) => (durataMin ? Math.max(5, Math.round(durataMin)) : 10);
@@ -34,9 +34,18 @@ export function livello(xp: number) {
 }
 
 // --- Quando una task è prevista ---
-// Rispetta ricorrenza, tipo di giorno (turno/riposo) e carico (giorno dopo la notte: solo essenziali; notte + sera: nessuna).
-export function èPrevista(t: Task, data: string, ignoraCarico = false): boolean {
+export const inVacanza = (v: Vacanza | null, data: string) => !!v && data >= v.dal && (!v.al || data <= v.al);
+export const èIgnorata = (ignorati: Ignorato[], taskId: string, data: string) =>
+  ignorati.some((i) => i.taskId === taskId && i.data === data);
+
+// Contesto che cambia cosa è previsto: fuori casa e "carico" del giorno.
+export type Previsione = { vacanza: Vacanza | null; ignoraCarico?: boolean };
+
+// Rispetta ricorrenza, tipo di giorno (turno/riposo), fuori casa e carico
+// (giorno dopo la notte: solo essenziali; notte + sera: nessuna). I giorni "saltati" si gestiscono a parte.
+export function èPrevista(t: Task, data: string, p?: Previsione): boolean {
   if (!t.attiva) return false;
+  if (t.soloACasa && inVacanza(p?.vacanza ?? null, data)) return false;
   const r = t.ricorrenza;
   if (r.tipo === "una_volta") {
     if (r.data !== data) return false;
@@ -47,7 +56,7 @@ export function èPrevista(t: Task, data: string, ignoraCarico = false): boolean
   const tipo = tipoGiorno(data);
   if (t.solo === "riposo" && tipo !== "riposo") return false;
   if (t.solo === "lavoro" && tipo === "riposo") return false;
-  if (ignoraCarico) return true;
+  if (p?.ignoraCarico) return true;
   const carico = caricoGiorno(data);
   if (carico === "nessuna") return false;
   if (carico === "essenziale") return t.essenziale;
@@ -57,13 +66,13 @@ export function èPrevista(t: Task, data: string, ignoraCarico = false): boolean
 // --- Serie (giorni consecutivi) ---
 // I giorni in cui la task non era prevista non la rompono. C'è 1 "salvataggio" a settimana:
 // un giorno saltato per settimana non spezza la serie (es. dopo un doppio turno).
-export function serie(t: Task, cs: Completamento[], oggi: string): number {
+export function serie(t: Task, cs: Completamento[], oggi: string, p?: Previsione, ignorati: Ignorato[] = []): number {
   const fatti = new Set(cs.filter((c) => c.taskId === t.id).map((c) => c.data));
   const salvataggiUsati = new Set<string>();
   let conta = 0;
-  let d = èPrevista(t, oggi) && !fatti.has(oggi) ? dataPiù(oggi, -1) : oggi; // oggi ancora da fare non rompe nulla
+  let d = èPrevista(t, oggi, p) && !fatti.has(oggi) ? dataPiù(oggi, -1) : oggi; // oggi ancora da fare non rompe nulla
   for (let n = 0; n < 400 && d >= t.creatoIl; n++, d = dataPiù(d, -1)) {
-    if (!èPrevista(t, d)) continue;
+    if (!èPrevista(t, d, p) || èIgnorata(ignorati, t.id, d)) continue; // giorno neutro: non rompe la serie
     if (fatti.has(d)) {
       conta++;
     } else {
