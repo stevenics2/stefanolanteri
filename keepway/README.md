@@ -13,10 +13,11 @@ npm run build    # controllo di produzione
 
 Stack: Next.js (App Router) + TypeScript + Tailwind. Backend (Supabase) in arrivo.
 
-## Pubblicazione (Cloudflare Pages)
+## Pubblicazione (Cloudflare)
 
-Il sito è statico (`output: "export"`): `npm run build` crea la cartella `out/`.
+Il sito è statico (`output: "export"`): `npm run build` crea la cartella `out/`, che `wrangler.jsonc` pubblica.
 
-- Repo: `stefanolanteri`, branch di produzione `insightbinary`, root directory `keepway`.
-- Build command: `npm run build`. Build output directory: `out`.
-- Variabile d'ambiente: `NODE_VERSION=22` (c'è anche `.node-version`).
+- Repo `stefanolanteri`, production branch `insightbinary`, Path (root directory) `keepway`.
+- Build command: `npm run build`. Deploy command: `npx wrangler deploy`.
+- Il nome del progetto su Cloudflare deve essere `keepway` (come in `wrangler.jsonc`).
+- Node 22 (file `.node-version`).

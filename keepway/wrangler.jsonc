@@ -1,0 +1,10 @@
+{
+  // Pubblica la cartella `out/` (il sito statico generato da `npm run build`) su Cloudflare.
+  // Il nome deve essere uguale a quello del progetto su Cloudflare.
+  "name": "keepway",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./out",
+    "not_found_handling": "404-page"
+  }
+}
