@@ -186,6 +186,13 @@ export function èInSilenzio(ms: number): boolean {
   return silenzioMin(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 60000 + d.getHours() * 60 + d.getMinutes());
 }
 
+// Solo il sonno (non il turno): per i promemoria che hanno senso anche a lavoro, come la lettura.
+export function èADormire(ms: number): boolean {
+  const d = new Date(ms);
+  const m = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 60000 + d.getHours() * 60 + d.getMinutes();
+  return elencoSonni().some((x) => m >= x.aLetto && m < x.sveglia);
+}
+
 // --- Momenti liberi della giornata (né in turno, né a dormire) ---
 export type Finestra = { da: number; a: number }; // minuti dalla mezzanotte
 

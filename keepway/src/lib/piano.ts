@@ -3,7 +3,7 @@ import { violazioniDa } from "./calendario";
 import { giorniTra } from "./eventi";
 import { èIgnorata, èPrevista } from "./regole";
 import { momentoGiusto } from "./momento";
-import { èInSilenzio, hhmm } from "./sonno";
+import { èADormire, èInSilenzio, hhmm } from "./sonno";
 import { titoloTask } from "./stanze";
 import type { Stato, Task } from "./tipi";
 
@@ -81,7 +81,7 @@ export function pianoNotifiche(stato: Stato, ora: number, oggi: string): Notific
         const quando = istante(giorno, hhmm);
         if (quando <= ora) return;
         if (rinvio && quando < rinvio.alle) return; // "più tardi": niente avvisi prima dell'ora scelta
-        if (èInSilenzio(quando)) return; // in turno o a dormire
+        if (task.id === "lettura" ? èADormire(quando) : èInSilenzio(quando)) return; // in turno o a dormire (la lettura a lavoro si può)
         const ultima = n === orari.length - 1 && orari.length > 1;
         const minuti = task.durataMin ? `${task.durataMin} minuti` : "";
         const testo = ultima
