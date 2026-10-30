@@ -17,6 +17,7 @@ export type Ricompensa = {
   bonus: number;
   frase: string;
   nuovoLivello: string | null;
+  daTimer: boolean; // finita con il timer: suona la fanfara
 };
 
 type Contesto = {
@@ -24,7 +25,7 @@ type Contesto = {
   stato: Stato;
   oggi: string;
   xp: number;
-  completa: (taskId: string, opzioni: { minima: boolean; minuti?: number }) => void;
+  completa: (taskId: string, opzioni: { minima: boolean; minuti?: number; daTimer?: boolean }) => void;
   annulla: (completamentoId: string) => void;
   salvaTask: (t: Task) => void;
   eliminaTask: (id: string) => void;
@@ -34,6 +35,7 @@ type Contesto = {
   pausaTimer: () => void;
   riprendiTimer: () => void;
   fermaTimer: () => void;
+  resettaTimer: () => void;
   ignoraOggi: (taskId: string) => void;
   ripristina: (taskId: string) => void;
   rimanda: (taskId: string, alle: number) => void;
@@ -126,7 +128,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const completa: Contesto["completa"] = useCallback(
-    (taskId, { minima, minuti }) => {
+    (taskId, { minima, minuti, daTimer }) => {
       const s = ref.current;
       const t = s.task.find((x) => x.id === taskId);
       if (!t) return;
@@ -154,6 +156,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         bonus,
         frase: s.aree.find((a) => a.id === t.areaId)?.frase ?? "",
         nuovoLivello: dopo.indice > prima.indice ? dopo.nome : null,
+        daTimer: !!daTimer,
       });
     },
     [aggiorna],
@@ -193,6 +196,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             : x,
         ),
       fermaTimer: () => aggiorna((x) => ({ ...x, timer: null })),
+      // Ricomincia da capo: stessa task, tempo pieno, di nuovo in marcia.
+      resettaTimer: () =>
+        aggiorna((x) => (x.timer ? { ...x, timer: { ...x.timer, inizio: Date.now(), pausaInizio: null, pausaTotale: 0 } } : x)),
       ignoraOggi: (taskId) =>
         aggiorna((x) => ({
           ...x,

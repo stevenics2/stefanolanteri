@@ -63,7 +63,7 @@ export default function TaskCard({ task, soloMinima }: { task: Task; soloMinima:
           <span className="inline-flex items-center gap-1.5 text-emerald-400">
             <Check size={16} /> Fatta{fatto.minima ? " (versione minima)" : ""} · +{fatto.punti + fatto.bonus} XP
           </span>
-          <button onClick={() => annulla(fatto.id)} className="inline-flex items-center gap-1 text-muted">
+          <button data-suono="indietro" onClick={() => annulla(fatto.id)} className="inline-flex items-center gap-1 text-muted">
             <Undo2 size={14} /> Annulla
           </button>
         </div>
@@ -71,20 +71,20 @@ export default function TaskCard({ task, soloMinima }: { task: Task; soloMinima:
         <>
           <div className="mt-3 flex flex-wrap gap-2">
             {task.durataMin && !soloMinima && (
-              <button onClick={() => avviaTimer(task.id, false, task.durataMin!)} className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-black">
+              <button data-suono="via" onClick={() => avviaTimer(task.id, false, task.durataMin!)} className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-black">
                 <Play size={16} fill="currentColor" /> Avvia
               </button>
             )}
             {soloMinima && minima && (
-              <button onClick={() => avviaTimer(task.id, true, minima)} className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-black">
+              <button data-suono="via" onClick={() => avviaTimer(task.id, true, minima)} className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-black">
                 <Play size={16} fill="currentColor" /> Avvia ({minima} min)
               </button>
             )}
-            <button onClick={() => completa(task.id, { minima: soloMinima && !!minima })} className="inline-flex items-center gap-1.5 rounded-xl bg-white/10 px-4 py-2 text-sm">
+            <button data-suono="nessuno" onClick={() => completa(task.id, { minima: soloMinima && !!minima })} className="inline-flex items-center gap-1.5 rounded-xl bg-white/10 px-4 py-2 text-sm">
               <Check size={16} /> Fatta
             </button>
             {minima && !soloMinima && (
-              <button onClick={() => completa(task.id, { minima: true })} className="rounded-xl bg-white/10 px-4 py-2 text-sm">
+              <button data-suono="nessuno" onClick={() => completa(task.id, { minima: true })} className="rounded-xl bg-white/10 px-4 py-2 text-sm">
                 Minima ({minima}′)
               </button>
             )}
@@ -94,14 +94,14 @@ export default function TaskCard({ task, soloMinima }: { task: Task; soloMinima:
             {rinvio ? (
               <span className="inline-flex items-center gap-1.5 text-sky-300">
                 <AlarmClock size={15} /> Te lo ricordo alle {ora(rinvio.alle)}
-                <button onClick={() => annullaRinvio(task.id)} className="ml-1 underline">togli</button>
+                <button data-suono="indietro" onClick={() => annullaRinvio(task.id)} className="ml-1 underline">togli</button>
               </span>
             ) : (
               <button onClick={() => setPiuTardi((v) => !v)} className="inline-flex items-center gap-1.5">
                 <AlarmClock size={15} /> Più tardi
               </button>
             )}
-            <button onClick={() => ignoraOggi(task.id)} className="inline-flex items-center gap-1.5">
+            <button data-suono="pausa" onClick={() => ignoraOggi(task.id)} className="inline-flex items-center gap-1.5">
               <SkipForward size={15} /> Salta oggi
             </button>
           </div>
@@ -109,7 +109,7 @@ export default function TaskCard({ task, soloMinima }: { task: Task; soloMinima:
           {piuTardi && (
             <div className="mt-2 flex flex-wrap gap-2">
               {[["Tra 1 ora", () => rimandaDi(60)], ["Tra 3 ore", () => rimandaDi(180)], ["Stasera 20:30", stasera]].map(([etichetta, azione]) => (
-                <button key={etichetta as string} onClick={azione as () => void} className="rounded-full bg-sky-500/15 px-3 py-1 text-sm text-sky-200">
+                <button key={etichetta as string} data-suono="via" onClick={azione as () => void} className="rounded-full bg-sky-500/15 px-3 py-1 text-sm text-sky-200">
                   {etichetta as string}
                 </button>
               ))}

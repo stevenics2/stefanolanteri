@@ -13,7 +13,7 @@ export default function Ricompense() {
   useEffect(() => {
     if (!r) return;
     if (animazioni) void coriandoli(!!r.nuovoLivello);
-    if (suoni) suono(r.nuovoLivello ? "livello" : "ok");
+    if (suoni) suono(r.nuovoLivello ? "livello" : r.daTimer ? "vittoria" : "ok");
     const id = setTimeout(chiudiRicompensa, r.nuovoLivello ? 5000 : 4000);
     return () => clearTimeout(id);
     // Parte una volta sola per ricompensa
@@ -37,7 +37,7 @@ export default function Ricompense() {
           </div>
           <div className="text-sm text-muted">{r.frase || r.titolo}</div>
         </div>
-        <button onClick={() => annulla(r.completamentoId)} className="rounded-lg bg-white/10 px-3 py-1.5 text-sm">
+        <button data-suono="indietro" onClick={() => annulla(r.completamentoId)} className="rounded-lg bg-white/10 px-3 py-1.5 text-sm">
           Annulla
         </button>
       </div>

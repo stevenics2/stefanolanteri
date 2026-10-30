@@ -73,7 +73,7 @@ export default function TaskForm({ iniziale, onClose }: { iniziale: Task | null;
       <div className="mx-auto max-w-md space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold">{iniziale ? "Modifica task" : "Nuova task"}</h1>
-          <button onClick={onClose} className="text-muted">Chiudi</button>
+          <button data-suono="indietro" onClick={onClose} className="text-muted">Chiudi</button>
         </div>
 
         {!iniziale && (
@@ -184,11 +184,12 @@ export default function TaskForm({ iniziale, onClose }: { iniziale: Task | null;
           Essenziale: resta anche nel giorno dopo la notte
         </label>
 
-        <button onClick={salva} disabled={!valido} className="w-full rounded-2xl bg-accent py-3.5 text-lg font-bold text-black disabled:opacity-40">
+        <button data-suono="via" onClick={salva} disabled={!valido} className="w-full rounded-2xl bg-accent py-3.5 text-lg font-bold text-black disabled:opacity-40">
           Salva
         </button>
         {iniziale && (
           <button
+            data-suono="indietro"
             onClick={() => confirm("Eliminare questa task? Le prove già accumulate restano.") && (eliminaTask(iniziale.id), onClose())}
             className="w-full rounded-2xl bg-red-500/15 py-3 text-red-300"
           >

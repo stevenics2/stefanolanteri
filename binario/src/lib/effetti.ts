@@ -44,19 +44,34 @@ export function tic() {
   }
 }
 
-export function suono(tipo: "ok" | "livello" | "fine") {
+// Vocabolario dei suoni: lo stesso schema in tutta l'app.
+//   via      = parte qualcosa / conferma   (3 note che salgono)
+//   indietro = annulla / chiudi / torna    (un bip basso)
+//   pausa    = si ferma                    (2 note che scendono)
+//   riprendi = riparte                     (2 note che salgono)
+//   ok       = task fatta                  (2 note brillanti)
+//   livello  = livello nuovo               (arpeggio)
+//   vittoria = fine timer                  (fanfara)
+export type Suono = "via" | "indietro" | "pausa" | "riprendi" | "ok" | "livello" | "vittoria";
+
+const NOTE: Record<Suono, [freq: number, inizio: number, durata: number, volume?: number][]> = {
+  via: [[587, 0, 0.09], [740, 0.1, 0.09], [880, 0.2, 0.18]],
+  indietro: [[294, 0, 0.14, 0.18]],
+  pausa: [[587, 0, 0.1], [440, 0.11, 0.16]],
+  riprendi: [[440, 0, 0.1], [587, 0.11, 0.16]],
+  ok: [[659, 0, 0.12], [880, 0.1, 0.2]],
+  livello: [[523, 0, 0.3], [659, 0.12, 0.3], [784, 0.24, 0.3], [1047, 0.36, 0.5]],
+  vittoria: [
+    [523, 0, 0.14, 0.18], [523, 0.16, 0.14, 0.18], [523, 0.32, 0.14, 0.18],
+    [659, 0.5, 0.3, 0.18], [784, 0.82, 0.2, 0.18],
+    [1047, 1.04, 0.8, 0.18], [784, 1.04, 0.8, 0.1], [659, 1.04, 0.8, 0.1],
+  ],
+};
+
+export function suono(tipo: Suono) {
   try {
     avviaAudio();
-    if (tipo === "ok") {
-      nota(659, 0, 0.12);
-      nota(880, 0.1, 0.2);
-    } else if (tipo === "fine") {
-      nota(880, 0, 0.2);
-      nota(880, 0.3, 0.2);
-      nota(1175, 0.6, 0.4);
-    } else {
-      [523, 659, 784, 1047].forEach((f, i) => nota(f, i * 0.12, 0.3));
-    }
+    for (const [freq, inizio, durata, volume] of NOTE[tipo]) nota(freq, inizio, durata, volume);
   } catch {
     // niente audio disponibile: pazienza
   }

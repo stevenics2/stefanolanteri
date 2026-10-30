@@ -1,9 +1,8 @@
 "use client";
 
-import { Pause, Play } from "lucide-react";
+import { Pause, Play, RotateCcw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { titoloTask } from "@/lib/stanze";
-import { suono } from "@/lib/effetti";
 import { useStore } from "@/lib/store";
 import AreaIcona from "./AreaIcona";
 
@@ -18,7 +17,7 @@ const mmss = (sec: number) => {
 // Timer a schermo intero. Salva l'ora di inizio e ricalcola sempre da lì:
 // funziona anche se l'app va in background o lo schermo si spegne.
 export default function TimerSchermo() {
-  const { stato, oggi, completa, pausaTimer, riprendiTimer, fermaTimer } = useStore();
+  const { stato, oggi, completa, pausaTimer, riprendiTimer, fermaTimer, resettaTimer } = useStore();
   const timer = stato.timer;
   const task = timer ? stato.task.find((t) => t.id === timer.taskId) : undefined;
   const [ora, setAdesso] = useState(0); // aggiornato dall'intervallo: niente Date.now() all'avvio
@@ -51,10 +50,9 @@ export default function TimerSchermo() {
   useEffect(() => {
     if (!timer || !task || restanteSec > 0 || finito.current === timer.inizio) return;
     finito.current = timer.inizio;
-    if (stato.impostazioni.suoni) suono("fine");
     navigator.vibrate?.([200, 100, 200]);
-    completa(task.id, { minima: timer.minima, minuti: Math.round(timer.durataSec / 60) });
-  }, [timer, task, restanteSec, completa, stato.impostazioni.suoni]);
+    completa(task.id, { minima: timer.minima, minuti: Math.round(timer.durataSec / 60), daTimer: true });
+  }, [timer, task, restanteSec, completa]);
 
   if (!timer || !task) return null;
 
@@ -67,7 +65,7 @@ export default function TimerSchermo() {
 
   // "Termina ora": se ho già fatto almeno la versione minima conta come fatta, altrimenti si annulla.
   const termina = () => {
-    if (minimoMin > 0 && trascorsiMin >= minimoMin) completa(task.id, { minima: true, minuti: Math.floor(trascorsiMin) });
+    if (minimoMin > 0 && trascorsiMin >= minimoMin) completa(task.id, { minima: true, minuti: Math.floor(trascorsiMin), daTimer: true });
     else fermaTimer();
   };
 
@@ -97,12 +95,16 @@ export default function TimerSchermo() {
 
       <div className="flex w-full max-w-sm flex-col gap-3">
         <button
+          data-suono={inPausa ? "riprendi" : "pausa"}
           onClick={inPausa ? riprendiTimer : pausaTimer}
           className="inline-flex items-center justify-center gap-2 rounded-2xl bg-accent py-4 text-lg font-bold text-black"
         >
           {inPausa ? <><Play size={20} fill="currentColor" /> Riprendi</> : <><Pause size={20} fill="currentColor" /> Pausa</>}
         </button>
-        <button onClick={termina} className="rounded-2xl bg-white/10 py-3">
+        <button data-suono="indietro" onClick={resettaTimer} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/10 py-3">
+          <RotateCcw size={18} /> Ricomincia da capo
+        </button>
+        <button data-suono={minimoMin > 0 && trascorsiMin >= minimoMin ? "nessuno" : "indietro"} onClick={termina} className="rounded-2xl bg-white/10 py-3">
           {minimoMin > 0 && trascorsiMin >= minimoMin ? "Termina ora (conta come minima)" : "Annulla timer"}
         </button>
       </div>

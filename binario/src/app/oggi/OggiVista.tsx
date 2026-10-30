@@ -41,6 +41,7 @@ export default function OggiVista() {
         </div>
         {!fuoriCasa && (
           <button
+            data-suono="via"
             onClick={() => setVacanza({ dal: oggi, al: null })}
             className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-sm text-muted"
           >
@@ -54,7 +55,7 @@ export default function OggiVista() {
           <span className="inline-flex items-center gap-2">
             <Plane size={18} className="shrink-0" /> Sei fuori casa: niente task di casa. Il resto continua.
           </span>
-          <button onClick={() => setVacanza(null)} className="shrink-0 rounded-lg bg-white/10 px-3 py-1.5">
+          <button data-suono="indietro" onClick={() => setVacanza(null)} className="shrink-0 rounded-lg bg-white/10 px-3 py-1.5">
             Sono a casa
           </button>
         </div>
@@ -104,7 +105,7 @@ export default function OggiVista() {
           {ignorate.map((t) => (
             <div key={t.id} className="flex items-center justify-between">
               <span>{titoloTask(t, stato, oggi)}</span>
-              <button onClick={() => ripristina(t.id)} className="inline-flex items-center gap-1 text-muted">
+              <button data-suono="indietro" onClick={() => ripristina(t.id)} className="inline-flex items-center gap-1 text-muted">
                 <Undo2 size={14} /> Rimetti
               </button>
             </div>

@@ -47,7 +47,7 @@ export default function ImpostazioniVista() {
           <input type="checkbox" className="h-5 w-5" checked={stato.impostazioni.suonoTocco} onChange={(e) => impostazioni({ suonoTocco: e.target.checked })} />
         </label>
         <label className={riga}>
-          <span>Vibrazione a ogni tocco</span>
+          <span>Vibrazione a ogni tocco<span className="block text-xs text-muted">Su iPhone potrebbe non funzionare</span></span>
           <input type="checkbox" className="h-5 w-5" checked={stato.impostazioni.vibrazione} onChange={(e) => impostazioni({ vibrazione: e.target.checked })} />
         </label>
         <label className={riga}>
@@ -65,7 +65,7 @@ export default function ImpostazioniVista() {
               {fuori ? "Fuori casa" : "Programmato"}: dal {stato.vacanza.dal}
               {stato.vacanza.al ? ` al ${stato.vacanza.al}` : ", finché non torni"}
             </div>
-            <button onClick={() => setVacanza(null)} className="w-full rounded-xl bg-white/10 py-2.5">Sono a casa / annulla</button>
+            <button data-suono="indietro" onClick={() => setVacanza(null)} className="w-full rounded-xl bg-white/10 py-2.5">Sono a casa / annulla</button>
           </div>
         ) : (
           <div className="space-y-2 rounded-2xl bg-card p-4">
@@ -79,7 +79,7 @@ export default function ImpostazioniVista() {
                 <input type="date" value={al} onChange={(e) => setAl(e.target.value)} className={campo.replace("bg-card", "bg-white/10")} />
               </label>
             </div>
-            <button onClick={() => setVacanza({ dal: dal || oggi, al: al || null })} className="w-full rounded-xl bg-accent py-2.5 font-bold text-black">
+            <button data-suono="via" onClick={() => setVacanza({ dal: dal || oggi, al: al || null })} className="w-full rounded-xl bg-accent py-2.5 font-bold text-black">
               Attiva
             </button>
           </div>
@@ -93,7 +93,7 @@ export default function ImpostazioniVista() {
           {stato.stanze.map((s) => (
             <div key={s} className={riga}>
               <span className="first-letter:uppercase">{s}</span>
-              <button onClick={() => setStanze(stato.stanze.filter((x) => x !== s))} aria-label={`Togli ${s}`} className="text-muted">
+              <button data-suono="indietro" onClick={() => setStanze(stato.stanze.filter((x) => x !== s))} aria-label={`Togli ${s}`} className="text-muted">
                 <X size={18} />
               </button>
             </div>
@@ -107,7 +107,7 @@ export default function ImpostazioniVista() {
             placeholder="es. lo studio, la lavanderia"
             className="flex-1 rounded-xl bg-card px-3 py-2.5 outline-none"
           />
-          <button onClick={aggiungiStanza} aria-label="Aggiungi stanza" className="rounded-xl bg-accent px-4 text-black">
+          <button data-suono="via" onClick={aggiungiStanza} aria-label="Aggiungi stanza" className="rounded-xl bg-accent px-4 text-black">
             <Plus size={20} />
           </button>
         </div>
