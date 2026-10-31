@@ -3,7 +3,7 @@ import { violazioniDa } from "./calendario";
 import { giorniTra } from "./eventi";
 import { èIgnorata, èPrevista } from "./regole";
 import { momentoGiusto } from "./momento";
-import { èADormire, èInSilenzio, hhmm } from "./sonno";
+import { èADormire, èInSilenzio, hhmm, istanteDaMinutiAssoluti, situazioneAdesso, sonniPrevisti } from "./sonno";
 import { titoloTask } from "./stanze";
 import type { Stato, Task } from "./tipi";
 
@@ -111,10 +111,41 @@ export function pianoNotifiche(stato: Stato, ora: number, oggi: string): Notific
     out.push({ id: `seguito-${t.id}`, quando: q, titolo: t.titolo, testo: t.notificaTesto, url: "/oggi/", tag: `seguito-${t.id}`, urgente: true });
   }
 
+  out.push(...notificheSonno(ora));
   out.push(...notificheEventi(stato, ora, oggi));
   out.push(...notificheTurniDaSistemare(ora, oggi));
 
   return out.sort((a, b) => a.quando - b.quando).slice(0, MAX_NOTIFICHE);
+}
+
+// «È ora di andare a letto»: una notifica all'orario consigliato per dormire. Ultimo orario utile: 23:59 (se il consiglio è dopo la mezzanotte,
+// es. «entro le 01:30», la notifica arriva alle 23:59). Non si manda per il sonno del mattino dopo la notte, né se a quell'ora sei in turno.
+const ULTIMA_ORA_MIN = 23 * 60 + 59;
+function notificheSonno(ora: number): Notifica[] {
+  const out: Notifica[] = [];
+  for (const s of sonniPrevisti(ora, 3)) {
+    const mm = ((s.aLettoMin % 1440) + 1440) % 1440;
+    if (mm >= 6 * 60 && mm < 12 * 60) continue; // sonno del mattino (dopo la notte): niente notifica
+    let quando = s.aLettoMs;
+    let entro = false;
+    if (mm < 6 * 60) {
+      // consiglio dopo mezzanotte: la notifica arriva alle 23:59 della sera prima
+      const mezzanotte = s.aLettoMin - mm;
+      quando = istanteDaMinutiAssoluti(mezzanotte - 1440 + ULTIMA_ORA_MIN);
+      entro = true;
+    }
+    if (quando <= ora) continue;
+    const prima = situazioneAdesso(quando - 60_000); // un minuto prima, perché all'ora esatta il sonno è già «iniziato»
+    if (prima === "turno" || prima === "sonno") continue; // al lavoro o già a dormire
+    const alle = hhmm(s.aLettoMin);
+    const sveglia = hhmm(s.aLettoMin + s.ore);
+    const oreTxt = String(Math.round(s.ore / 30) / 2).replace(".", ",");
+    const testo = s.tipo === "riposino"
+      ? `Riposino prima del turno: dalle ${alle}, sveglia alle ${sveglia}.`
+      : `${entro ? `Vai a letto entro le ${alle}` : "È ora di andare a letto"}: sveglia alle ${sveglia}, circa ${oreTxt} ore di sonno.`;
+    out.push({ id: `sonno-${s.aLettoMs}`, quando, titolo: s.tipo === "riposino" ? "Ora del riposino" : "Ora di andare a letto", testo, url: "/oggi/", tag: "sonno", urgente: true });
+  }
+  return out;
 }
 
 // Sposta un orario fuori dal silenzio (turno o sonno), al massimo di 6 ore in avanti, e mai di notte (solo tra le 8:00 e le 22:30).

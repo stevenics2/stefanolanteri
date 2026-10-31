@@ -2,6 +2,7 @@ import { blocchiEffettivi, giornoEffettivo, versioneCalendario, type BloccoLavor
 
 // --- Abitudini di sonno (modificabili: poi le portiamo nelle Impostazioni) ---
 const SONNO_IDEALE_MIN = 8 * 60;
+const SONNO_PRIMA_DEL_TERZO_MIN = 9 * 60; // prima del turno 3 si dorme volentieri 9 ore: a letto al massimo alle 00:30 (sveglia 9:30)
 const SONNO_MINIMO_MIN = 7 * 60;
 const PREPARAZIONE_MIN = 60; // dalla sveglia all'inizio del turno (turno 7:00 -> sveglia 6:00)
 const SVEGLIA_TARDA = 9 * 60 + 30; // prima di un turno 13:00 o 19:00 ci si sveglia verso le 9:30
@@ -46,7 +47,9 @@ function sonnoRegolare(q: Blocco, fineP: number | null): Sonno {
   const svegliaAbituale = Math.min(limite, base + SVEGLIA_TARDA);
 
   const vincolo = fineP === null ? -Infinity : fineP + DOPO_TURNO_MIN;
-  const aLetto = Math.max(svegliaAbituale - SONNO_IDEALE_MIN, vincolo);
+  const prima3 = q.inizio - base === 13 * 60; // turno che inizia alle 13:00
+  const ideale = prima3 ? SONNO_PRIMA_DEL_TERZO_MIN : SONNO_IDEALE_MIN;
+  const aLetto = Math.max(svegliaAbituale - ideale, vincolo);
   // Se si va a letto tardi, la sveglia slitta (fino al limite) per arrivare almeno a 7 ore.
   const sveglia = Math.min(limite, Math.max(svegliaAbituale, aLetto + SONNO_MINIMO_MIN));
   const ore = sveglia - aLetto;
@@ -56,7 +59,7 @@ function sonnoRegolare(q: Blocco, fineP: number | null): Sonno {
     inizio: q.inizio,
     aLetto,
     sveglia,
-    ultimoLetto: aLetto === svegliaAbituale - SONNO_IDEALE_MIN ? sveglia - SONNO_MINIMO_MIN : undefined,
+    ultimoLetto: aLetto === svegliaAbituale - ideale ? sveglia - SONNO_MINIMO_MIN : undefined,
     ore,
     corto: ore < SONNO_MINIMO_MIN,
   };
@@ -102,6 +105,20 @@ const elencoSonni = (): Sonno[] => {
   }
   return sonniCache;
 };
+
+// I prossimi sonni (da `adessoMs` e per `giorni` giorni) con gli orari già in istanti reali, per le notifiche «è ora di andare a letto».
+export type SonnoPrevisto = { tipo: TipoSonno; turno: string; aLettoMs: number; aLettoMin: number; svegliaMs: number; ore: number };
+const assolutiAMs = (m: number) => {
+  const d = new Date(m * 60000); // i minuti "assoluti" sono l'ora locale scritta come se fosse UTC
+  return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), d.getUTCHours(), d.getUTCMinutes()).getTime();
+};
+export function sonniPrevisti(adessoMs: number, giorni: number): SonnoPrevisto[] {
+  const limite = adessoMs + giorni * 86_400_000;
+  return elencoSonni()
+    .map((s) => ({ tipo: s.tipo, turno: s.turno, aLettoMs: assolutiAMs(s.aLetto), aLettoMin: s.aLetto, svegliaMs: assolutiAMs(s.sveglia), ore: s.ore }))
+    .filter((s) => s.aLettoMs > adessoMs - 12 * 3600_000 && s.aLettoMs < limite);
+}
+export const istanteDaMinutiAssoluti = assolutiAMs;
 
 // --- Cosa mostrare ---
 export type ConsiglioSonno = {
