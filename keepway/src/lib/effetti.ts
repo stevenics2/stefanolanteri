@@ -63,7 +63,7 @@ export function tic() {
 //   ok       = task fatta                  (2 note brillanti)
 //   livello  = livello nuovo               (arpeggio)
 //   vittoria = fine timer                  (fanfara)
-//   incasso  = straordinario / cambio turno (cassa da negozio: "CHA-CHING!")
+//   incasso  = straordinario / cambio turno (monete che cadono e tintinnano, poi il "ding" di moneta presa)
 //   slot     = task completata: una scala in salita che arriva a un accordo brillante
 //   calcolo  = apertura dell'app (un computer che elabora, poi un "ding" di approvazione)
 export type Suono = "via" | "indietro" | "pausa" | "riprendi" | "ok" | "livello" | "vittoria" | "incasso" | "calcolo" | "slot";
@@ -128,17 +128,31 @@ function campana(inizio: number, base: number, volume: number, scala = 1) {
   }
 }
 
-// "CHA-CHING!": due colpi di cassa.
-//  CHA   = un colpo secco e basso: un click metallico con un colpo sordo, che si spegne subito
-//  CHING = il campanello d'ottone, più alto di una quinta, che suona a lungo
+// Un "tin" di moneta: poche note metalliche NON armoniche, acute e brevissime, con un luccichio (la nota doppiata di pochissimo).
+function moneta(inizio: number, base: number, volume: number, durata = 0.22) {
+  const parziali: [rapporto: number, peso: number, durata: number][] = [[1, 1, 1], [2.32, 0.55, 0.7], [3.87, 0.35, 0.5], [5.6, 0.18, 0.3]];
+  for (const [r, v, d] of parziali) {
+    nota(base * r, inizio, durata * d, volume * v, "sine");
+    nota(base * r * 1.006, inizio, durata * d * 0.8, volume * v * 0.45, "sine");
+  }
+  rumore(inizio, 0.015, 7500, volume * 1.6); // il "clic" del metallo che si urta
+}
+
+// Monete che cadono e tintinnano (~1,3 s): una cascata di tin sempre più fitti e di altezze diverse, poi il "ding" di moneta presa
+// (due note rapide, come nei giochi) e un ultimo tintinnio.
 function incasso() {
-  // CHA
-  rumore(0, 0.055, 3200, 0.45);
-  scivola(220, 70, 0, 0.1, 0.35, "triangle");
-  campana(0, 1760, 0.1, 0.16);
-  // CHING
-  rumore(0.15, 0.03, 6500, 0.22);
-  campana(0.15, 2637, 0.17);
+  const altezze = [3520, 2960, 4186, 3135, 3951, 2794, 4435, 3322, 3729, 3136];
+  let t = 0;
+  altezze.forEach((f, i) => {
+    moneta(t, f, 0.05 + (i % 3) * 0.012, 0.2 + (i % 4) * 0.03);
+    t += 0.085 - i * 0.0045; // sempre più fitte, come una pioggia di monete
+  });
+  const fine = t + 0.05;
+  nota(988, fine, 0.07, 0.07, "square");
+  nota(1319, fine + 0.07, 0.5, 0.08, "square");
+  nota(1319 * 2, fine + 0.07, 0.35, 0.03, "sine");
+  moneta(fine + 0.12, 4200, 0.07, 0.45);
+  moneta(fine + 0.2, 3300, 0.05, 0.4);
 }
 
 // Un computer che fa i conti: una raffica di bip brevi e secchi, sempre più fitti (~1 s), con un ronzio di fondo che sale.
