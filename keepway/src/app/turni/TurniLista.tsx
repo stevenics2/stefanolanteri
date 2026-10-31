@@ -119,13 +119,28 @@ function Blocco({ g, avviso }: { g: GiornoEffettivo; avviso?: string }) {
   else if (g.codici.includes("1") && g.codici.includes("4")) classe = "bg-violet-700 text-white";
   else classe = "bg-blue-700 text-white";
 
+  // Straordinario: il turno di prima com'era, sotto in viola l'orario aggiunto, e la striscia viola «ORE DI STRAORDINARIO»
+  const s = g.straordinario;
   return (
     <div className="flex-1 overflow-hidden rounded-xl">
-      <div className={`px-3 py-3 text-center ${classe}`}>
-        <div className="font-bold">{g.etichetta}</div>
-        {g.orario && <div className="text-sm opacity-90">{g.orario}</div>}
-        {!g.riposo && g.unita && <div className="mt-0.5 text-xs opacity-75">{g.unita}</div>}
-      </div>
+      {s ? (
+        <>
+          <div className={`px-3 py-3 text-center ${s.codiciOriginali.length ? "bg-blue-700 text-white" : "border border-emerald-500/60 bg-emerald-500/15 text-emerald-100"}`}>
+            <div className="font-bold">{s.etichettaOriginale}</div>
+            {s.orarioOriginale && <div className="text-sm opacity-90">{s.orarioOriginale}</div>}
+            {g.unita && <div className="mt-0.5 text-xs opacity-75">{g.unita}</div>}
+          </div>
+          <div className="bg-violet-500 px-3 py-2 text-center text-white">
+            <div className="font-bold">{s.orarioExtra}</div>
+          </div>
+        </>
+      ) : (
+        <div className={`px-3 py-3 text-center ${classe}`}>
+          <div className="font-bold">{g.etichetta}</div>
+          {g.orario && <div className="text-sm opacity-90">{g.orario}</div>}
+          {!g.riposo && g.unita && <div className="mt-0.5 text-xs opacity-75">{g.unita}</div>}
+        </div>
+      )}
       <Banda m={g.modifica} />
       {avviso && (
         <div className="bg-red-600 px-3 py-1.5 text-center text-white">

@@ -162,3 +162,5 @@
 - Suono «incasso» (straordinario e cambio turno pagato): non più la cassa «CHA-CHING» ma monete: una cascata di 10 tintinnii metallici sempre più fitti (note inarmoniche acute con un clic di metallo), poi il «ding» di moneta presa a due note e un ultimo tintinnio. Circa 1,3 s.
 
 - Suono «incasso» (turni pagati): ora è la registrazione 'Cha-Ching' dell'utente (public/sounds/incasso.mp3: tagliata la parte muta iniziale, mono, 2,3 s, dissolvenza finale). Si carica al primo tocco e si riproduce dal contesto audio; se non è pronta o non si carica resta il tintinnio di monete sintetizzato. Altri suoni registrati si aggiungono in CAMPIONI (lib/effetti.ts). Nota: se un giorno l'app sarà per altri utenti, controllare i diritti del file.
+
+- Straordinario con turno aggiunto (es. 2 + 3): il blocco mostra il turno originale com'era (es. 2, 07:00–13:00, in blu), sotto in viola con testo bianco l'orario aggiunto (13:00–19:00) e sotto la striscia viola «ORE DI STRAORDINARIO». Vale nel roster, nel dettaglio del calendario mese e nel blocco del turno in Oggi. Dato nuovo: GiornoEffettivo.straordinario (turno originale, orario originale, extra, orario extra).
