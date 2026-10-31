@@ -29,7 +29,7 @@ const quando = (t: Task) =>
       : t.ricorrenza.tipo === "auto"
         ? `${t.ricorrenza.volte} ${t.ricorrenza.volte === 1 ? "volta" : "volte"} a settimana · automatico`
         : t.ricorrenza.tipo === "intervallo"
-          ? `ogni ${t.ricorrenza.ogni} giorni${t.ricorrenza.tolleranza ? ` (±${t.ricorrenza.tolleranza})` : " esatti"} · automatico`
+          ? `ogni ${t.ricorrenza.ogni} giorni${t.ricorrenza.tolleranza ? ` (fino a ${t.ricorrenza.ogni + t.ricorrenza.tolleranza})` : " esatti"} · automatico`
           : t.ricorrenza.data;
 
 // I quattro riquadri grandi, con la loro icona.

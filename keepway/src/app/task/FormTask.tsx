@@ -151,14 +151,14 @@ export default function FormTask({ iniziale, onClose }: { iniziale: Task | null;
                   {[2, 3, 4, 5, 7, 10, 14, 21, 30].map((n) => <Chip key={n} attivo={ogni === n} onClick={() => setOgni(n)}>ogni {n} giorni</Chip>)}
                 </div>
                 <div>
-                  <div className="mb-1 text-xs text-muted">Quanto è rigida la distanza?</div>
+                  <div className="mb-1 text-xs text-muted">Quanto può slittare, al massimo? (mai prima)</div>
                   <div className="flex flex-wrap gap-2">
-                    {[[0, "Esatta"], [1, "±1 giorno"], [2, "±2 giorni"]].map(([t, nome]) => <Chip key={String(t)} attivo={tolleranza === t} onClick={() => setTolleranza(t as number)}>{nome}</Chip>)}
+                    {[[0, "Esatta"], [1, "+1 giorno"], [2, "+2 giorni"]].map(([t, nome]) => <Chip key={String(t)} attivo={tolleranza === t} onClick={() => setTolleranza(t as number)}>{nome}</Chip>)}
                   </div>
                 </div>
                 <p className="text-xs text-muted">
-                  I giorni si contano dall&apos;ultima volta che l&apos;hai fatta: se la fai prima o dopo, il conto riparte da quel giorno. Così, per esempio, il giardino cade sempre a 7 giorni esatti dal precedente,
-                  e la barba ogni 3-4 giorni, mai a ridosso.
+                  I giorni si contano dall&apos;ultima volta che l&apos;hai fatta e non passano mai meno di N giorni: se la fai prima o dopo, il conto riparte da quel giorno. Così il giardino cade sempre a 7 giorni esatti dal precedente
+                  e la barba da 3 a 4 giorni dopo (ogni 3 giorni, +1): mai il lunedì dopo il sabato.
                 </p>
               </div>
             )}

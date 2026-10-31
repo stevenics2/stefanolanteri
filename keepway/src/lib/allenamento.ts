@@ -158,8 +158,8 @@ export function pianifica(stato: Stato, oggi: string): PianoVoce[] {
           da = oggi;
           a = dataPiù(oggi, 2); // la prima volta: nei prossimi giorni
         } else {
-          da = dataPiù(prec, ogni - tolleranza);
-          a = dataPiù(prec, ogni + tolleranza);
+          da = dataPiù(prec, ogni); // mai prima di N giorni dall'ultima volta
+          a = dataPiù(prec, ogni + tolleranza); // al massimo N + tolleranza
           if (a < oggi) { da = oggi; a = dataPiù(oggi, 1); } // in ritardo: appena possibile
           if (da < oggi) da = oggi;
         }
@@ -172,7 +172,7 @@ export function pianifica(stato: Stato, oggi: string): PianoVoce[] {
           for (let d = da; d <= a; d = dataPiù(d, 1)) {
             const x = ok(d);
             if (!x || !x.slot) continue;
-            const p = x.qualita * 10 - Math.abs(giorniTraDate(bersaglio, d)) * 8;
+            const p = x.qualita * 10 - Math.abs(giorniTraDate(bersaglio, d)) * 8; // il più vicino a quello giusto (il primo)
             if (!migliore || p > migliore.p) migliore = { d, a: x, p };
           }
           if (migliore) scelta = migliore;

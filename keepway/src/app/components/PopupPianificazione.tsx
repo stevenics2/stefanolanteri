@@ -58,7 +58,7 @@ function Contenuto({
   const vaiA = (i: number) => scorri.current?.scrollTo({ left: i * (scorri.current?.clientWidth ?? 0), behavior: "smooth" });
 
   const r = bozza.ricorrenza;
-  const ritmo = r.tipo === "auto" ? `${r.volte} ${r.volte === 1 ? "volta" : "volte"} a settimana` : r.tipo === "intervallo" ? `ogni ${r.ogni} giorni${r.tolleranza ? ` (±${r.tolleranza})` : " esatti"}` : "";
+  const ritmo = r.tipo === "auto" ? `${r.volte} ${r.volte === 1 ? "volta" : "volte"} a settimana` : r.tipo === "intervallo" ? `ogni ${r.ogni} giorni${r.tolleranza ? ` (fino a ${r.ogni + r.tolleranza})` : " esatti"}` : "";
   const tutteViste = elenco.length > 0 && viste.length >= elenco.length;
 
   return (
