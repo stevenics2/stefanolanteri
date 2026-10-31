@@ -129,10 +129,15 @@ function notificheSonno(ora: number): Notifica[] {
     let quando = s.aLettoMs;
     let entro = false;
     if (mm < 6 * 60) {
-      // consiglio dopo mezzanotte: la notifica arriva alle 23:59 della sera prima
+      // consiglio dopo mezzanotte: la notifica arriva alle 23:59 della sera prima...
       const mezzanotte = s.aLettoMin - mm;
       quando = istanteDaMinutiAssoluti(mezzanotte - 1440 + ULTIMA_ORA_MIN);
       entro = true;
+      // ...ma se a quell'ora sei ancora in turno (es. il 4 che finisce all'1:00, a letto alle 2:30), arriva mezz'ora prima di andare a letto (alle 2:00)
+      if (situazioneAdesso(quando - 60_000) === "turno") {
+        quando = s.aLettoMs - 30 * 60_000;
+        entro = false;
+      }
     }
     if (quando <= ora) continue;
     const prima = situazioneAdesso(quando - 60_000); // un minuto prima, perché all'ora esatta il sonno è già «iniziato»

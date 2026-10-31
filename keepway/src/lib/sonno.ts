@@ -2,7 +2,7 @@ import { blocchiEffettivi, giornoEffettivo, versioneCalendario, type BloccoLavor
 
 // --- Abitudini di sonno (modificabili: poi le portiamo nelle Impostazioni) ---
 const SONNO_IDEALE_MIN = 8 * 60;
-const SONNO_PRIMA_DEL_TERZO_MIN = 9 * 60; // prima del turno 3 si dorme volentieri 9 ore: a letto al massimo alle 00:30 (sveglia 9:30)
+const SONNO_PRIMA_DEL_TERZO_MIN = 9 * 60; // prima dei turni 3 e 4 (sveglia 9:30) si dorme volentieri 9 ore: a letto al massimo alle 00:30
 const SONNO_MINIMO_MIN = 7 * 60;
 const PREPARAZIONE_MIN = 60; // dalla sveglia all'inizio del turno (turno 7:00 -> sveglia 6:00)
 const SVEGLIA_TARDA = 9 * 60 + 30; // prima di un turno 13:00 o 19:00 ci si sveglia verso le 9:30
@@ -47,7 +47,8 @@ function sonnoRegolare(q: Blocco, fineP: number | null): Sonno {
   const svegliaAbituale = Math.min(limite, base + SVEGLIA_TARDA);
 
   const vincolo = fineP === null ? -Infinity : fineP + DOPO_TURNO_MIN;
-  const prima3 = q.inizio - base === 13 * 60; // turno che inizia alle 13:00
+  const dalle = q.inizio - base;
+  const prima3 = dalle === 13 * 60 || dalle === 19 * 60; // turni che iniziano alle 13:00 (3) o alle 19:00 (4)
   const ideale = prima3 ? SONNO_PRIMA_DEL_TERZO_MIN : SONNO_IDEALE_MIN;
   const aLetto = Math.max(svegliaAbituale - ideale, vincolo);
   // Se si va a letto tardi, la sveglia slitta (fino al limite) per arrivare almeno a 7 ore.
