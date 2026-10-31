@@ -32,7 +32,7 @@ export function regolaAllenamento(data: string): Esito {
 }
 
 // Toglie dalle finestre il tempo occupato dagli appuntamenti (con il viaggio, andata e ritorno).
-function senzaEventi(finestre: Finestra[], eventi: Evento[], data: string): Finestra[] {
+export function senzaEventi(finestre: Finestra[], eventi: Evento[], data: string): Finestra[] {
   let out = finestre;
   for (const e of eventi) {
     if (e.data !== data || !e.ora || e.fatto || e.tipo !== "appuntamento") continue;
@@ -54,13 +54,13 @@ export type AnalisiGiorno = { slot: Finestra | null; qualita: number; nota: stri
 
 // La lavatrice (e le faccende col seguito, tipo «stendi il bucato»): va messa quando, a fine ciclo, sei sveglio e a casa.
 // Si cerca l'orario di partenza più presto per cui il seguito cade in un momento libero; se non c'è, il primo momento libero.
-function analizzaFaccenda(task: Task, data: string, eventi: Evento[]): AnalisiGiorno {
+function analizzaFaccenda(task: Task, data: string, eventi: Evento[], dopoMin = 0): AnalisiGiorno {
   const g = giornoEffettivo(data);
   if (g?.modifica?.tipo === "assenza" && g.modifica.assenza === "malattia") return { slot: null, qualita: 0, nota: "", motivo: "malattia" };
   if (g && g.codici.includes("1") && g.codici.includes("4")) return { slot: null, qualita: 0, nota: "", motivo: "1+4: giornata troppo pesante" };
   const serve = durataMin(task) || 15;
   const dopo = task.seguito?.dopoMin ?? 0;
-  const liberi = senzaEventi(finestreLibere(data, 8 * 60, 22 * 60 + 30, 15), eventi, data);
+  const liberi = senzaEventi(finestreLibere(data, Math.max(8 * 60, dopoMin), 22 * 60 + 30, 15), eventi, data);
   const adatti = liberi.filter((f) => f.a - f.da >= serve);
   if (adatti.length === 0) return { slot: null, qualita: 0, nota: "", motivo: "nessun momento libero" };
   for (const f of adatti) {
@@ -75,12 +75,13 @@ function analizzaFaccenda(task: Task, data: string, eventi: Evento[]): AnalisiGi
 }
 
 // Un giorno per una task: il momento proposto (o perché no).
-export function analizzaGiorno(task: Task, data: string, eventi: Evento[]): AnalisiGiorno {
-  if (task.seguito) return analizzaFaccenda(task, data, eventi);
+// `dopoMin` = non prima di quest'ora (minuti dalla mezzanotte): serve per cercare un nuovo momento quando quello di prima è passato.
+export function analizzaGiorno(task: Task, data: string, eventi: Evento[], dopoMin = 0): AnalisiGiorno {
+  if (task.seguito) return analizzaFaccenda(task, data, eventi, dopoMin);
   const e = regolaAllenamento(data);
   if ("motivo" in e) return { slot: null, qualita: 0, nota: "", motivo: e.motivo };
   const serve = durataTotaleMin(task);
-  const liberi = senzaEventi(finestreLibere(data, e.regola.dopo, e.regola.prima, 15), eventi, data).filter((f) => f.a - f.da >= serve);
+  const liberi = senzaEventi(finestreLibere(data, Math.max(e.regola.dopo, dopoMin), e.regola.prima, 15), eventi, data).filter((f) => f.a - f.da >= serve);
   if (liberi.length === 0) return { slot: null, qualita: 0, nota: e.regola.nota, motivo: "nessun momento libero abbastanza lungo" };
   const f = liberi[0];
   return { slot: { da: f.da, a: f.da + serve }, qualita: e.regola.qualita, nota: e.regola.nota };

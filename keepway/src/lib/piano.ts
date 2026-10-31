@@ -2,7 +2,7 @@ import { dataPiù } from "./date";
 import { violazioniDa } from "./calendario";
 import { giorniTra } from "./eventi";
 import { èIgnorata, èPrevista } from "./regole";
-import { momentoGiusto } from "./momento";
+import { momentoAttuale } from "./momento";
 import { èADormire, èInSilenzio, hhmm, istanteDaMinutiAssoluti, situazioneAdesso, sonniPrevisti } from "./sonno";
 import { titoloTask } from "./stanze";
 import type { Stato, Task } from "./tipi";
@@ -32,8 +32,9 @@ function istante(data: string, hhmm: string): number {
 // Gli orari dei promemoria di una task in un dato giorno. Se la task "si adatta ai turni", si scelgono nel momento libero
 // più lungo della giornata (tra turni e sonno): uno poco dopo l'inizio, uno a metà, uno prima della fine. Se non c'è nessun
 // momento libero, niente promemoria.
-function orariPerGiorno(task: Task, giorno: string, scelto?: { da: number; a: number }): string[] {
-  const f = momentoGiusto(task, giorno, scelto);
+function orariPerGiorno(task: Task, giorno: string, ctx: { oggi: string; adessoMin: number; eventi: Stato["eventi"] }, scelto?: { da: number; a: number }): string[] {
+  // Oggi il momento giusto si aggiorna all'ora che è (se quello di prima è passato se ne cerca un altro)
+  const f = momentoAttuale(task, giorno, { oggi: ctx.oggi, adessoMin: giorno === ctx.oggi ? ctx.adessoMin : 0, eventi: ctx.eventi, scelto }).finestra;
   if (!task.adattaATurni) {
     if (!f) return [...task.promemoria].sort();
     return [hhmm(f.da)]; // abitudini legate al turno (meditazione, lettura): un promemoria all'inizio del momento giusto
@@ -77,7 +78,8 @@ export function pianoNotifiche(stato: Stato, ora: number, oggi: string): Notific
       const titolo = èOggi ? titoloTask(task, stato, oggi) : task.titolo;
       const rinvio = èOggi ? stato.rinvii.find((r) => r.taskId === task.id && r.data === oggi) : undefined;
 
-      const orari = orariPerGiorno(task, giorno, stato.momenti.find((m) => m.taskId === task.id && m.data === giorno));
+      const adessoMin = new Date(ora).getHours() * 60 + new Date(ora).getMinutes();
+      const orari = orariPerGiorno(task, giorno, { oggi, adessoMin, eventi: stato.eventi }, stato.momenti.find((m) => m.taskId === task.id && m.data === giorno));
       orari.forEach((hhmm, n) => {
         const quando = istante(giorno, hhmm);
         if (quando <= ora) return;

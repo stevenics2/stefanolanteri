@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { puntiMinima, serie } from "@/lib/regole";
 import { durataMin } from "@/lib/durata";
-import { momentoGiusto } from "@/lib/momento";
+import { momentoAttuale } from "@/lib/momento";
 import { hhmm } from "@/lib/sonno";
 import { stanzaDelGiorno, titoloTask } from "@/lib/stanze";
 import { useStore } from "@/lib/store";
@@ -17,7 +17,7 @@ const ora = (ms: number) => new Date(ms).toLocaleTimeString("it-IT", { hour: "2-
 // Una task nella schermata Oggi: avvia il timer, segna come fatta, fa la versione minima,
 // la rimanda a più tardi oppure la salta per oggi.
 export default function TaskCard({ task, soloMinima, senzaOrario = false }: { task: Task; soloMinima: boolean; senzaOrario?: boolean }) {
-  const { stato, oggi, completa, annulla, apriTimer, ignoraOggi, rimanda, annullaRinvio, impostaMomento } = useStore();
+  const { stato, oggi, adesso, completa, annulla, apriTimer, ignoraOggi, rimanda, annullaRinvio, impostaMomento } = useStore();
   const [piuTardi, setPiuTardi] = useState(false);
   const [modMomento, setModMomento] = useState(false);
   const [aperta, setAperta] = useState(false); // il planner mostra la riga compatta; toccandola si apre la scheda intera
@@ -29,7 +29,11 @@ export default function TaskCard({ task, soloMinima, senzaOrario = false }: { ta
   const minima = task.minimaMin;
   // Task che si adatta ai turni: il momento libero più lungo di oggi (né in turno, né a dormire)
   const scelto = stato.momenti.find((m) => m.taskId === task.id && m.data === oggi);
-  const finestra = !fatto ? momentoGiusto(task, oggi, scelto) : null;
+  const adessoMin = adesso > 0 ? new Date(adesso).getHours() * 60 + new Date(adesso).getMinutes() : 0;
+  const momento = !fatto ? momentoAttuale(task, oggi, { oggi, adessoMin, eventi: stato.eventi, scelto }) : null;
+  const finestra = momento?.finestra ?? null;
+  const spostato = !!momento?.spostato;
+  const esaurito = !!momento?.esaurito;
   const senzaTempo = task.adattaATurni && !fatto && !finestra;
   const stanza = task.tipo === "stanza" ? stanzaDelGiorno(stato.stanze, stato.completamenti, task.id, oggi) : null;
 
@@ -61,7 +65,10 @@ export default function TaskCard({ task, soloMinima, senzaOrario = false }: { ta
             {finestra && !senzaOrario ? (
               <span className="inline-flex items-center gap-1 whitespace-nowrap font-semibold text-emerald-300">
                 <Clock size={11} /> {hhmm(finestra.da)}–{hhmm(finestra.a)}
+                {spostato && <span className="font-medium text-amber-300">· spostato</span>}
               </span>
+            ) : esaurito && !senzaOrario ? (
+              <span className="whitespace-nowrap text-amber-300">nessun momento libero oggi</span>
             ) : null}
             {dettaglio && <span>{dettaglio}</span>}
             {rinvio && !fatto && (
@@ -126,10 +133,11 @@ export default function TaskCard({ task, soloMinima, senzaOrario = false }: { ta
         </div>
       </div>
 
+      {esaurito && !finestra && <div className="mt-2 text-xs text-amber-300">Per oggi i momenti liberi sono finiti: se riesci la versione minima, altrimenti domani.</div>}
       {(finestra) && <div className="mt-2">
           {finestra && !modMomento && (
             <button data-suono="via" onClick={() => setModMomento(true)} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-300">
-              <Clock size={12} /> Momento giusto: {hhmm(finestra.da)}–{hhmm(finestra.a)} <Pencil size={11} />
+              <Clock size={12} /> {spostato ? "Nuovo momento" : "Momento giusto"}: {hhmm(finestra.da)}–{hhmm(finestra.a)} <Pencil size={11} />
             </button>
           )}
           {finestra && modMomento && (

@@ -4,7 +4,7 @@ import ListaFlip from "./ListaFlip";
 import { ChevronDown } from "lucide-react";
 import { Fragment, useState } from "react";
 import { eventiDelGiorno } from "@/lib/eventi";
-import { momentoGiusto } from "@/lib/momento";
+import { momentoAttuale } from "@/lib/momento";
 import { hhmm } from "@/lib/sonno";
 import { useStore } from "@/lib/store";
 import type { Evento, Task } from "@/lib/tipi";
@@ -32,7 +32,7 @@ export default function Timeline({
   }
   const senzaOrario: Task[] = [];
   for (const t of task) {
-    const m = momentoGiusto(t, oggi, stato.momenti.find((x) => x.taskId === t.id && x.data === oggi));
+    const m = momentoAttuale(t, oggi, { oggi, adessoMin: adessoMin ?? 0, eventi: stato.eventi, scelto: stato.momenti.find((x) => x.taskId === t.id && x.data === oggi) }).finestra;
     if (m) voci.push({ t: m.da, ordine: 1, tipo: "task", task: t, fine: m.a });
     else senzaOrario.push(t);
   }

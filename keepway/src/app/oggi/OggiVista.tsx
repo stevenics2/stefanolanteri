@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { caricoGiorno } from "@/lib/carico";
 import { dataLunga } from "@/lib/date";
-import { momentoGiusto } from "@/lib/momento";
+import { momentoAttuale } from "@/lib/momento";
 import { èIgnorata, èPrevista, inVacanza } from "@/lib/regole";
 import { titoloTask } from "@/lib/stanze";
 import { useStore } from "@/lib/store";
@@ -47,7 +47,9 @@ export default function OggiVista() {
   // Planner: prima le task con un momento consigliato, in ordine di orario; poi le altre (si parte dalla pulizia: la stanza
   // del giorno, poi il resto della casa). Le fatte vanno in fondo.
   const peso = (t: Task) => (t.tipo === "stanza" ? 0 : t.areaId === "casa" ? 1 : 2);
-  const inizioMomento = (t: Task) => momentoGiusto(t, oggi, stato.momenti.find((m) => m.taskId === t.id && m.data === oggi))?.da ?? Infinity;
+  const adessoMin = adesso > 0 ? new Date(adesso).getHours() * 60 + new Date(adesso).getMinutes() : 0;
+  const inizioMomento = (t: Task) =>
+    momentoAttuale(t, oggi, { oggi, adessoMin, eventi: stato.eventi, scelto: stato.momenti.find((m) => m.taskId === t.id && m.data === oggi) }).finestra?.da ?? Infinity;
   const ordina = (a: Task, b: Task) => Number(èFatta(a)) - Number(èFatta(b)) || (inizioMomento(a) === inizioMomento(b) ? 0 : inizioMomento(a) < inizioMomento(b) ? -1 : 1) || peso(a) - peso(b);
 
   // "Prima di dormire": le task della sera (piatti) e, dalle 18 in poi, tutto quello che non è ancora fatto.
