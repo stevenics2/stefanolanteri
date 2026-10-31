@@ -23,6 +23,18 @@ const MAX_PIANO = 200;
 const TROPPO_TARDI_MS = 30 * 60 * 1000; // una notifica in ritardo di oltre 30 minuti non ha più senso
 const MAX_FALLIMENTI = 5;
 
+// Lettere «in grassetto» (Mathematical Sans-Serif Bold): caratteri Unicode che sembrano grassetto. Le accentate = lettera + accento combinato.
+function grassetto(testo) {
+  const mappa = (c) => {
+    const k = c.codePointAt(0);
+    if (k >= 65 && k <= 90) return String.fromCodePoint(0x1d5d4 + k - 65); // A-Z
+    if (k >= 97 && k <= 122) return String.fromCodePoint(0x1d5ee + k - 97); // a-z
+    if (k >= 48 && k <= 57) return String.fromCodePoint(0x1d7ec + k - 48); // 0-9
+    return c;
+  };
+  return [...String(testo).normalize('NFD')].map(mappa).join('').normalize('NFC');
+}
+
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
 const err = (msg, status = 400) => json({ error: msg }, status);
@@ -173,7 +185,7 @@ async function prova(env, request) {
     let ultimo = { stato: 0, dettaglio: '' };
     for (const [primo, secondo, tag] of scelti) {
       // il «titolo» invisibile + il testo su due righe: prima riga = cosa, seconda = dettaglio
-      ultimo = await spedisci(env, vapid, sub, { titolo: '\u2800', testo: `→ ${primo}\n${secondo}`, tag, urgente: true });
+      ultimo = await spedisci(env, vapid, sub, { titolo: '\u2800', testo: `→ ${grassetto(primo)}\n${secondo}`, tag, urgente: true });
     }
     return json({ ok: ultimo.stato >= 200 && ultimo.stato < 300, stato: ultimo.stato, dettaglio: ultimo.dettaglio, inviate: scelti.map((x) => x[0]) });
   }
