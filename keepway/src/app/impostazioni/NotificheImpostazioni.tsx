@@ -81,7 +81,7 @@ export default function NotificheImpostazioni() {
                     : `Non inviata. Risposta: ${r.stato || "nessuna"}${r.dettaglio ? ` — ${r.dettaglio}` : ""}`;
                 })
               }
-              className="rounded-xl bg-white/10 py-2.5 disabled:opacity-50"
+              className="rounded-xl bg-ov/10 py-2.5 disabled:opacity-50"
             >
               Invia una prova
             </button>
@@ -89,7 +89,7 @@ export default function NotificheImpostazioni() {
               disabled={occupato}
               data-suono="indietro"
               onClick={() => esegui(async () => void (await disattivaPush()))}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 py-2.5 disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-ov/10 py-2.5 disabled:opacity-50"
             >
               <BellOff size={16} /> Disattiva
             </button>

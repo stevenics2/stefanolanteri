@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 
 // Pezzi di interfaccia condivisi dai moduli: chip, riquadri con icona, schermo a tutta pagina.
-export const campo = "mt-1 w-full rounded-xl bg-white/10 px-3 py-2.5 outline-none";
+export const campo = "mt-1 w-full rounded-xl bg-ov/10 px-3 py-2.5 outline-none";
 
 export function Etichetta({ children }: { children: ReactNode }) {
   return <div className="mb-1.5 text-sm font-medium text-muted">{children}</div>;
@@ -14,7 +14,7 @@ export function Chip({ attivo, onClick, children }: { attivo: boolean; onClick: 
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${attivo ? "bg-accent text-black" : "bg-white/10"}`}
+      className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${attivo ? "bg-accent text-black" : "bg-ov/10"}`}
     >
       {children}
     </button>
@@ -28,7 +28,7 @@ export function Riquadro({ icona, nome, attivo, onClick }: { icona: ReactNode; n
       type="button"
       onClick={onClick}
       className={`flex flex-col items-center gap-1.5 rounded-2xl border px-2 py-3 text-xs font-medium ${
-        attivo ? "border-accent bg-accent/15 text-accent" : "border-transparent bg-white/10"
+        attivo ? "border-accent bg-accent/15 text-accent" : "border-transparent bg-ov/10"
       }`}
     >
       {icona}
@@ -39,7 +39,7 @@ export function Riquadro({ icona, nome, attivo, onClick }: { icona: ReactNode; n
 
 export function Interruttore({ valore, onChange, children }: { valore: boolean; onChange: (v: boolean) => void; children: ReactNode }) {
   return (
-    <label className="flex items-center justify-between gap-3 rounded-2xl bg-white/5 px-4 py-3 text-sm">
+    <label className="flex items-center justify-between gap-3 rounded-2xl bg-ov/5 px-4 py-3 text-sm">
       <span>{children}</span>
       <input type="checkbox" checked={valore} onChange={(e) => onChange(e.target.checked)} className="h-5 w-5 shrink-0" />
     </label>

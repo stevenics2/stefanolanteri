@@ -44,7 +44,7 @@ function Odometro({ valore, anima }: { valore: number; anima: boolean }) {
 const TRAGUARDI_SERIE = [3, 7, 14, 30, 60, 100];
 
 // Il recap in cima a Oggi: una console da nerd. Barre e percentuali che avanzano, boss della settimana, combo, record.
-export default function RiepilogoOggi({ fatte, totale }: { fatte: number; totale: number }) {
+export default function RiepilogoOggi({ fatte, totale, conFeedback = true }: { fatte: number; totale: number; conFeedback?: boolean }) {
   const { stato, oggi, adesso, xp } = useStore();
   const anima = stato.impostazioni.animazioni;
   const l = livello(xp);
@@ -94,6 +94,7 @@ export default function RiepilogoOggi({ fatte, totale }: { fatte: number; totale
     <Pannello
       key={`${oggi}-${apertura}`}
       anima={anima}
+      conFeedback={conFeedback}
       apertura={apertura}
       rgb={rgb}
       l={{ numero: l.numero, nome: l.nome }}
@@ -224,9 +225,10 @@ function Cella({ s, anima }: { s: Stat; anima: boolean }) {
 
 // Il riquadro vero e proprio. A ogni apertura si ricalcola: una riga luminosa lo attraversa mentre gli anelli si riempiono.
 function Pannello({
-  anima, apertura, rgb, l, xp, nudge, tutto, restante, centro, stat,
+  anima, conFeedback, apertura, rgb, l, xp, nudge, tutto, restante, centro, stat,
 }: {
   anima: boolean;
+  conFeedback: boolean;
   apertura: number;
   rgb: Rgb;
   l: { numero: number; nome: string };
@@ -272,7 +274,7 @@ function Pannello({
     >
       {ricalcolo && <div className="lampo" aria-hidden />}
       {ricalcolo && <div className="scansione" aria-hidden />}
-      {primaVolta && anima && <FeedbackBox />}
+      {primaVolta && anima && conFeedback && <FeedbackBox />}
       {r && anima && <div key={r.id} className="lampo-ora" aria-hidden />}
       {combo && (
         <div className="pointer-events-none absolute inset-0 z-[4] flex items-center justify-center px-3">

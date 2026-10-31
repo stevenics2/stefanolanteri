@@ -6,6 +6,7 @@ import FeedbackTocco from "./FeedbackTocco";
 import FestaOverlay from "./FestaOverlay";
 import RecapFlash from "./RecapFlash";
 import Ricompense from "./Ricompense";
+import TemaApplicato from "./TemaApplicato";
 import SincronizzaNotifiche from "./SincronizzaNotifiche";
 import TimerSchermo from "./TimerSchermo";
 
@@ -20,6 +21,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <RecapFlash />
       <FestaOverlay />
       <FeedbackTocco />
+      <TemaApplicato />
       <SincronizzaNotifiche />
     </StoreProvider>
   );

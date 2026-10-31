@@ -103,7 +103,7 @@ export type Bonus = { id: string; data: string; xp: number; tipo: "forziere" | "
 // (resta), `escluso` = un giorno che hai tolto (l'app non lo propone più). da/a = minuti dalla mezzanotte, il momento proposto.
 export type PianoVoce = { taskId: string; data: string; tipo: "auto" | "fissato" | "escluso"; da?: number; a?: number };
 
-export type Impostazioni = { suoni: boolean; animazioni: boolean; vibrazione: boolean; suonoTocco: boolean; vistaOggi: "compatta" | "estesa" };
+export type Impostazioni = { suoni: boolean; animazioni: boolean; vibrazione: boolean; suonoTocco: boolean; vistaOggi: "compatta" | "estesa"; tema: "scuro" | "chiaro" };
 
 export type TimerAttivo = {
   taskId: string;

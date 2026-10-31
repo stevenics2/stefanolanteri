@@ -150,7 +150,7 @@ function MenuGiorno({ data, onClose, onVai }: { data: string; onClose: () => voi
                   Modifica il turno del {formatoGiornoMese(d)}
                 </button>
               ))}
-            <button data-suono="indietro" onClick={onClose} className="rounded-xl bg-white/10 py-3">Lo faccio dopo</button>
+            <button data-suono="indietro" onClick={onClose} className="rounded-xl bg-ov/10 py-3">Lo faccio dopo</button>
           </div>
         </div>
       )}

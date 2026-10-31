@@ -46,7 +46,7 @@ export default function SonnoCard() {
       <a
         href={LINK_SVEGLIA}
         data-suono="via"
-        className="mt-3 inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2.5 text-sm font-semibold"
+        className="mt-3 inline-flex items-center gap-2 rounded-xl bg-ov/10 px-4 py-2.5 text-sm font-semibold"
       >
         <AlarmClock size={16} /> Imposta sveglia
       </a>

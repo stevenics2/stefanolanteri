@@ -47,10 +47,10 @@ export default function FormLavatrice({ onClose, iniziale }: { onClose: () => vo
       <div>
         <Etichetta>Quando?</Etichetta>
         <div className="mb-3 grid grid-cols-2 gap-2">
-          <button type="button" onClick={() => setAutomatica(true)} className={`rounded-xl py-2.5 text-sm font-semibold ${automatica ? "bg-accent text-black" : "bg-white/10"}`}>
+          <button type="button" onClick={() => setAutomatica(true)} className={`rounded-xl py-2.5 text-sm font-semibold ${automatica ? "bg-accent text-black" : "bg-ov/10"}`}>
             Decide l&apos;app
           </button>
-          <button type="button" onClick={() => setAutomatica(false)} className={`rounded-xl py-2.5 text-sm font-semibold ${!automatica ? "bg-accent text-black" : "bg-white/10"}`}>
+          <button type="button" onClick={() => setAutomatica(false)} className={`rounded-xl py-2.5 text-sm font-semibold ${!automatica ? "bg-accent text-black" : "bg-ov/10"}`}>
             Scelgo i giorni
           </button>
         </div>
@@ -69,7 +69,7 @@ export default function FormLavatrice({ onClose, iniziale }: { onClose: () => vo
               const attivo = giorni.includes(g);
               return (
                 <button key={g} type="button" onClick={() => setGiorni((x) => (x.includes(g) ? x.filter((y) => y !== g) : [...x, g]))}
-                  className={`rounded-xl py-2.5 text-sm font-semibold ${attivo ? "bg-accent text-black" : "bg-white/10"}`}>
+                  className={`rounded-xl py-2.5 text-sm font-semibold ${attivo ? "bg-accent text-black" : "bg-ov/10"}`}>
                   {GIORNI_LUNGHI[g].slice(0, 3)}
                 </button>
               );

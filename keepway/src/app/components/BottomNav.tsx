@@ -16,7 +16,7 @@ const voci = [
 export default function BottomNav() {
   const pathname = usePathname();
   return (
-    <nav className="fixed inset-x-0 bottom-0 border-t border-white/10 bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
+    <nav className="fixed inset-x-0 bottom-0 border-t border-ov/10 bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
       <ul className="flex">
         {voci.map(({ href, etichetta, Icona }) => {
           const attiva = pathname.startsWith(href);

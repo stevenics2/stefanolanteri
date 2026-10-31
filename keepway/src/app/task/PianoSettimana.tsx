@@ -41,7 +41,7 @@ export default function PianoSettimana({ task, modifica }: { task: Task; modific
                 disabled={!modifica || passato}
                 data-suono={inPiano ? "indietro" : "via"}
                 onClick={() => sistemaGiornoAuto(task.id, d, !inPiano)}
-                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm ${inPiano ? "bg-accent/20 ring-1 ring-accent/40" : "bg-white/5"} ${passato ? "opacity-45" : ""}`}
+                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm ${inPiano ? "bg-accent/20 ring-1 ring-accent/40" : "bg-ov/5"} ${passato ? "opacity-45" : ""}`}
               >
                 <span className="w-14 shrink-0 font-semibold">
                   {GIORNI_BREVI[giornoSettimana(d)]} {dt.getDate()}
@@ -56,7 +56,7 @@ export default function PianoSettimana({ task, modifica }: { task: Task; modific
                   )}
                 </span>
                 {modifica && !passato && (
-                  <span className={`h-5 w-9 shrink-0 rounded-full p-0.5 ${inPiano ? "bg-accent" : "bg-white/15"}`}>
+                  <span className={`h-5 w-9 shrink-0 rounded-full p-0.5 ${inPiano ? "bg-accent" : "bg-ov/15"}`}>
                     <span className={`block h-4 w-4 rounded-full bg-black transition-transform ${inPiano ? "translate-x-4" : ""}`} />
                   </span>
                 )}

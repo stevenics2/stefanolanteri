@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Keepway: tema scuro unico, pensato per iPhone. */
+/* Keepway: tema scuro (predefinito) e tema chiaro, pensati per iPhone. */
 :root {
   /* Spazio sopra il contenuto: l'iPhone sfuma la fascia sotto orologio e batteria, il testo non deve stare lì. */
   --pt-pagina: calc(env(safe-area-inset-top) + 2.5rem);
@@ -9,6 +9,35 @@
   --card: #151b23;
   --muted: #8b97a6;
   --accent: #f5a524; /* giallo "gru/porto" */
+  --ov: #ffffff; /* il colore delle velature: bianco sul tema scuro, scuro sul tema chiaro */
+}
+
+/* Tema chiaro: stessi nomi, altri valori. I testi colorati chiari (pastello) diventano più scuri per leggersi sul bianco. */
+:root[data-tema="chiaro"] {
+  color-scheme: light;
+  --background: #eef1f5;
+  --foreground: #10151c;
+  --card: #ffffff;
+  --muted: #5b6675;
+  --accent: #d98200;
+  --ov: #0b0f14;
+  --color-emerald-100: #064e3b; --color-emerald-200: #065f46; --color-emerald-300: #047857; --color-emerald-400: #059669;
+  --color-red-100: #7f1d1d; --color-red-200: #991b1b; --color-red-300: #b91c1c; --color-red-400: #dc2626;
+  --color-sky-200: #075985; --color-sky-300: #0369a1;
+  --color-amber-100: #78350f; --color-amber-200: #92400e; --color-amber-300: #b45309;
+  --color-violet-200: #5b21b6; --color-violet-300: #6d28d9;
+  --color-teal-300: #0f766e;
+  --color-indigo-200: #3730a3;
+}
+/* Sul tema chiaro l'ora e la batteria dell'iPhone (testo bianco) stanno su una fascia scura */
+:root[data-tema="chiaro"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: env(safe-area-inset-top);
+  background: #0b0f14;
+  z-index: 100;
+  pointer-events: none;
 }
 
 @theme inline {
@@ -17,6 +46,7 @@
   --color-card: var(--card);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
+  --color-ov: var(--ov);
   --font-sans: var(--font-geist-sans);
 }
 

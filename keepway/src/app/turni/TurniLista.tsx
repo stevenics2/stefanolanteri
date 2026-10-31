@@ -48,7 +48,7 @@ export default function TurniLista() {
 
   return (
     <section className="-mx-4 -mt-[var(--pt-pagina)]">
-      <header className="sticky top-0 z-10 border-b border-white/10 bg-background px-4 pb-3 pt-[calc(env(safe-area-inset-top)+1.5rem)]">
+      <header className="sticky top-0 z-10 border-b border-ov/10 bg-background px-4 pb-3 pt-[calc(env(safe-area-inset-top)+1.5rem)]">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Turni</h1>
           {vista === "lista" && (
@@ -57,7 +57,7 @@ export default function TurniLista() {
             </button>
           )}
         </div>
-        <div className="mt-3 grid grid-cols-3 gap-1 rounded-xl bg-white/10 p-1 text-sm font-medium">
+        <div className="mt-3 grid grid-cols-3 gap-1 rounded-xl bg-ov/10 p-1 text-sm font-medium">
           {([["lista", "Roster"], ["mese", "Calendario"], ["recap", "Recap"]] as const).map(([v, nome]) => (
             <button key={v} onClick={() => setVista(v)} className={`rounded-lg py-1.5 ${vista === v ? "bg-accent text-black" : "text-muted"}`}>
               {nome}
@@ -67,7 +67,7 @@ export default function TurniLista() {
         {vista === "lista" && (
           <div className="mt-3 flex gap-2 text-sm">
             {(["tutti", "lavoro", "riposi"] as Filtro[]).map((f) => (
-              <button key={f} onClick={() => setFiltro(f)} className={`rounded-full px-3 py-1 capitalize ${filtro === f ? "bg-white/15 text-foreground" : "text-muted"}`}>
+              <button key={f} onClick={() => setFiltro(f)} className={`rounded-full px-3 py-1 capitalize ${filtro === f ? "bg-ov/15 text-foreground" : "text-muted"}`}>
                 {f}
               </button>
             ))}
@@ -89,7 +89,7 @@ export default function TurniLista() {
               const data = new Date(a, m - 1, gg);
               const èOggi = g.data === oggi;
               return (
-                <li key={g.data} ref={èOggi ? rigaOggi : undefined} className="border-b border-white/10">
+                <li key={g.data} ref={èOggi ? rigaOggi : undefined} className="border-b border-ov/10">
                   <button onClick={() => setAperto(g.data)} className="flex w-full items-center gap-3 px-4 py-3 text-left">
                     <div className={`w-16 shrink-0 rounded-xl py-1.5 text-center leading-tight ${èOggi ? "bg-accent text-black" : "text-sky-300"}`}>
                       <div className="text-sm">{GIORNI_BREVI[data.getDay()]}</div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { AlarmClock, Plane, Plus, X } from "lucide-react";
+import { AlarmClock, Moon, Plane, Plus, Sun, X } from "lucide-react";
 import { useState } from "react";
 import { inVacanza } from "@/lib/regole";
 import { useStore } from "@/lib/store";
@@ -39,6 +39,22 @@ export default function ImpostazioniVista() {
       <h1 className="text-2xl font-bold">Impostazioni</h1>
 
       <div className="space-y-2">
+        <div className={riga}>
+          <span>Tema</span>
+          <div className="inline-flex rounded-full bg-ov/10 p-0.5 text-sm" role="group" aria-label="Tema">
+            {([["scuro", "Scuro", Moon], ["chiaro", "Chiaro", Sun]] as const).map(([t, nome, Icona]) => (
+              <button
+                key={t}
+                data-suono="via"
+                onClick={() => impostazioni({ tema: t })}
+                aria-pressed={stato.impostazioni.tema === t}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-semibold ${stato.impostazioni.tema === t ? "bg-foreground text-background" : "text-muted"}`}
+              >
+                <Icona size={14} /> {nome}
+              </button>
+            ))}
+          </div>
+        </div>
         <label className={riga}>
           <span>Suoni</span>
           <input type="checkbox" className="h-5 w-5" checked={stato.impostazioni.suoni} onChange={(e) => impostazioni({ suoni: e.target.checked })} />
@@ -85,18 +101,18 @@ export default function ImpostazioniVista() {
               {fuori ? "Fuori casa" : "Programmato"}: dal {stato.vacanza.dal}
               {stato.vacanza.al ? ` al ${stato.vacanza.al}` : ", finché non torni"}
             </div>
-            <button data-suono="indietro" onClick={() => setVacanza(null)} className="w-full rounded-xl bg-white/10 py-2.5">Sono a casa / annulla</button>
+            <button data-suono="indietro" onClick={() => setVacanza(null)} className="w-full rounded-xl bg-ov/10 py-2.5">Sono a casa / annulla</button>
           </div>
         ) : (
           <div className="space-y-2 rounded-2xl bg-card p-4">
             <div className="grid grid-cols-2 gap-3">
               <label className="block text-sm text-muted">
                 Dal
-                <input type="date" value={dal || oggi} onChange={(e) => setDal(e.target.value)} className={campo.replace("bg-card", "bg-white/10")} />
+                <input type="date" value={dal || oggi} onChange={(e) => setDal(e.target.value)} className={campo.replace("bg-card", "bg-ov/10")} />
               </label>
               <label className="block text-sm text-muted">
                 Al (facoltativo)
-                <input type="date" value={al} onChange={(e) => setAl(e.target.value)} className={campo.replace("bg-card", "bg-white/10")} />
+                <input type="date" value={al} onChange={(e) => setAl(e.target.value)} className={campo.replace("bg-card", "bg-ov/10")} />
               </label>
             </div>
             <button data-suono="via" onClick={() => setVacanza({ dal: dal || oggi, al: al || null })} className="w-full rounded-xl bg-accent py-2.5 font-bold text-black">
@@ -149,7 +165,7 @@ export default function ImpostazioniVista() {
       <div className="space-y-2">
         <h2 className={titolo}>I tuoi dati</h2>
         <p className="text-sm text-muted">Per ora i dati restano su questo telefono. Con gli account arriverà il salvataggio online.</p>
-        <button onClick={esporta} className="w-full rounded-2xl bg-white/10 py-3">Esporta i dati (JSON)</button>
+        <button onClick={esporta} className="w-full rounded-2xl bg-ov/10 py-3">Esporta i dati (JSON)</button>
         <button
           onClick={() => confirm("Cancellare tutto e ripartire da zero?") && azzera()}
           className="w-full rounded-2xl bg-red-500/15 py-3 text-red-300"

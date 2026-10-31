@@ -19,9 +19,9 @@ export default function StrisciaGiorni({ oggi, selezionato, onScegli }: { oggi: 
             data-suono="via"
             onClick={() => onScegli(d)}
             aria-pressed={sel}
-            className={`flex min-w-[3.1rem] flex-col items-center rounded-2xl px-2 py-1.5 ${sel ? "bg-white text-black" : "bg-white/10"}`}
+            className={`flex min-w-[3.1rem] flex-col items-center rounded-2xl px-2 py-1.5 ${sel ? "bg-foreground text-background" : "bg-ov/10"}`}
           >
-            <span className={`text-[10px] font-semibold uppercase ${sel ? "text-black/60" : "text-muted"}`}>{i === 0 ? "Oggi" : dt.toLocaleDateString("it-IT", { weekday: "short" }).replace(".", "")}</span>
+            <span className={`text-[10px] font-semibold uppercase ${sel ? "text-background/60" : "text-muted"}`}>{i === 0 ? "Oggi" : dt.toLocaleDateString("it-IT", { weekday: "short" }).replace(".", "")}</span>
             <span className="text-base font-extrabold leading-tight">{dt.getDate()}</span>
             <span className="mt-0.5 h-1.5 w-1.5 rounded-full" style={{ background: coloreGiorno(riepilogoGiorno(d)) }} />
           </button>

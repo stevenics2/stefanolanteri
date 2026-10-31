@@ -68,7 +68,7 @@ export default function TaskHub() {
             key={id}
             data-suono="via"
             onClick={() => apri(id)}
-            className={`flex flex-col items-start gap-3 rounded-3xl bg-gradient-to-br ${classe.split(" ")[0]} to-card p-4 text-left ring-1 ring-white/10`}
+            className={`flex flex-col items-start gap-3 rounded-3xl bg-gradient-to-br ${classe.split(" ")[0]} to-card p-4 text-left ring-1 ring-ov/10`}
           >
             <span className={`rounded-2xl bg-black/25 p-2.5 ${classe.split(" ")[1]}`}><Icona size={26} strokeWidth={1.8} /></span>
             <span>
@@ -112,7 +112,7 @@ export default function TaskHub() {
                 <span className="text-sm font-bold text-accent">+{t.punti}</span>
                 <button
                   onClick={() => salvaTask({ ...t, attiva: !t.attiva })}
-                  className={`rounded-full px-3 py-1 text-xs ${t.attiva ? "bg-emerald-500/20 text-emerald-300" : "bg-white/10 text-muted"}`}
+                  className={`rounded-full px-3 py-1 text-xs ${t.attiva ? "bg-emerald-500/20 text-emerald-300" : "bg-ov/10 text-muted"}`}
                 >
                   {t.attiva ? "Attiva" : "Spenta"}
                 </button>

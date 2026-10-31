@@ -16,6 +16,7 @@ import SonnoCard from "../components/SonnoCard";
 import TurniDaSistemare from "../components/TurniDaSistemare";
 import TaskCard from "../components/TaskCard";
 import BloccoTurno from "../components/BloccoTurno";
+import InterruttoreTema from "../components/InterruttoreTema";
 import GiornoSeguente from "../components/GiornoSeguente";
 import StrisciaGiorni from "../components/StrisciaGiorni";
 import Timeline from "../components/Timeline";
@@ -65,23 +66,26 @@ export default function OggiVista() {
           <p className="text-muted first-letter:uppercase">{dataLunga(oggi)}</p>
         </div>
         <div className="flex flex-col items-end gap-2">
-        {!fuoriCasa && (
-          <button
-            data-suono="via"
-            onClick={() => setVacanza({ dal: oggi, al: null })}
-            className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-sm text-muted"
-          >
-            <Plane size={15} /> Fuori casa
-          </button>
-        )}
-        <div className="inline-flex rounded-full bg-white/10 p-0.5 text-xs" role="group" aria-label="Vista">
+        <div className="flex items-center gap-2">
+          <InterruttoreTema />
+          {!fuoriCasa && (
+            <button
+              data-suono="via"
+              onClick={() => setVacanza({ dal: oggi, al: null })}
+              className="inline-flex items-center gap-1.5 rounded-full bg-ov/10 px-3 py-1.5 text-sm text-muted"
+            >
+              <Plane size={15} /> Fuori casa
+            </button>
+          )}
+        </div>
+        <div className="inline-flex rounded-full bg-ov/10 p-0.5 text-xs" role="group" aria-label="Vista">
           {([["compatta", "Compatta"], ["estesa", "Estesa"]] as const).map(([vv, nome]) => (
             <button
               key={vv}
               data-suono="via"
               onClick={() => impostazioni({ vistaOggi: vv })}
               aria-pressed={vista === vv}
-              className={`rounded-full px-2.5 py-1 font-semibold ${vista === vv ? "bg-white text-black" : "text-muted"}`}
+              className={`rounded-full px-2.5 py-1 font-semibold ${vista === vv ? "bg-foreground text-background" : "text-muted"}`}
             >
               {nome}
             </button>
@@ -105,7 +109,7 @@ export default function OggiVista() {
           <span className="inline-flex items-center gap-2">
             <Plane size={18} className="shrink-0" /> Sei fuori casa: niente task di casa. Il resto continua.
           </span>
-          <button data-suono="indietro" onClick={() => setVacanza(null)} className="shrink-0 rounded-lg bg-white/10 px-3 py-1.5">
+          <button data-suono="indietro" onClick={() => setVacanza(null)} className="shrink-0 rounded-lg bg-ov/10 px-3 py-1.5">
             Sono a casa
           </button>
         </div>

@@ -1,5 +1,7 @@
 "use client";
 
+import { giornata } from "@/lib/regole";
+import RiepilogoOggi from "../components/RiepilogoOggi";
 import { BellRing, CalendarPlus, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 import { useState } from "react";
 import { giornoEffettivo, violazioniDa, type GiornoEffettivo } from "@/lib/calendario";
@@ -18,7 +20,7 @@ const p2 = (n: number) => String(n).padStart(2, "0");
 
 // Colore della casella: blu = lavoro, viola = notte + sera, verde = riposo, ambra = assenza, grigio = non ho i turni.
 function stileTurno(g: GiornoEffettivo | undefined) {
-  if (!g) return "bg-white/5 text-muted";
+  if (!g) return "bg-ov/5 text-muted";
   if (g.modifica?.tipo === "assenza") return "bg-amber-500/25 text-amber-100";
   if (g.riposo) return "bg-emerald-500/20 text-emerald-200";
   if (g.codici.includes("1") && g.codici.includes("4")) return "bg-violet-600 text-white";
@@ -61,12 +63,16 @@ export default function CalendarioMese() {
   const giorniProblema = new Set(problemi.flatMap((v) => [v.primo.data, v.secondo.data]));
   const problemiSel = sel ? problemi.filter((v) => v.primo.data === sel || v.secondo.data === sel) : [];
 
+  const oggiFatte = giornata(stato, oggi);
+
   return (
     <div className="space-y-4 px-4 pb-4 pt-4">
+      <RiepilogoOggi fatte={oggiFatte.fatte.length} totale={oggiFatte.previste.length} conFeedback={false} />
+
       <div className="flex items-center justify-between">
-        <button data-suono="indietro" onClick={() => vai(-1)} aria-label="Mese precedente" className="rounded-xl bg-white/10 p-2"><ChevronLeft size={20} /></button>
+        <button data-suono="indietro" onClick={() => vai(-1)} aria-label="Mese precedente" className="rounded-xl bg-ov/10 p-2"><ChevronLeft size={20} /></button>
         <div className="text-lg font-bold capitalize">{MESI_LUNGHI[m]} {a}</div>
-        <button data-suono="via" onClick={() => vai(1)} aria-label="Mese successivo" className="rounded-xl bg-white/10 p-2"><ChevronRight size={20} /></button>
+        <button data-suono="via" onClick={() => vai(1)} aria-label="Mese successivo" className="rounded-xl bg-ov/10 p-2"><ChevronRight size={20} /></button>
       </div>
 
       <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted">
@@ -125,7 +131,7 @@ export default function CalendarioMese() {
           ))}
 
           {geSel && (
-            <button data-suono="via" onClick={() => setMenu(sel)} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white/10 py-2.5 text-sm font-semibold">
+            <button data-suono="via" onClick={() => setMenu(sel)} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-ov/10 py-2.5 text-sm font-semibold">
               <Pencil size={16} /> Modifica turno (cambio, straordinario, assenza)
             </button>
           )}

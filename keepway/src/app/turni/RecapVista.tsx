@@ -38,9 +38,9 @@ export default function RecapVista() {
   return (
     <div className="space-y-4 px-4 pb-4 pt-4">
       <div className="flex items-center justify-between">
-        <button data-suono="indietro" onClick={() => vai(-1)} aria-label="Mese precedente" className="rounded-xl bg-white/10 p-2"><ChevronLeft size={20} /></button>
+        <button data-suono="indietro" onClick={() => vai(-1)} aria-label="Mese precedente" className="rounded-xl bg-ov/10 p-2"><ChevronLeft size={20} /></button>
         <div className="text-lg font-bold capitalize">{MESI_LUNGHI[m]} {a}</div>
-        <button data-suono="via" onClick={() => vai(1)} aria-label="Mese successivo" className="rounded-xl bg-white/10 p-2"><ChevronRight size={20} /></button>
+        <button data-suono="via" onClick={() => vai(1)} aria-label="Mese successivo" className="rounded-xl bg-ov/10 p-2"><ChevronRight size={20} /></button>
       </div>
 
       <div className="space-y-2">
@@ -75,7 +75,7 @@ export default function RecapVista() {
               <button
                 data-suono="nessuno"
                 onClick={() => confermaAnnulla(x.gruppo ? "Annullare questa modifica e quella collegata?" : "Annullare questa modifica?", stato.impostazioni.suoni) && annullaModifiche([x.id])}
-                className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-white/10 px-2.5 py-1.5 text-xs"
+                className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-ov/10 px-2.5 py-1.5 text-xs"
               >
                 <Undo2 size={13} /> Annulla
               </button>

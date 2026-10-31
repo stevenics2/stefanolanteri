@@ -19,7 +19,7 @@ export default function Livello() {
           <div className="text-xs text-muted">XP</div>
         </div>
       </div>
-      <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white/10">
+      <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-ov/10">
         <div className="h-full rounded-full bg-accent transition-all duration-700" style={{ width: `${Math.round(l.progresso * 100)}%` }} />
       </div>
       <div className="mt-1.5 text-xs text-muted">

@@ -135,9 +135,9 @@ export default function TaskCard({ task, soloMinima, senzaOrario = false }: { ta
           {finestra && modMomento && (
             <div className="flex flex-nowrap items-center gap-1.5 whitespace-nowrap text-xs text-emerald-300">
               <Clock size={12} />
-              <input id={`da-${task.id}`} type="time" defaultValue={hhmm(finestra.da)} className="w-[5.2rem] rounded-lg bg-white/10 px-1.5 py-1 text-white" />
+              <input id={`da-${task.id}`} type="time" defaultValue={hhmm(finestra.da)} className="w-[5.2rem] rounded-lg bg-ov/10 px-1.5 py-1 text-foreground" />
               –
-              <input id={`a-${task.id}`} type="time" defaultValue={hhmm(finestra.a)} className="w-[5.2rem] rounded-lg bg-white/10 px-1.5 py-1 text-white" />
+              <input id={`a-${task.id}`} type="time" defaultValue={hhmm(finestra.a)} className="w-[5.2rem] rounded-lg bg-ov/10 px-1.5 py-1 text-foreground" />
               <button
                 data-suono="ok"
                 className="rounded-full bg-emerald-500/25 px-2.5 py-1 font-bold"
@@ -190,11 +190,11 @@ export default function TaskCard({ task, soloMinima, senzaOrario = false }: { ta
                 <CalendarClock size={16} /> Apri
               </Link>
             )}
-            <button data-suono="nessuno" onClick={() => { completa(task.id, { minima: soloMinima && !!minima }); setAperta(false); }} className="inline-flex items-center gap-1.5 rounded-xl bg-white/10 px-4 py-2 text-sm">
+            <button data-suono="nessuno" onClick={() => { completa(task.id, { minima: soloMinima && !!minima }); setAperta(false); }} className="inline-flex items-center gap-1.5 rounded-xl bg-ov/10 px-4 py-2 text-sm">
               <Check size={16} /> Fatta
             </button>
             {minima && !soloMinima && (
-              <button data-suono="nessuno" onClick={() => { completa(task.id, { minima: true }); setAperta(false); }} className="rounded-xl bg-white/10 px-4 py-2 text-sm">
+              <button data-suono="nessuno" onClick={() => { completa(task.id, { minima: true }); setAperta(false); }} className="rounded-xl bg-ov/10 px-4 py-2 text-sm">
                 Minima ({minima}′) · +{puntiMinima(task.punti)}
               </button>
             )}

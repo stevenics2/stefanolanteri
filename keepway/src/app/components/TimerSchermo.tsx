@@ -114,21 +114,21 @@ export default function TimerSchermo() {
         )}
 
         <div className="grid grid-cols-2 gap-3">
-          <button data-suono="indietro" onClick={indietro} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/10 py-3">
+          <button data-suono="indietro" onClick={indietro} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-ov/10 py-3">
             <ArrowLeft size={18} /> Indietro
           </button>
           <button
             data-suono="indietro"
             onClick={resettaTimer}
             disabled={pronto}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/10 py-3 disabled:opacity-30"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-ov/10 py-3 disabled:opacity-30"
           >
             <RotateCcw size={18} /> Reset
           </button>
         </div>
 
         {contaComeMinima && (
-          <button data-suono="nessuno" onClick={termina} className="rounded-2xl bg-white/10 py-3 text-sm">
+          <button data-suono="nessuno" onClick={termina} className="rounded-2xl bg-ov/10 py-3 text-sm">
             Termina ora (conta come minima)
           </button>
         )}

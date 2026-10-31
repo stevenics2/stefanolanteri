@@ -176,7 +176,7 @@ export default function FormEvento({
               key={p.id}
               type="button"
               onClick={() => setPriorita(p.id)}
-              className={`rounded-2xl border py-3 text-sm font-bold ${priorita === p.id ? "" : "border-transparent bg-white/10 text-muted"}`}
+              className={`rounded-2xl border py-3 text-sm font-bold ${priorita === p.id ? "" : "border-transparent bg-ov/10 text-muted"}`}
               style={priorita === p.id ? { borderColor: p.colore, background: `${p.colore}26`, color: p.colore } : undefined}
             >
               {p.nome}

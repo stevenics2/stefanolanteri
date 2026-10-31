@@ -26,6 +26,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="it" className={`${geistSans.variable} h-full antialiased`}>
       {/* Il body è sempre un po' più alto dello schermo (vedi globals.css): su iPhone la barra fissa in basso sta al bordo
           solo se la pagina può scorrere, anche di poco, e con una pagina corta (es. Recap) altrimenti si alza. */}
+      <head>
+        {/* Il tema si applica prima del primo disegno, così non c'è il lampo scuro quando scegli il chiaro */}
+        <script dangerouslySetInnerHTML={{ __html: "try{if(localStorage.getItem('keepway-tema')==='chiaro')document.documentElement.dataset.tema='chiaro'}catch(e){}" }} />
+      </head>
       <body className="flex flex-col">
         <Providers>
           <main className="flex-1 px-4 pb-28 pt-[var(--pt-pagina)]">
