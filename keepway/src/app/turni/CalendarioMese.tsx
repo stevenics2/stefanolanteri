@@ -1,7 +1,5 @@
 "use client";
 
-import { giornata } from "@/lib/regole";
-import RiepilogoOggi from "../components/RiepilogoOggi";
 import { BellRing, CalendarPlus, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 import { useState } from "react";
 import { giornoEffettivo, violazioniDa, type GiornoEffettivo } from "@/lib/calendario";
@@ -63,12 +61,8 @@ export default function CalendarioMese() {
   const giorniProblema = new Set(problemi.flatMap((v) => [v.primo.data, v.secondo.data]));
   const problemiSel = sel ? problemi.filter((v) => v.primo.data === sel || v.secondo.data === sel) : [];
 
-  const oggiFatte = giornata(stato, oggi);
-
   return (
     <div className="space-y-4 px-4 pb-4 pt-4">
-      <RiepilogoOggi fatte={oggiFatte.fatte.length} totale={oggiFatte.previste.length} conFeedback={false} />
-
       <div className="flex items-center justify-between">
         <button data-suono="indietro" onClick={() => vai(-1)} aria-label="Mese precedente" className="rounded-xl bg-ov/10 p-2"><ChevronLeft size={20} /></button>
         <div className="text-lg font-bold capitalize">{MESI_LUNGHI[m]} {a}</div>

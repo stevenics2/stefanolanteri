@@ -94,13 +94,15 @@ export default function OggiVista() {
         </div>
       </div>
 
+      <RiepilogoOggi fatte={fatte} totale={daFare.length} />
+
       <StrisciaGiorni oggi={oggi} selezionato={giorno} onScegli={(d) => setScelto(d === oggi ? null : d)} />
 
       {giorno !== oggi ? (
         <GiornoSeguente data={giorno} onApri={setDaModificare} />
       ) : (
       <>
-      <RiepilogoOggi fatte={fatte} totale={daFare.length} />
+      
 
       <TurniDaSistemare />
 
