@@ -4,11 +4,11 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { pianifica } from "./allenamento";
 import { impostaModifiche } from "./calendario";
 import { impostaPianoAuto } from "./pianoAuto";
-import { inizioSettimana, oggiLocale } from "./date";
+import { dataPiù, inizioSettimana, oggiLocale } from "./date";
 import { bossSettimana, giornata, livello, puntiMinima, xpTotali } from "./regole";
 import { nuovoId, statoIniziale, statoVuoto, taskStanza } from "./seed";
 import { stanzaDelGiorno } from "./stanze";
-import type { Bonus, Completamento, Evento, Impostazioni, Modifica, Stato, Task, Vacanza } from "./tipi";
+import type { Bonus, Completamento, Evento, Impostazioni, Modifica, Momento, Stato, Task, Vacanza } from "./tipi";
 
 const CHIAVE = "keepway.v1";
 const CHIAVE_VECCHIA = "binario.v1"; // il nome precedente: se ci sono dati salvati lì li si recupera
@@ -147,8 +147,50 @@ function carica(): Stato {
   return statoIniziale();
 }
 
+const PROGRAMMAZIONE_ID = "programmazione-allenamenti";
+
+// Il seguito di una task: una task di un giorno solo che compare dopo `dopoMin` minuti, con il suo momento e la sua notifica.
+function creaSeguito(t: Task, completamentoId: string, ts: number): { task: Task; momento: Momento } {
+  const dopoMin = t.seguito?.dopoMin ?? 0;
+  const quando = ts + dopoMin * 60_000;
+  const d = new Date(quando);
+  const data = oggiLocale(d);
+  const da = d.getHours() * 60 + d.getMinutes();
+  const id = nuovoId();
+  return {
+    task: {
+      id, titolo: t.seguito?.titolo ?? "Seguito", areaId: t.areaId, icona: "bucato", durataMin: null, minimaMin: null,
+      ricorrenza: { tipo: "una_volta", data }, fascia: "qualsiasi", solo: "sempre", punti: t.seguito?.punti ?? 20, essenziale: true, soloACasa: false,
+      promemoria: [], attiva: true, creatoIl: oggiLocale(new Date(ts)), seguitoDi: t.id, seguitoDa: completamentoId, visibileDa: quando, notificaTesto: t.seguito?.testo,
+    },
+    momento: { taskId: id, data, da, a: da + 15 },
+  };
+}
+
+// La task «Programmazione Allenamenti Settimanali» (domenica sera) esiste finché c'è almeno un allenamento automatico.
+// I seguiti vecchi (di ieri e prima) si ripuliscono.
+function sistemaTaskAutomatiche(s: Stato, oggi: string): Stato {
+  let task = s.task;
+  const haAuto = task.some((t) => t.attiva && t.ricorrenza.tipo === "auto" && !t.seguito);
+  const programmazione = task.find((t) => t.id === PROGRAMMAZIONE_ID);
+  if (haAuto && !programmazione) {
+    task = [...task, {
+      id: PROGRAMMAZIONE_ID, titolo: "Programmazione Allenamenti Settimanali", areaId: "allenamento", icona: "calendario", durataMin: null, minimaMin: null,
+      ricorrenza: { tipo: "settimana", giorni: [0] }, fascia: "sera", solo: "sempre", punti: 20, essenziale: false, soloACasa: false, promemoria: [],
+      apre: "/task/#allenamento", attiva: true, creatoIl: oggi,
+    }];
+  } else if (!haAuto && programmazione) {
+    task = task.filter((t) => t.id !== PROGRAMMAZIONE_ID);
+  }
+  const limite = dataPiù(oggi, -1);
+  const pulite = task.filter((t) => !(t.seguitoDi && t.ricorrenza.tipo === "una_volta" && t.ricorrenza.data < limite));
+  if (pulite.length !== task.length) task = pulite;
+  return task === s.task ? s : { ...s, task };
+}
+
 // Ricalcola il piano automatico delle task "N volte a settimana" (e lo mette a disposizione di chi lo legge).
-function conPiano(s: Stato): Stato {
+function conPiano(stato: Stato): Stato {
+  const s = sistemaTaskAutomatiche(stato, oggiLocale());
   if (!s.task.some((t) => t.ricorrenza.tipo === "auto")) {
     impostaPianoAuto([]);
     return s.pianoAuto.length ? { ...s, pianoAuto: [] } : s;
@@ -269,11 +311,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const prima = livello(xpTotali(s.completamenti, s.bonus));
       const dopo = livello(xpTotali(completamenti, [...s.bonus, ...nuoviBonus]));
 
+      // Il seguito (es. lavatrice -> «stendi il bucato» dopo 4 ore): si apre da solo, con la sua notifica
+      const seguito = t.seguito ? creaSeguito(t, id, ts) : null;
       aggiorna((x) => ({
         ...x,
         completamenti: [...x.completamenti, nuova],
         bonus: [...x.bonus, ...nuoviBonus],
         timer: x.timer?.taskId === taskId ? null : x.timer,
+        ...(seguito ? { task: [...x.task, seguito.task], momenti: [...x.momenti, seguito.momento] } : {}),
       }));
       if (feste.length) setFesta((f) => [...f, ...feste]);
       setRicompensa({
@@ -301,7 +346,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       completa,
       annulla: (cid) => {
         // si tolgono anche i bonus (forziere, boss) che quella task aveva fatto scattare
-        aggiorna((x) => ({ ...x, completamenti: x.completamenti.filter((c) => c.id !== cid), bonus: x.bonus.filter((b) => b.da !== cid) }));
+        aggiorna((x) => {
+          const seguiti = x.task.filter((t) => t.seguitoDa === cid).map((t) => t.id); // anche il seguito aperto da quel completamento sparisce
+          return {
+            ...x,
+            completamenti: x.completamenti.filter((c) => c.id !== cid),
+            bonus: x.bonus.filter((b) => b.da !== cid),
+            task: x.task.filter((t) => t.seguitoDa !== cid),
+            momenti: x.momenti.filter((m) => !seguiti.includes(m.taskId)),
+          };
+        });
         setRicompensa(null);
         setFesta([]);
       },

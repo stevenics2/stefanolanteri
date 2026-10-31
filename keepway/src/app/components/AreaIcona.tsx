@@ -1,6 +1,6 @@
 import {
   Activity, Bike, BellRing, BookOpen, Brain, Briefcase, CalendarDays, Car, CookingPot, Dumbbell, Flower2, Footprints, GlassWater, House,
-  PenLine, PersonStanding, Repeat, ShoppingCart, Smile, Snowflake, Sparkles, Stethoscope, Target, UtensilsCrossed, Waves, WashingMachine, Wind,
+  PenLine, PersonStanding, Shirt, Repeat, ShoppingCart, Smile, Snowflake, Sparkles, Stethoscope, Target, UtensilsCrossed, Waves, WashingMachine, Wind,
   type LucideIcon,
 } from "lucide-react";
 import type { Task } from "@/lib/tipi";
@@ -32,6 +32,7 @@ export const MAPPA: Record<string, LucideIcon> = {
   cucina: CookingPot,
   spesa: ShoppingCart,
   lavatrice: WashingMachine,
+  bucato: Shirt,
   // appuntamenti e promemoria
   dottore: Stethoscope,
   dentista: Smile,
@@ -63,6 +64,7 @@ const PAROLE: [RegExp, string][] = [
   [/medit|mindful/i, "loto"],
   [/piatti|stoviglie/i, "piatti"],
   [/stanza|pulis|pulizi|ordin|riordin|aspira|spolver/i, "pulizia"],
+  [/stendi|stendere|bucato asciutto/i, "bucato"],
   [/lavatrice|bucato/i, "lavatrice"],
   [/cucin|cena|pranzo|colazione/i, "cucina"],
   [/spesa/i, "spesa"],

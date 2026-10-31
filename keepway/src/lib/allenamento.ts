@@ -1,6 +1,6 @@
 import { giornoEffettivo } from "./calendario";
 import { dataPiù, inizioSettimana } from "./date";
-import { durataTotaleMin } from "./durata";
+import { durataMin, durataTotaleMin } from "./durata";
 import { finestreLibere, oreSonnoPrima, type Finestra } from "./sonno";
 import type { Evento, PianoVoce, Stato, Task } from "./tipi";
 
@@ -52,8 +52,31 @@ function senzaEventi(finestre: Finestra[], eventi: Evento[], data: string): Fine
 
 export type AnalisiGiorno = { slot: Finestra | null; qualita: number; nota: string; motivo?: string };
 
+// La lavatrice (e le faccende col seguito, tipo «stendi il bucato»): va messa quando, a fine ciclo, sei sveglio e a casa.
+// Si cerca l'orario di partenza più presto per cui il seguito cade in un momento libero; se non c'è, il primo momento libero.
+function analizzaFaccenda(task: Task, data: string, eventi: Evento[]): AnalisiGiorno {
+  const g = giornoEffettivo(data);
+  if (g?.modifica?.tipo === "assenza" && g.modifica.assenza === "malattia") return { slot: null, qualita: 0, nota: "", motivo: "malattia" };
+  if (g && g.codici.includes("1") && g.codici.includes("4")) return { slot: null, qualita: 0, nota: "", motivo: "1+4: giornata troppo pesante" };
+  const serve = durataMin(task) || 15;
+  const dopo = task.seguito?.dopoMin ?? 0;
+  const liberi = senzaEventi(finestreLibere(data, 8 * 60, 22 * 60 + 30, 15), eventi, data);
+  const adatti = liberi.filter((f) => f.a - f.da >= serve);
+  if (adatti.length === 0) return { slot: null, qualita: 0, nota: "", motivo: "nessun momento libero" };
+  for (const f of adatti) {
+    for (let da = f.da; da + serve <= f.a; da += 30) {
+      const fineCiclo = da + serve + dopo;
+      if (liberi.some((l) => fineCiclo >= l.da && fineCiclo <= l.a - 10)) {
+        return { slot: { da, a: da + serve }, qualita: 3, nota: `${dopo >= 60 ? `${Math.round(dopo / 6) / 10}`.replace(".", ",") + " ore" : `${dopo} min`} dopo sei libero` };
+      }
+    }
+  }
+  return { slot: { da: adatti[0].da, a: adatti[0].da + serve }, qualita: 1, nota: "a fine ciclo potresti essere in turno o a dormire" };
+}
+
 // Un giorno per una task: il momento proposto (o perché no).
 export function analizzaGiorno(task: Task, data: string, eventi: Evento[]): AnalisiGiorno {
+  if (task.seguito) return analizzaFaccenda(task, data, eventi);
   const e = regolaAllenamento(data);
   if ("motivo" in e) return { slot: null, qualita: 0, nota: "", motivo: e.motivo };
   const serve = durataTotaleMin(task);

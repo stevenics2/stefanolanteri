@@ -1,4 +1,5 @@
 import { nelPianoAuto } from "./pianoAuto";
+import { adessoMs } from "./seed";
 import { caricoGiorno, tipoGiorno } from "./carico";
 import { dataPiù, giornoSettimana, inizioSettimana } from "./date";
 import type { Bonus, Completamento, Ignorato, Stato, Task, Vacanza } from "./tipi";
@@ -49,6 +50,7 @@ export type Previsione = { vacanza: Vacanza | null; ignoraCarico?: boolean };
 // (giorno dopo la notte: solo essenziali; notte + sera: nessuna). I giorni "saltati" si gestiscono a parte.
 export function èPrevista(t: Task, data: string, p?: Previsione): boolean {
   if (!t.attiva) return false;
+  if (t.visibileDa && t.visibileDa > adessoMs()) return false; // il seguito di una task (es. stendere il bucato) compare dopo qualche ora
   if (t.soloACasa && inVacanza(p?.vacanza ?? null, data)) return false;
   const r = t.ricorrenza;
   if (r.tipo === "auto") return data >= t.creatoIl && nelPianoAuto(t.id, data); // il piano ha già tenuto conto di turni, sonno e carico

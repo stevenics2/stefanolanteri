@@ -28,6 +28,12 @@ export type Task = {
   icona?: string; // icona della task (se manca, quella dell'area)
   km?: number; // corsa: distanza; la durata si ricava (6 minuti al km) e non c'è il timer
   spostamentoMin?: number; // minuti per andare (e altrettanti per tornare) se la task si fa fuori casa
+  seguito?: { dopoMin: number; titolo: string; testo: string; punti: number }; // dopo «Fatto» si apre un'altra task dopo `dopoMin` minuti, con notifica `testo` (es. stendere il bucato)
+  seguitoDi?: string; // questa è il seguito di un'altra task (id della task madre)
+  seguitoDa?: string; // ... aperto da questo completamento
+  apre?: string; // un indirizzo dell'app da aprire dalla scheda (es. la programmazione degli allenamenti)
+  visibileDa?: number; // ms: la task compare solo da questo istante
+  notificaTesto?: string; // testo della notifica all'istante visibileDa
   adattaATurni?: boolean; // il momento giusto e i promemoria si scelgono nei momenti liberi tra turni e sonno
   attiva: boolean;
   creatoIl: string;

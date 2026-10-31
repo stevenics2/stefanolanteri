@@ -1,6 +1,6 @@
 "use client";
 
-import { BellRing, CalendarPlus, Dumbbell, ListPlus } from "lucide-react";
+import { BellRing, CalendarPlus, Dumbbell, ListPlus, WashingMachine } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { GIORNI_LUNGHI } from "@/lib/date";
@@ -11,11 +11,13 @@ import { RigaEvento } from "../components/AgendaBox";
 import AreaIcona, { iconaTask } from "../components/AreaIcona";
 import FormAllenamento from "./FormAllenamento";
 import FormEvento from "./FormEvento";
+import FormLavatrice from "./FormLavatrice";
 import FormTask from "./FormTask";
 
 type Modo =
   | { tipo: "task"; task: Task | null }
   | { tipo: "allenamento"; task: Task | null }
+  | { tipo: "lavatrice"; task: Task | null }
   | { tipo: "promemoria" | "appuntamento"; evento: Evento | null };
 
 const quando = (t: Task) =>
@@ -31,6 +33,7 @@ const quando = (t: Task) =>
 const RIQUADRI = [
   { id: "task", nome: "Nuova task", sotto: "abitudine o cosa da fare", Icona: ListPlus, classe: "from-amber-500/30 text-amber-300" },
   { id: "allenamento", nome: "Allenamento", sotto: "corsa, palestra, freddo…", Icona: Dumbbell, classe: "from-red-500/30 text-red-300" },
+  { id: "lavatrice", nome: "Lavatrice", sotto: "con promemoria dopo", Icona: WashingMachine, classe: "from-teal-500/30 text-teal-300" },
   { id: "promemoria", nome: "Promemoria", sotto: "una cosa da ricordare", Icona: BellRing, classe: "from-sky-500/30 text-sky-300" },
   { id: "appuntamento", nome: "Appuntamento", sotto: "dottore, dentista, psicologa…", Icona: CalendarPlus, classe: "from-violet-500/30 text-violet-300" },
 ] as const;
@@ -47,7 +50,7 @@ export default function TaskHub() {
   if (!pronto) return null;
 
   const apri = (id: (typeof RIQUADRI)[number]["id"]) =>
-    setModo(id === "task" ? { tipo: "task", task: null } : id === "allenamento" ? { tipo: "allenamento", task: null } : { tipo: id, evento: null });
+    setModo(id === "task" ? { tipo: "task", task: null } : id === "allenamento" ? { tipo: "allenamento", task: null } : id === "lavatrice" ? { tipo: "lavatrice", task: null } : { tipo: id, evento: null });
   const chiudi = () => setModo(null);
 
   // Appuntamenti e promemoria che devono ancora succedere (o promemoria scaduti non fatti)
@@ -88,7 +91,7 @@ export default function TaskHub() {
       </div>
 
       {stato.aree.map((a) => {
-        const lista = stato.task.filter((t) => t.areaId === a.id);
+        const lista = stato.task.filter((t) => t.areaId === a.id && !t.seguitoDi && t.id !== "programmazione-allenamenti");
         return (
           <div key={a.id} id={a.id} className="scroll-mt-4 space-y-2">
             <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide" style={{ color: a.colore }}>
@@ -98,7 +101,7 @@ export default function TaskHub() {
             {lista.map((t) => (
               <div key={t.id} className={`flex items-center gap-3 rounded-2xl bg-card p-3 ${t.attiva ? "" : "opacity-50"}`}>
                 <AreaIcona nome={iconaTask(t, a.icona)} colore={a.colore} size={16} />
-                <button onClick={() => setModo(t.areaId === "allenamento" ? { tipo: "allenamento", task: t } : { tipo: "task", task: t })} className="flex-1 text-left">
+                <button onClick={() => setModo(t.seguito ? { tipo: "lavatrice", task: t } : t.areaId === "allenamento" ? { tipo: "allenamento", task: t } : { tipo: "task", task: t })} className="flex-1 text-left">
                   <div className="font-medium">{t.tipo === "stanza" ? "Sistema una stanza (a rotazione)" : t.titolo}</div>
                   <div className="text-xs text-muted">
                     {quando(t)}
@@ -120,6 +123,7 @@ export default function TaskHub() {
       })}
 
       {modo?.tipo === "task" && <FormTask key={modo.task?.id ?? "nuova"} iniziale={modo.task} onClose={chiudi} />}
+      {modo?.tipo === "lavatrice" && <FormLavatrice key={modo.task?.id ?? "nuova"} iniziale={modo.task} onClose={chiudi} />}
       {modo?.tipo === "allenamento" && <FormAllenamento key={modo.task?.id ?? "nuovo"} iniziale={modo.task} onClose={chiudi} />}
       {(modo?.tipo === "appuntamento" || modo?.tipo === "promemoria") && (
         <FormEvento key={modo.evento?.id ?? modo.tipo} tipo={modo.tipo} iniziale={modo.evento} onClose={chiudi} />

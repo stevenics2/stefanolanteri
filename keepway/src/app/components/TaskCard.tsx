@@ -1,6 +1,7 @@
 "use client";
 
-import { AlarmClock, Check, ChevronDown, Clock, Pencil, Flame, Play, SkipForward, Undo2 } from "lucide-react";
+import { AlarmClock, CalendarClock, Check, ChevronDown, Clock, Pencil, Flame, Play, SkipForward, Undo2 } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { puntiMinima, serie } from "@/lib/regole";
 import { durataMin } from "@/lib/durata";
@@ -183,6 +184,11 @@ export default function TaskCard({ task, soloMinima, senzaOrario = false }: { ta
               <button onClick={() => apriTimer(task.id, true, minima)} className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-black">
                 <Play size={16} fill="currentColor" /> Inizia! ({minima} min)
               </button>
+            )}
+            {task.apre && (
+              <Link href={task.apre} data-suono="via" className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-black">
+                <CalendarClock size={16} /> Apri
+              </Link>
             )}
             <button data-suono="nessuno" onClick={() => { completa(task.id, { minima: soloMinima && !!minima }); setAperta(false); }} className="inline-flex items-center gap-1.5 rounded-xl bg-white/10 px-4 py-2 text-sm">
               <Check size={16} /> Fatta

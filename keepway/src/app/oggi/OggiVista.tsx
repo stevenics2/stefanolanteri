@@ -1,10 +1,10 @@
 "use client";
 
-import { CalendarClock, ChevronRight, Dumbbell, ListChecks, Moon, Plane, Undo2 } from "lucide-react";
+import { CalendarClock, ListChecks, Moon, Plane, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { caricoGiorno } from "@/lib/carico";
-import { dataLunga, giornoSettimana } from "@/lib/date";
+import { dataLunga } from "@/lib/date";
 import { momentoGiusto } from "@/lib/momento";
 import { èIgnorata, èPrevista, inVacanza } from "@/lib/regole";
 import { titoloTask } from "@/lib/stanze";
@@ -23,20 +23,12 @@ import FormEvento from "../task/FormEvento";
 
 // Dalle 18 le task non ancora fatte passano in "prima di dormire". Spenta durante lo sviluppo, per vedere tutto il resto.
 const REGOLA_SERA_ATTIVA = false;
-const CHIAVE_PROGRAMMAZIONE = "keepway-programmazione-allenamenti"; // l'ultima domenica in cui l'hai aperta
 const ORA_SERA = 18;
 
 export default function OggiVista() {
   const { pronto, stato, oggi, adesso, setVacanza, ripristina, impostazioni } = useStore();
   const [mostraTutte, setMostraTutte] = useState(false);
   const [daModificare, setDaModificare] = useState<Evento | null>(null);
-  const [programmazioneVista, setProgrammazioneVista] = useState(() => {
-    try {
-      return localStorage.getItem(CHIAVE_PROGRAMMAZIONE);
-    } catch {
-      return null;
-    }
-  });
   const [scelto, setScelto] = useState<string | null>(null); // il giorno guardato (null = oggi)
   if (!pronto) return null;
 
@@ -64,19 +56,6 @@ export default function OggiVista() {
   const v = stato.impostazioni.vistaOggi as string; // "timeline" è il nome vecchio di "estesa"; "lista" e il vecchio "compatta" sono la vista compatta
   const vista: "compatta" | "estesa" = v === "estesa" || v === "timeline" ? "estesa" : "compatta";
   const giorno = scelto ?? oggi;
-
-  // La domenica sera: «Programmazione allenamenti settimanali» tra le cose da fare prima di dormire (se hai allenamenti automatici)
-  const haAuto = stato.task.some((t) => t.attiva && t.ricorrenza.tipo === "auto");
-  const domenicaSera = giornoSettimana(oggi) === 0 && adesso > 0 && new Date(adesso).getHours() >= 18;
-  const mostraProgrammazione = haAuto && domenicaSera && programmazioneVista !== oggi;
-  const apriProgrammazione = () => {
-    try {
-      localStorage.setItem(CHIAVE_PROGRAMMAZIONE, oggi);
-    } catch {
-      // pazienza
-    }
-    setProgrammazioneVista(oggi);
-  };
 
   return (
     <section className="space-y-5">
@@ -172,7 +151,7 @@ export default function OggiVista() {
         </div>
       )}
 
-      {(mustPrimaDiDormire.length > 0 || mostraProgrammazione) && (
+      {mustPrimaDiDormire.length > 0 && (
         <div className="space-y-2">
           <h2 className="flex items-center gap-2 text-lg font-extrabold uppercase tracking-wide text-amber-300">
             <Moon size={20} /> Must before sleep:
@@ -180,24 +159,6 @@ export default function OggiVista() {
           {mustPrimaDiDormire.map((t) => (
             <TaskCard key={t.id} task={t} soloMinima={soloMinima} />
           ))}
-          {mostraProgrammazione && (
-            <Link
-              href="/task/#allenamento"
-              data-suono="via"
-              onClick={apriProgrammazione}
-              className="flex items-center gap-3 rounded-2xl bg-card px-3 py-2.5"
-              style={{ borderLeft: "4px solid #ef4444" }}
-            >
-              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-500/15">
-                <Dumbbell size={18} color="#ef4444" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block font-semibold leading-tight">Programmazione Allenamenti Settimanali</span>
-                <span className="text-xs text-muted">Guarda e sistema il piano della settimana</span>
-              </span>
-              <ChevronRight size={18} className="shrink-0 text-muted" />
-            </Link>
-          )}
         </div>
       )}
 

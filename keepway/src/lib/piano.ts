@@ -39,6 +39,7 @@ function orariPerGiorno(task: Task, giorno: string, scelto?: { da: number; a: nu
     return [hhmm(f.da)]; // abitudini legate al turno (meditazione, lettura): un promemoria all'inizio del momento giusto
   }
   if (!f) return [];
+  if (task.ricorrenza.tipo === "auto" && f.a - f.da < 60) return [hhmm(f.da)]; // un momento corto (es. la lavatrice): un solo avviso, all'inizio
   const candidati = [f.da + 15, f.da + 15 + 180, f.a - 45].filter((m) => m >= f.da && m <= f.a - 15).sort((a, b) => a - b);
   const scelti: number[] = [];
   for (const m of candidati) if (!scelti.length || m - scelti[scelti.length - 1] >= 90) scelti.push(m);
@@ -97,6 +98,17 @@ export function pianoNotifiche(stato: Stato, ora: number, oggi: string): Notific
         out.push({ id: `rinvio-${task.id}`, quando: rinvio.alle, titolo, testo: "Eccomi, come promesso: è il momento.", url: "/oggi/", tag: task.id });
       }
     }
+  }
+
+  // Il seguito di una task (es. «stendi il bucato»): la notifica arriva all'ora giusta anche in turno; se stai dormendo c'è il non disturbare
+  // e slitta al risveglio.
+  for (const t of stato.task) {
+    if (!t.attiva || !t.visibileDa || !t.notificaTesto) continue;
+    if (stato.completamenti.some((c) => c.taskId === t.id)) continue;
+    let q = t.visibileDa;
+    if (q <= ora) continue;
+    for (let i = 0; i < 96 && èADormire(q); i++) q += 15 * 60_000;
+    out.push({ id: `seguito-${t.id}`, quando: q, titolo: t.titolo, testo: t.notificaTesto, url: "/oggi/", tag: `seguito-${t.id}`, urgente: true });
   }
 
   out.push(...notificheEventi(stato, ora, oggi));
