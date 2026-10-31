@@ -157,7 +157,7 @@ async function prova(env, request) {
   const sub = await env.DB.prepare('SELECT * FROM subs WHERE device_id = ?').bind(device).first();
   if (!sub) return err('Questo telefono non è iscritto alle notifiche', 404);
   const vapid = await chiavi(env, new URL(request.url).origin);
-  const { stato, dettaglio } = await spedisci(env, vapid, sub, { titolo: 'Keepway', testo: 'Le notifiche funzionano. Si parte.', tag: 'prova', urgente: true });
+  const { stato, dettaglio } = await spedisci(env, vapid, sub, { titolo: 'Notifica', testo: 'Le notifiche funzionano. Si parte.', tag: 'prova', urgente: true });
   return json({ ok: stato >= 200 && stato < 300, stato, dettaglio });
 }
 
