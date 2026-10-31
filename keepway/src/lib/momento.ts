@@ -1,7 +1,7 @@
 import { analizzaGiorno, senzaEventi } from "./allenamento";
 import { èPianificata, voceAuto } from "./pianoAuto";
 import { durataMin, durataTotaleMin } from "./durata";
-import { finestraMigliore, finestreLibere, limiteSerale, momentoLettura, momentoMeditazione, type Finestra } from "./sonno";
+import { attesaPerTask, finestraMigliore, finestreLibere, inizioUtile, limiteSerale, momentoLettura, momentoMeditazione, type Finestra } from "./sonno";
 import type { Evento, Task } from "./tipi";
 
 // Il momento giusto di una task in un giorno: quello scelto a mano, oppure quello calcolato dai turni.
@@ -48,7 +48,7 @@ export function momentoAttuale(
     return nuovo ? { finestra: nuovo, spostato: true, primaDiDormire: false, esaurito: false } : { finestra: null, spostato: true, primaDiDormire: false, esaurito: true };
   }
   const fine = èTranquilla(task) ? Math.max(22 * 60 + 30, limiteSerale(data)) : 22 * 60 + 30; // le cose tranquille anche fino a quando vai a letto
-  const liberi = senzaEventi(finestreLibere(data, 8 * 60, fine, bisogno), opz.eventi, data);
+  const liberi = senzaEventi(finestreLibere(data, Math.max(8 * 60, inizioUtile(data, attesaPerTask(task))), fine, bisogno), opz.eventi, data);
   for (const w of liberi) {
     const da = Math.max(w.da, ora);
     const a = Math.min(w.a, da + 120);

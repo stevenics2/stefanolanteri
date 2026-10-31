@@ -5,7 +5,9 @@ export const AREE: Area[] = [
   { id: "allenamento", nome: "Allenamento", colore: "#ef4444", icona: "dumbbell", frase: "Sono uno che si allena" },
   { id: "progetti", nome: "Progetti", colore: "#8b5cf6", icona: "target", frase: "Sono uno che porta a termine le cose" },
   { id: "casa", nome: "Ordine in casa", colore: "#22c55e", icona: "casa", frase: "Sono uno che tiene in ordine" },
-  { id: "abitudini", nome: "Abitudini quotidiane", colore: "#f5a524", icona: "ripeti", frase: "Sono uno costante" },
+  { id: "abitudini", nome: "Abitudini quotidiane", colore: "#f5a524", icona: "alba", frase: "Sono uno costante" },
+  { id: "selfcare", nome: "Self care", colore: "#ec4899", icona: "doccia", frase: "Sono uno che si prende cura di sé" },
+  { id: "commissioni", nome: "Commissioni", colore: "#0ea5e9", icona: "borsa", frase: "Sono uno che sbriga le cose" },
 ];
 
 // Ora corrente in ms. Sta qui (e non dentro i componenti) perché va chiamata solo quando l'utente fa qualcosa, mai durante il disegno.

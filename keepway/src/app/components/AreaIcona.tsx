@@ -1,6 +1,6 @@
 import {
   Activity, Bike, BellRing, BookOpen, Brain, Briefcase, CalendarDays, Car, CookingPot, Dumbbell, Flower2, Footprints, GlassWater, House,
-  PenLine, PersonStanding, Shirt, Repeat, ShoppingCart, Smile, Snowflake, Sparkles, Stethoscope, Target, UtensilsCrossed, Waves, WashingMachine, Wind,
+  PenLine, PersonStanding, Shirt, ShowerHead, ShoppingBasket, Sunrise, Repeat, ShoppingCart, Smile, Snowflake, Sparkles, Stethoscope, Target, UtensilsCrossed, Waves, WashingMachine, Wind,
   type LucideIcon,
 } from "lucide-react";
 import type { Task } from "@/lib/tipi";
@@ -33,6 +33,9 @@ export const MAPPA: Record<string, LucideIcon> = {
   spesa: ShoppingCart,
   lavatrice: WashingMachine,
   bucato: Shirt,
+  alba: Sunrise,
+  doccia: ShowerHead,
+  borsa: ShoppingBasket,
   // appuntamenti e promemoria
   dottore: Stethoscope,
   dentista: Smile,
@@ -61,6 +64,8 @@ export default function AreaIcona({ nome, colore, size = 18, badge = true }: { n
 // la meditazione...), riconosciuta dal nome; altrimenti quella dell'area.
 const PAROLE: [RegExp, string][] = [
   [/lettur|leggi|libro/i, "libro"],
+  [/barba|rasoio|rasarsi|capelli|parrucchier|unghie|denti|skincare|crema|trucco|profum/i, "doccia"],
+  [/posta|banca|pacco|ritirare|commission|farmacia/i, "borsa"],
   [/medit|mindful/i, "loto"],
   [/piatti|stoviglie/i, "piatti"],
   [/stanza|pulis|pulizi|ordin|riordin|aspira|spolver/i, "pulizia"],

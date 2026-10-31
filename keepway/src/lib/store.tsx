@@ -96,7 +96,7 @@ export function useStore(): Contesto {
 }
 
 // Icone: prima erano emoji, ora sono chiavi di icone vere.
-const ICONE_VECCHIE: Record<string, string> = { "💪": "dumbbell", "🎯": "target", "🏠": "casa", "🔁": "ripeti" };
+const ICONE_VECCHIE: Record<string, string> = { "💪": "dumbbell", "🎯": "target", "🏠": "casa", "🔁": "alba", ripeti: "alba" }; // l'icona delle Abitudini è ora il sole che sorge
 
 // Legge i dati dal telefono e li porta all'ultima forma (aggiunge i campi nuovi senza perdere nulla).
 function carica(): Stato {
@@ -124,7 +124,8 @@ function carica(): Stato {
           ...base,
           ...s,
           impostazioni: { ...base.impostazioni, ...s.impostazioni }, // le opzioni nuove prendono il valore predefinito
-          aree: (s.aree ?? base.aree).map((a) => ({ ...a, icona: ICONE_VECCHIE[a.icona] ?? a.icona })),
+          // le aree nuove (Self care, Commissioni) si aggiungono a chi aveva già l'app
+          aree: [...(s.aree ?? base.aree), ...base.aree.filter((b) => !(s.aree ?? base.aree).some((a) => a.id === b.id))].map((a) => ({ ...a, icona: ICONE_VECCHIE[a.icona] ?? a.icona })),
           task,
           stanze: s.stanze ?? base.stanze,
           ignorati: s.ignorati ?? [],

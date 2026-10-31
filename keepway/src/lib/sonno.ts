@@ -273,6 +273,25 @@ export function limiteSerale(data: string): number {
   return s ? s.aLetto - base : 23 * 60 + 30;
 }
 
+// --- Quando si può cominciare una task: un'ora dopo la sveglia (mezz'ora per la meditazione) ---
+export const ATTESA_DOPO_SVEGLIA_MIN = 60;
+export const ATTESA_MEDITAZIONE_MIN = 30;
+const SVEGLIA_RIPOSO_MIN = 9 * 60 + 30; // nei giorni senza un sonno previsto (riposo) ci si sveglia verso le 9:30
+
+// A che ora ti svegli il giorno `data` (minuti dalla mezzanotte): la prima sveglia calcolata di quel giorno (6:00 prima del turno 2,
+// 9:30 prima del 3 e del 4, 14:30 dopo la notte); nei giorni di riposo 9:30.
+export function svegliaDelGiorno(data: string): number {
+  const base = mezzanotte(data);
+  const fine = elencoSonni()
+    .filter((s) => s.sveglia > base && s.sveglia <= base + MIN_GIORNO)
+    .map((s) => s.sveglia - base)
+    .sort((a, b) => a - b)[0];
+  return fine ?? SVEGLIA_RIPOSO_MIN;
+}
+export const attesaPerTask = (t: { id: string; titolo: string }) => (t.id === "meditazione" || /medit/i.test(t.titolo) ? ATTESA_MEDITAZIONE_MIN : ATTESA_DOPO_SVEGLIA_MIN);
+// La prima ora in cui una task può essere suggerita quel giorno.
+export const inizioUtile = (data: string, attesa = ATTESA_DOPO_SVEGLIA_MIN) => svegliaDelGiorno(data) + attesa;
+
 // Dove finisce la giornata utile: la fine dell'ultimo momento libero (tra turni e sonno, entro le 22:30). Minuti dalla mezzanotte.
 export function fineGiornataMin(data: string): number | null {
   const f = finestreLibere(data, 8 * 60, 22 * 60 + 30, 15);
@@ -281,7 +300,7 @@ export function fineGiornataMin(data: string): number | null {
 
 // Il momento libero più lungo della giornata (almeno 45 minuti): quello giusto per una task che richiede tempo.
 export function finestraMigliore(data: string, minimo = 45): Finestra | null {
-  const tutte = finestreLibere(data, 8 * 60, 22 * 60 + 30, Math.max(30, minimo));
+  const tutte = finestreLibere(data, Math.max(8 * 60, inizioUtile(data)), 22 * 60 + 30, Math.max(30, minimo));
   return tutte.reduce<Finestra | null>((m, f) => (!m || f.a - f.da > m.a - m.da ? f : m), null);
 }
 
@@ -326,11 +345,11 @@ export function momentoMeditazione(data: string): Finestra | null {
   const base = mezzanotte(data);
   const riposino = elencoSonni().find((s) => s.tipo === "riposino" && s.aLetto >= base && s.aLetto < base + MIN_GIORNO);
   if (riposino) {
-    const prima = finestreLibere(data, 8 * 60, riposino.aLetto - base, 15).pop();
+    const prima = finestreLibere(data, Math.max(8 * 60, inizioUtile(data, ATTESA_MEDITAZIONE_MIN)), riposino.aLetto - base, 15).pop();
     if (prima) return { da: Math.max(prima.da, prima.a - 60), a: prima.a };
   }
   if (g.codici.includes("2")) return accorcia(finestreLibere(data, 18 * 60, 22 * 60 + 30, 15)[0]);
-  return accorcia(finestreLibere(data, 8 * 60, 12 * 60, 15)[0]);
+  return accorcia(finestreLibere(data, Math.max(8 * 60, inizioUtile(data, ATTESA_MEDITAZIONE_MIN)), 12 * 60, 15)[0]);
 }
 
 // Lettura: se lavori, nelle prime ore del turno (dalle 13:00 -> 13:30–15:00); nei giorni liberi la sera.

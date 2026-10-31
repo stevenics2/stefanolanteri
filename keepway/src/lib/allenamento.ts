@@ -2,7 +2,7 @@ import { giornoEffettivo } from "./calendario";
 import { caricoGiorno } from "./carico";
 import { dataPiù, inizioSettimana } from "./date";
 import { durataMin, durataTotaleMin } from "./durata";
-import { finestreLibere, limiteSerale, oreSonnoPrima, type Finestra } from "./sonno";
+import { attesaPerTask, finestreLibere, inizioUtile, limiteSerale, oreSonnoPrima, type Finestra } from "./sonno";
 import type { Evento, PianoVoce, Stato, Task } from "./tipi";
 import { èPianificata } from "./pianoAuto";
 
@@ -62,7 +62,7 @@ function analizzaFaccenda(task: Task, data: string, eventi: Evento[], dopoMin = 
   if (g && g.codici.includes("1") && g.codici.includes("4")) return { slot: null, qualita: 0, nota: "", motivo: "1+4: giornata troppo pesante" };
   const serve = durataMin(task) || 15;
   const dopo = task.seguito?.dopoMin ?? 0;
-  const liberi = senzaEventi(finestreLibere(data, Math.max(8 * 60, dopoMin), 22 * 60 + 30, 15), eventi, data);
+  const liberi = senzaEventi(finestreLibere(data, Math.max(8 * 60, dopoMin, inizioUtile(data, attesaPerTask(task))), 22 * 60 + 30, 15), eventi, data);
   const adatti = liberi.filter((f) => f.a - f.da >= serve);
   if (adatti.length === 0) return { slot: null, qualita: 0, nota: "", motivo: "nessun momento libero" };
   for (const f of adatti) {
@@ -88,7 +88,7 @@ function analizzaGenerica(task: Task, data: string, eventi: Evento[], dopoMin = 
   const [da, a, nota] =
     task.fascia === "mattina" ? [8 * 60, 13 * 60, "mattina"] : task.fascia === "pomeriggio" ? [13 * 60, 19 * 60, "pomeriggio"] : task.fascia === "sera" ? [18 * 60, sera, "prima di dormire"] : [8 * 60, sera, "quando sei libero"];
   const serveMin = durataTotaleMin(task);
-  const liberi = senzaEventi(finestreLibere(data, Math.max(da, dopoMin), a, 15), eventi, data).filter((f) => f.a - f.da >= serveMin);
+  const liberi = senzaEventi(finestreLibere(data, Math.max(da, dopoMin, inizioUtile(data, attesaPerTask(task))), a, 15), eventi, data).filter((f) => f.a - f.da >= serveMin); // mai prima di un'ora dopo la sveglia (mezz'ora per la meditazione)
   if (liberi.length === 0) return { slot: null, qualita: 0, nota, motivo: "nessun momento libero adatto" };
   const f = liberi[0];
   return { slot: { da: f.da, a: f.da + serveMin }, qualita: (g?.riposo ? 3 : carico === "normale" ? 2 : 1), nota };
@@ -102,7 +102,7 @@ export function analizzaGiorno(task: Task, data: string, eventi: Evento[], dopoM
   const e = regolaAllenamento(data);
   if ("motivo" in e) return { slot: null, qualita: 0, nota: "", motivo: e.motivo };
   const serve = durataTotaleMin(task);
-  const liberi = senzaEventi(finestreLibere(data, Math.max(e.regola.dopo, dopoMin), e.regola.prima, 15), eventi, data).filter((f) => f.a - f.da >= serve);
+  const liberi = senzaEventi(finestreLibere(data, Math.max(e.regola.dopo, dopoMin, inizioUtile(data)), e.regola.prima, 15), eventi, data).filter((f) => f.a - f.da >= serve);
   if (liberi.length === 0) return { slot: null, qualita: 0, nota: e.regola.nota, motivo: "nessun momento libero abbastanza lungo" };
   const f = liberi[0];
   return { slot: { da: f.da, a: f.da + serve }, qualita: e.regola.qualita, nota: e.regola.nota };

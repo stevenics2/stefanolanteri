@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarClock, CalendarCog } from "lucide-react";
+import { CalendarClock, CalendarCog, Clock } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { proposte, analizzaGiorno, type Proposta } from "@/lib/allenamento";
 import { GIORNI_LUNGHI, giornoSettimana } from "@/lib/date";
@@ -108,15 +108,14 @@ function Contenuto({
                         {p.voci.map((v) => {
                           const nota = analizzaGiorno(bozza, v.data, stato.eventi).nota;
                           return (
-                            <div key={v.data} className="flex items-center justify-between gap-3 rounded-xl bg-ov/10 px-3 py-2.5">
-                              <div>
-                                <div className="font-semibold capitalize">{GIORNI_LUNGHI[giornoSettimana(v.data)]} {Number(v.data.slice(8))}</div>
-                                {nota && <div className="text-[11px] text-muted">{nota}</div>}
-                              </div>
-                              <div className="text-right text-lg font-extrabold tabular-nums text-accent">
-                                {v.da !== undefined ? hhmm(v.da) : "—"}
-                                {v.a !== undefined && <span className="block text-[10px] font-semibold text-muted">fino alle {hhmm(v.a)}</span>}
-                              </div>
+                            <div key={v.data} className="rounded-xl bg-ov/10 px-3 py-2.5">
+                              <div className="text-base font-bold capitalize">{GIORNI_LUNGHI[giornoSettimana(v.data)]} {Number(v.data.slice(8))}</div>
+                              {v.da !== undefined && v.a !== undefined && (
+                                <div className="mt-1 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-300">
+                                  <Clock size={12} /> Orario suggerito: {hhmm(v.da)}–{hhmm(v.a)}
+                                </div>
+                              )}
+                              {nota && <div className="mt-1 text-[11px] text-muted">{nota}</div>}
                             </div>
                           );
                         })}

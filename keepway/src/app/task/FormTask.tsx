@@ -85,10 +85,18 @@ export default function FormTask({ iniziale, onClose }: { iniziale: Task | null;
 
       <div>
         <Etichetta>Di che area è?</Etichetta>
-        <div className="grid grid-cols-4 gap-2">
+        {/* Una sola riga che scorre di lato: le aree sono sei e non entrerebbero con il nome intero */}
+        <div className="no-scrollbar -mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1">
           {stato.aree.map((a) => (
-            <Riquadro key={a.id} attivo={areaId === a.id} nome={a.nome.split(" ")[0]} onClick={() => setAreaId(a.id)}
-              icona={<AreaIcona nome={a.icona} colore="currentColor" size={22} badge={false} />} />
+            <button
+              key={a.id}
+              type="button"
+              onClick={() => setAreaId(a.id)}
+              className={`flex min-w-[5.6rem] shrink-0 snap-start flex-col items-center gap-1.5 rounded-2xl border px-2 py-3 text-xs font-medium ${areaId === a.id ? "chip-on border-accent bg-accent/15 text-accent" : "border-transparent bg-ov/10"}`}
+            >
+              <AreaIcona nome={a.icona} colore="currentColor" size={22} badge={false} />
+              <span className="whitespace-nowrap">{a.nome.replace(" quotidiane", "").replace("Ordine in casa", "Ordine")}</span>
+            </button>
           ))}
         </div>
       </div>
@@ -178,12 +186,12 @@ export default function FormTask({ iniziale, onClose }: { iniziale: Task | null;
       </div>
 
       <div className="space-y-2">
-        <div className="flex items-start gap-3 rounded-2xl bg-ov/5 px-4 py-3 text-sm">
-          <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white"><Check size={13} strokeWidth={3} /></span>
+        <div className="flex items-center justify-between gap-3 rounded-2xl bg-ov/5 px-4 py-3 text-sm">
           <span>
             <span className="block font-medium">Adatta ai turni e agli impegni</span>
-            <span className="block text-xs text-muted">Suggerisce il momento libero tra turni, sonno e appuntamenti e ti avvisa lì. Sempre attivo.</span>
+            <span className="block text-xs text-muted">Suggerisce il momento libero tra turni, sonno e appuntamenti e ti avvisa</span>
           </span>
+          <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white" aria-label="Sempre attivo"><Check size={15} strokeWidth={3} /></span>
         </div>
         <Interruttore valore={essenziale} onChange={setEssenziale}>Essenziale: resta anche nei giorni pesanti</Interruttore>
         <Interruttore valore={soloACasa} onChange={setSoloACasa}>Si fa solo a casa (sparisce quando sei fuori)</Interruttore>
