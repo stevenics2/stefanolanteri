@@ -1,6 +1,6 @@
 import { dataPiù, giornoSettimana } from "./date";
 import { giornata, serie } from "./regole";
-import { finestreLibere, èInSilenzio } from "./sonno";
+import { finestreLibere, situazioneAdesso } from "./sonno";
 import type { Stato } from "./tipi";
 
 export type Tono = "bene" | "medio" | "male";
@@ -57,9 +57,17 @@ export function feedbackApertura(stato: Stato, oggi: string, ora: Date): Feedbac
   // Il lunedì il messaggio di inizio settimana ha la precedenza su tutto, anche se sei in turno (leggere si può fare anche al lavoro)
   if (lunedi && trasc < 0.7) return { tono: "bene", testo: scegli(["Nuova settimana: il boss è a vita piena. Attacca!", "Lunedì: tutto da fare e tutto da vincere."]) };
 
-  // Niente di fatto. Se sei in turno o stai dormendo non ha senso dire "il tempo corre": sei impegnato
-  if (èInSilenzio(ora.getTime()) && (trasc === null || trasc < 0.9)) {
-    return { tono: "medio", testo: scegli(["Adesso sei impegnato: al prossimo momento libero, una task alla volta.", "Sei in turno: quando stacchi, parti dalla più facile.", "Ora tocca al lavoro. Le task ti aspettano dopo."]) };
+  // Niente di fatto. Se sei davvero in turno, o stai per andarci, o hai appena aperto gli occhi, non ha senso dire "il tempo corre":
+  // ognuno ha il suo messaggio (prima uno solo, anche quando eri solo appena sveglio, e parlava di lavoro)
+  const adesso = situazioneAdesso(ora.getTime());
+  if (adesso === "turno" && (trasc === null || trasc < 0.9)) {
+    return { tono: "medio", testo: scegli(["Sei in turno: quando stacchi, parti dalla più facile.", "Ora tocca al lavoro. Le task ti aspettano dopo.", "Sei al lavoro: le task possono aspettare il tuo turno."]) };
+  }
+  if (adesso === "prima_turno" && (trasc === null || trasc < 0.9)) {
+    return { tono: "medio", testo: scegli(["Tra poco inizi il turno: se riesci, una task piccola prima di uscire.", "Il turno sta per iniziare: le task ti aspettano dopo."]) };
+  }
+  if (adesso === "sonno" && (trasc === null || trasc < 0.9)) {
+    return { tono: "bene", testo: scegli(["Buongiorno! Parti con calma, una task alla volta.", "Sveglia! La giornata è ancora tutta da giocare.", "Appena sveglio: la più facile, poi si vede."]) };
   }
 
   // Niente di fatto: dipende da quanto è avanzata la giornata

@@ -186,6 +186,17 @@ export function èInSilenzio(ms: number): boolean {
   return silenzioMin(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 60000 + d.getHours() * 60 + d.getMinutes());
 }
 
+// Cosa stai facendo in un istante: in turno, tra poco in turno (mezz'ora prima), a dormire, o libero.
+export function situazioneAdesso(ms: number): "turno" | "prima_turno" | "sonno" | null {
+  const d = new Date(ms);
+  const m = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 60000 + d.getHours() * 60 + d.getMinutes();
+  const blocchi = blocchiEffettivi();
+  if (blocchi.some((b) => m >= b.inizio && m < b.fine)) return "turno";
+  if (blocchi.some((b) => m >= b.inizio - 30 && m < b.inizio)) return "prima_turno";
+  if (elencoSonni().some((x) => m >= x.aLetto && m < x.sveglia)) return "sonno";
+  return null;
+}
+
 // Solo il sonno (non il turno): per i promemoria che hanno senso anche a lavoro, come la lettura.
 export function èADormire(ms: number): boolean {
   const d = new Date(ms);
