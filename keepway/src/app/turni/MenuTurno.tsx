@@ -119,7 +119,15 @@ function MenuGiorno({ data, onClose, onVai }: { data: string; onClose: () => voi
   const selezione = sposta ? finale : nuovi; // quella da controllare
   const combinazioneOk = sposta ? finale.length > 0 && combinazioneValida(finale) : riposo || nuovi.length <= 1 || combinazioneValida(nuovi);
   const cambioValido = sposta ? !ge.riposo && !!altro && combinazioneOk : combinazioneOk && (riposo || nuovi.length > 0);
-  const disponibiliExtra = extraConsentiti(ge.codici); // solo i doppi consentiti: 2+3, 3+4, 1+4
+  // Straordinario: su un turno ordinario se ne aggiunge UNO solo (si forma un doppio consentito: 2+3, 3+4, 1+4);
+  // in un giorno di riposo se ne possono aggiungere DUE (che insieme formano un doppio consentito).
+  const giornoDiRiposo = ge.codici.length === 0;
+  const disponibiliExtra = giornoDiRiposo ? ["1", "2", "3", "4"] : extraConsentiti(ge.codici);
+  const scegliExtra = (c: string) => {
+    if (extra.includes(c)) return setExtra(extra.filter((x) => x !== c));
+    if (!giornoDiRiposo || extra.length !== 1 || !combinazioneValida([...extra, c])) return setExtra([c]); // si sostituisce la scelta
+    setExtra([...extra, c]);
+  };
 
   return (
     <Schermo titolo={dataLunga(data).replace(/^./, (c) => c.toUpperCase())} onClose={onClose}>
@@ -254,13 +262,15 @@ function MenuGiorno({ data, onClose, onVai }: { data: string; onClose: () => voi
             <Etichetta>Quale turno ti chiedono in più?</Etichetta>
             <div className="flex flex-wrap gap-2">
               {disponibiliExtra.map((c) => (
-                <Chip key={c} attivo={extra.includes(c)} onClick={() => attivaCodice(extra, setExtra, c)}>{c}</Chip>
+                <Chip key={c} attivo={extra.includes(c)} onClick={() => scegliExtra(c)}>{c}</Chip>
               ))}
             </div>
             <p className="mt-2 text-xs text-muted">
               {disponibiliExtra.length === 0
                 ? "Questo giorno ha già un doppio turno: non se ne può aggiungere altri."
-                : `Doppi possibili: ${DOPPI_CONSENTITI.join(", ")}. Mai 1+3, 4+1 o altre combinazioni.`}
+                : giornoDiRiposo
+                  ? `Giorno di riposo: puoi aggiungere fino a due turni, che insieme formano un doppio possibile (${DOPPI_CONSENTITI.join(", ")}).`
+                  : `Su un turno ordinario puoi aggiungere un solo turno (${DOPPI_CONSENTITI.join(", ")}).`}
             </p>
           </div>
           <p className="text-sm text-muted">

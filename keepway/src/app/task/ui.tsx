@@ -9,12 +9,13 @@ export function Etichetta({ children }: { children: ReactNode }) {
   return <div className="mb-1.5 text-sm font-medium text-muted">{children}</div>;
 }
 
-export function Chip({ attivo, onClick, children }: { attivo: boolean; onClick: () => void; children: ReactNode }) {
+export function Chip({ attivo, onClick, children, disabilitato = false }: { attivo: boolean; onClick: () => void; children: ReactNode; disabilitato?: boolean }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${attivo ? "bg-accent text-black" : "bg-ov/10"}`}
+      disabled={disabilitato}
+      className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${attivo ? "bg-accent text-black" : "bg-ov/10"} ${disabilitato ? "opacity-30" : ""}`}
     >
       {children}
     </button>
