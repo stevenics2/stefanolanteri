@@ -50,7 +50,7 @@ type Contesto = {
   oggi: string;
   adesso: number; // ora corrente (ms), aggiornata ogni 30 secondi; 0 finché i dati non sono pronti
   xp: number;
-  completa: (taskId: string, opzioni: { minima: boolean; minuti?: number; daTimer?: boolean }) => void;
+  completa: (taskId: string, opzioni: { minima: boolean; minuti?: number; daTimer?: boolean; punti?: number }) => void;
   annulla: (completamentoId: string) => void;
   salvaTask: (t: Task) => void;
   eliminaTask: (id: string) => void;
@@ -255,7 +255,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const completa: Contesto["completa"] = useCallback(
-    (taskId, { minima, minuti, daTimer }) => {
+    (taskId, { minima, minuti, daTimer, punti: puntiBase }) => {
       const s = ref.current;
       const t = s.task.find((x) => x.id === taskId);
       if (!t) return;
@@ -273,7 +273,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         riferimento = oggiC[i].ts;
       }
       const moltiplicatore = catena >= COMBO_MINIMO ? MOLTIPLICATORE_COMBO : 1;
-      const punti = Math.round((minima ? puntiMinima(t.punti) : t.punti) * moltiplicatore);
+      const punti = Math.round((puntiBase ?? (minima ? puntiMinima(t.punti) : t.punti)) * moltiplicatore);
       const bonus = Math.random() < 0.1 ? 5 + Math.floor(Math.random() * 11) : 0; // colpo di fortuna
       const durata = minuti ?? (minima ? t.minimaMin : t.durataMin) ?? 0;
       const stanza = t.tipo === "stanza" ? stanzaDelGiorno(s.stanze, s.completamenti, t.id, data).stanza : null;

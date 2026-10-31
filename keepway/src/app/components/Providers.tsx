@@ -8,6 +8,8 @@ import RecapFlash from "./RecapFlash";
 import Ricompense from "./Ricompense";
 import TemaApplicato from "./TemaApplicato";
 import SincronizzaNotifiche from "./SincronizzaNotifiche";
+import SincronizzaSalute from "./SincronizzaSalute";
+import AvvisoSalute from "./AvvisoSalute";
 import TimerSchermo from "./TimerSchermo";
 
 // Tutto ciò che deve vivere sopra ogni schermata: dati, timer e ricompense.
@@ -23,6 +25,8 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <FeedbackTocco />
       <TemaApplicato />
       <SincronizzaNotifiche />
+      <SincronizzaSalute />
+      <AvvisoSalute />
     </StoreProvider>
   );
 }

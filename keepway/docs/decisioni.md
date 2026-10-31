@@ -232,3 +232,11 @@
 - Prova del grassetto nelle notifiche: la prima riga degli esempi usa lettere Unicode «in grassetto» (Mathematical Sans-Serif Bold; le accentate = lettera + accento combinato). Il testo di una notifica non ha stili veri: solo il titolo è in grassetto e noi lo teniamo invisibile. Limiti: righe più larghe (si tagliano prima), VoiceOver le legge male, la ricerca non le trova. Da usare su tutte solo se la prova piace.
 
 - Il grassetto Unicode è applicato alla prima riga di tutte le notifiche (inGrassetto in lib/piano.ts; la prima riga si accorcia a 34 caratteri perché le lettere sono più larghe). Le notifiche arrivano anche su Apple Watch. Il pulsante di prova si chiama «Prova con testi veri».
+
+## Salute: allenamenti dall'iPhone e controllo delle 22:30
+- Il Comando Rapido può mandare anche gli allenamenti (`allenamento`, `minuti`, `km`, `inizio`): il server li salva (tabella `allenamenti`, una riga per tipo+giorno+ora di inizio, quindi il doppione si fonde) e ricorda l'ultimo invio (`ultimo`).
+- Corsa/palestra di oggi → la task corrispondente si completa da sola (la task più lunga se ce ne sono due dello stesso tipo). Corsa: XP = 10 per km (almeno i punti della task). Gli allenamenti già usati si ricordano: se annulli, non si rifà.
+- 22:30: notifica «Nessuna attività ricevuta oggi» (solo se almeno una volta è arrivato un dato). Il server la manda solo se oggi non è arrivato niente (colonna `salvo` = impronta del codice). In turno/a dormire slitta di 15 in 15 minuti. Popup nell'app dopo le 22:30 con «Sincronizza» (apre `shortcuts://run-shortcut?name=Keepway Salute`) e «Non ora» (per oggi non ricompare).
+- Impostazioni: «Ultima sincronizzazione» + ultimo allenamento + guida riscritta con tre automazioni (fine allenamento, sveglia, orari fissi).
+- Non verificabile qui: i nomi esatti delle azioni dei Comandi Rapidi, l'automazione «fine allenamento», l'apertura del Comando dal popup. Il server si aggiorna solo con il deploy Cloudflare.
+- Rimandato: sonno reale → giornata più leggera dopo notte corta, debito di sonno, orari di letto personalizzati.

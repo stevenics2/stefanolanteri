@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { datiInCache, scaricaSalute, type GiornoSalute } from "./salute";
+import { datiInCache, scaricaSalute, type DatiSalute, type GiornoSalute } from "./salute";
 
-// I dati di salute più recenti (sonno e passi). Si scaricano quando si apre la schermata e ogni 10 minuti; offline restano quelli dell'ultima volta.
-export function useSalute(giorni = 14) {
-  const [dati, setDati] = useState<GiornoSalute[] | null>(null);
+// I dati dall'iPhone (sonno, passi, allenamenti, ultimo invio). Si scaricano quando si apre la schermata, ogni 10 minuti e al rientro nell'app;
+// offline restano quelli dell'ultima volta.
+export function useDatiSalute(giorni = 14): DatiSalute | null {
+  const [dati, setDati] = useState<DatiSalute | null>(null);
   useEffect(() => {
     let spento = false;
     const carica = () =>
@@ -23,4 +24,9 @@ export function useSalute(giorni = 14) {
     };
   }, [giorni]);
   return dati;
+}
+
+// Solo l'elenco dei giorni (sonno e passi), come prima.
+export function useSalute(giorni = 14): GiornoSalute[] | null {
+  return useDatiSalute(giorni)?.giorni ?? null;
 }

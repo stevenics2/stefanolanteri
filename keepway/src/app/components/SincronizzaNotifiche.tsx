@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { inviaPiano, registraSW, riallineaIscrizione, statoPush } from "@/lib/notifiche";
 import { pianoNotifiche } from "@/lib/piano";
+import { codiceSalute, ultimoDatoRicevuto } from "@/lib/salute";
 import { useStore } from "@/lib/store";
 
 const CHIAVE_ALLINEA = "keepway.allineato";
@@ -34,7 +35,7 @@ export default function SincronizzaNotifiche() {
           await riallineaIscrizione();
           localStorage.setItem(CHIAVE_ALLINEA, String(Date.now()));
         }
-        await inviaPiano(pianoNotifiche(stato, Date.now(), oggi));
+        await inviaPiano(pianoNotifiche(stato, Date.now(), oggi, ultimoDatoRicevuto() !== null), codiceSalute());
       } catch {
         // offline o server non raggiungibile: si riprova al prossimo cambiamento
       }

@@ -15,6 +15,10 @@ const SCHEMA = [
   'CREATE INDEX IF NOT EXISTS piano_quando ON piano (quando)',
   // dati di salute mandati dal Comando Rapido dell'iPhone: uno per giorno; `codice` = impronta del codice personale (il codice vero non si salva)
   'CREATE TABLE IF NOT EXISTS salute (codice TEXT NOT NULL, giorno TEXT NOT NULL, passi INTEGER, sonno_min INTEGER, letto TEXT, sveglia TEXT, aggiornato INTEGER NOT NULL, PRIMARY KEY (codice, giorno))',
+  // allenamenti (corsa, palestra…) mandati dal Comando Rapido a fine workout; `inizio` evita i doppioni se lo stesso workout arriva due volte
+  'CREATE TABLE IF NOT EXISTS allenamenti (codice TEXT NOT NULL, giorno TEXT NOT NULL, tipo TEXT NOT NULL, inizio TEXT NOT NULL, minuti INTEGER, km REAL, aggiornato INTEGER NOT NULL, PRIMARY KEY (codice, giorno, tipo, inizio))',
+  // l'ultima volta che da quel codice è arrivato qualcosa (serve alla notifica «nessuna attività ricevuta oggi»)
+  'CREATE TABLE IF NOT EXISTS ultimo (codice TEXT PRIMARY KEY, quando INTEGER NOT NULL)',
 ];
 
 const PUSH_HOSTS = /^(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9.-]+\.push\.apple\.com|[a-z0-9.-]+\.notify\.windows\.com)$/i;
@@ -44,6 +48,8 @@ let schemaPronto = false;
 async function schema(env) {
   if (schemaPronto) return;
   await env.DB.batch(SCHEMA.map((q) => env.DB.prepare(q)));
+  // colonna aggiunta dopo: `salvo` = impronta del codice; la notifica non parte se da quel codice oggi è già arrivato qualcosa
+  await env.DB.prepare('ALTER TABLE piano ADD COLUMN salvo TEXT').run().catch(() => {}); // già presente: ok
   schemaPronto = true;
 }
 
@@ -113,6 +119,7 @@ async function salvaPiano(env, request) {
   const device = String(d?.deviceId || '');
   if (!DEVICE.test(device) || !Array.isArray(d.items)) return err('Dati non validi');
   const ora = Date.now();
+  const salvo = CODICE.test(String(d.codice ?? '')) ? await impronta(String(d.codice)) : null;
   const righe = [];
   for (const it of d.items.slice(0, MAX_PIANO)) {
     const quando = Number(it?.quando);
@@ -120,8 +127,8 @@ async function salvaPiano(env, request) {
     const id = clip(it.id, 80);
     if (!id) continue;
     righe.push(
-      env.DB.prepare('INSERT OR REPLACE INTO piano (device_id, id, quando, titolo, testo, url, tag, urgente) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-        .bind(device, id, Math.round(quando), clip(it.titolo, 100) || 'Keepway', clip(it.testo, 240), clip(it.url, 100) || '/oggi/', clip(it.tag, 40), it.urgente ? 1 : 0),
+      env.DB.prepare('INSERT OR REPLACE INTO piano (device_id, id, quando, titolo, testo, url, tag, urgente, salvo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+        .bind(device, id, Math.round(quando), clip(it.titolo, 100) || 'Keepway', clip(it.testo, 240), clip(it.url, 100) || '/oggi/', clip(it.tag, 40), it.urgente ? 1 : 0, it.senzaDati ? salvo : null),
     );
   }
   await env.DB.batch([env.DB.prepare('DELETE FROM piano WHERE device_id = ?').bind(device), ...righe]);
@@ -208,6 +215,11 @@ async function tick(env) {
   for (const n of dovute) {
     const sub = await env.DB.prepare('SELECT * FROM subs WHERE device_id = ?').bind(n.device_id).first();
     if (!sub) continue;
+    if (n.salvo) {
+      // «nessuna attività ricevuta oggi»: se oggi è arrivato qualcosa, non serve
+      const u = await env.DB.prepare('SELECT quando FROM ultimo WHERE codice = ?').bind(n.salvo).first();
+      if (u && oggiRoma(u.quando) === oggiRoma(ora)) continue;
+    }
     esiti.push((await spedisci(env, vapid, sub, n)).stato);
   }
   return `inviate ${esiti.filter((s) => s >= 200 && s < 300).length}/${dovute.length}`;
@@ -219,7 +231,7 @@ const impronta = async (testo) => {
   const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(testo));
   return [...new Uint8Array(h)].map((b) => b.toString(16).padStart(2, '0')).join('');
 };
-const oggiRoma = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome' }).format(new Date()); // AAAA-MM-GG
+const oggiRoma = (quando = Date.now()) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome' }).format(new Date(quando)); // AAAA-MM-GG
 
 // Un numero scritto "all'italiana" dal Comando Rapido: "8.421" (migliaia), "6,7" (decimali), "8421".
 function numero(v) {
@@ -239,6 +251,15 @@ function sonnoInMinuti(v) {
 }
 const ora = (v) => (/^([01]?\d|2[0-3])[:.]([0-5]\d)$/.test(String(v ?? '').trim()) ? String(v).trim().replace('.', ':').replace(/^(\d):/, '0$1:') : null);
 
+// Il nome del workout come lo scrive Salute («Corsa», «Running», «Allenamento di forza»…) → corsa / palestra / altro
+function tipoAllenamento(v) {
+  const t = String(v ?? '').trim().toLowerCase();
+  if (!t) return null;
+  if (/cors|run|jog/.test(t)) return 'corsa';
+  if (/palestra|forza|strength|gym|functional|funzion|pesi|hiit|cross/.test(t)) return 'palestra';
+  return 'altro';
+}
+
 async function inviaSalute(env, url, request) {
   const dati = request.method === 'POST' ? (await leggiJson(request)) ?? {} : Object.fromEntries(url.searchParams);
   const t = String(dati.t ?? url.searchParams.get('t') ?? '');
@@ -248,7 +269,20 @@ async function inviaSalute(env, url, request) {
   const sonno = sonnoInMinuti(dati.sonno);
   const letto = ora(dati.letto);
   const sveglia = ora(dati.sveglia);
-  if (passi === null && sonno === null && !letto && !sveglia) return err('Nessun dato da salvare');
+  const tipo = tipoAllenamento(dati.allenamento);
+  const minuti = numero(dati.minuti);
+  const km = numero(dati.km);
+  if (passi === null && sonno === null && !letto && !sveglia && !tipo) return err('Nessun dato da salvare');
+  const cod = await impronta(t);
+  await env.DB.prepare('INSERT INTO ultimo (codice, quando) VALUES (?, ?) ON CONFLICT(codice) DO UPDATE SET quando = excluded.quando').bind(cod, Date.now()).run();
+  if (tipo) {
+    const inizio = ora(dati.inizio) ?? '00:00';
+    await env.DB.prepare(
+      `INSERT INTO allenamenti (codice, giorno, tipo, inizio, minuti, km, aggiornato) VALUES (?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(codice, giorno, tipo, inizio) DO UPDATE SET minuti = COALESCE(excluded.minuti, minuti), km = COALESCE(excluded.km, km), aggiornato = excluded.aggiornato`,
+    ).bind(cod, giorno, tipo, inizio, minuti === null ? null : Math.round(minuti), km, Date.now()).run();
+    if (passi === null && sonno === null && !letto && !sveglia) return json({ ok: true, giorno, allenamento: tipo, minuti, km });
+  }
   await env.DB.prepare(
     `INSERT INTO salute (codice, giorno, passi, sonno_min, letto, sveglia, aggiornato) VALUES (?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(codice, giorno) DO UPDATE SET passi = COALESCE(excluded.passi, passi), sonno_min = COALESCE(excluded.sonno_min, sonno_min),
@@ -264,13 +298,17 @@ async function leggiSalute(env, url) {
   const giorni = Math.min(60, Math.max(1, Number(url.searchParams.get('giorni')) || 14));
   const { results } = await env.DB.prepare('SELECT giorno, passi, sonno_min, letto, sveglia, aggiornato FROM salute WHERE codice = ? ORDER BY giorno DESC LIMIT ?')
     .bind(await impronta(t), giorni).all();
-  return json({ giorni: results.map((r) => ({ giorno: r.giorno, passi: r.passi, sonnoMin: r.sonno_min, letto: r.letto, sveglia: r.sveglia, aggiornato: r.aggiornato })) });
+  const cod = await impronta(t);
+  const { results: al } = await env.DB.prepare('SELECT giorno, tipo, inizio, minuti, km FROM allenamenti WHERE codice = ? ORDER BY giorno DESC, inizio DESC LIMIT 60').bind(cod).all();
+  const u = await env.DB.prepare('SELECT quando FROM ultimo WHERE codice = ?').bind(cod).first();
+  return json({ ultimo: u?.quando ?? null, allenamenti: al, giorni: results.map((r) => ({ giorno: r.giorno, passi: r.passi, sonnoMin: r.sonno_min, letto: r.letto, sveglia: r.sveglia, aggiornato: r.aggiornato })) });
 }
 
 async function cancellaSalute(env, url) {
   const t = String(url.searchParams.get('t') ?? '');
   if (!CODICE.test(t)) return err('Codice non valido', 401);
-  await env.DB.prepare('DELETE FROM salute WHERE codice = ?').bind(await impronta(t)).run();
+  const c = await impronta(t);
+  await env.DB.batch(['salute', 'allenamenti', 'ultimo'].map((tab) => env.DB.prepare(`DELETE FROM ${tab} WHERE codice = ?`).bind(c)));
   return json({ ok: true });
 }
 

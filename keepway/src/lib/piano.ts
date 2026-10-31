@@ -19,6 +19,7 @@ export type Notifica = {
   tag: string;
   urgente?: boolean;
   emoji?: string; // l'emoji davanti alla prima riga
+  senzaDati?: boolean; // il server la manda solo se oggi dall'iPhone non è arrivato niente
 };
 
 // Come arriva sul telefono: il titolo è un carattere invisibile (così non si legge «Notifica» o il nome dell'app due volte) e il testo ha
@@ -82,7 +83,25 @@ function orariPerGiorno(task: Task, giorno: string, ctx: { oggi: string; adessoM
 //  - i promemoria delle task, ripetuti nella giornata fino a quando non sono fatte
 //  - "più tardi" scelto dall'utente
 // Si ricalcola a ogni cambiamento: se fai o salti una task, i promemoria successivi spariscono.
-export function pianoNotifiche(stato: Stato, ora: number, oggi: string): Notifica[] {
+// Ora oltre la quale, se dall'iPhone non è arrivato niente, si avvisa (notifica + popup nell'app).
+export const ORA_CONTROLLO_SALUTE = "22:30";
+
+// Una notifica per sera, solo se in passato hai già sincronizzato almeno una volta (senza dati mai arrivati non avrebbe senso).
+// Se a quell'ora sei in turno o stai dormendo, slitta al primo momento libero. Il server la manda solo se oggi non è arrivato niente.
+function notificheSalute(ora: number, oggi: string, haSincronizzato: boolean): Notifica[] {
+  if (!haSincronizzato) return [];
+  const out: Notifica[] = [];
+  for (let i = 0; i <= GIORNI_AVANTI; i++) {
+    const giorno = dataPiù(oggi, i);
+    let quando = istante(giorno, ORA_CONTROLLO_SALUTE);
+    for (let n = 0; n < 12 && èInSilenzio(quando); n++) quando += 15 * 60_000;
+    if (quando <= ora) continue;
+    out.push({ id: `salute-${giorno}`, quando, emoji: "🔄", titolo: "Nessuna attività ricevuta oggi", testo: "Tocca per sincronizzare", url: "/oggi/?sincronizza=1", tag: "salute", urgente: true, senzaDati: true });
+  }
+  return out;
+}
+
+export function pianoNotifiche(stato: Stato, ora: number, oggi: string, haSincronizzato = false): Notifica[] {
   const out: Notifica[] = [];
 
   const t = stato.timer;
@@ -145,6 +164,7 @@ export function pianoNotifiche(stato: Stato, ora: number, oggi: string): Notific
   }
 
   out.push(...notificheSonno(ora));
+  out.push(...notificheSalute(ora, oggi, haSincronizzato));
   out.push(...notificheEventi(stato, ora, oggi));
   out.push(...notificheTurniDaSistemare(ora, oggi));
 

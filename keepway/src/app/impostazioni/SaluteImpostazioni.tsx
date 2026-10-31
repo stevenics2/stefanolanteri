@@ -2,12 +2,22 @@
 
 import { Check, Copy, HeartPulse } from "lucide-react";
 import { useState } from "react";
-import { cancellaSalute, codiceSalute, indirizzoInvio, oreMinuti, rigeneraCodice } from "@/lib/salute";
-import { useSalute } from "@/lib/useSalute";
+import { cancellaSalute, codiceSalute, indirizzoInvio, linkSincronizza, oreMinuti, rigeneraCodice } from "@/lib/salute";
+import { useDatiSalute } from "@/lib/useSalute";
+
+const quandoFa = (ms: number) => {
+  const min = Math.max(0, Math.round((Date.now() - ms) / 60_000));
+  if (min < 1) return "adesso";
+  if (min < 60) return `${min} min fa`;
+  if (min < 1440) return `${Math.round(min / 60)} h fa`;
+  return `${Math.round(min / 1440)} giorni fa`;
+};
 
 // Sonno e passi dall'Apple Watch: li legge un Comando Rapido dell'iPhone (che ha il permesso per l'app Salute) e li manda a Keepway.
 export default function SaluteImpostazioni() {
-  const dati = useSalute(14);
+  const tutti = useDatiSalute(14);
+  const dati = tutti?.giorni;
+  const ultimoAllenamento = tutti?.allenamenti[0];
   const [copiato, setCopiato] = useState(false);
   const [codice, setCodice] = useState(() => codiceSalute());
   const indirizzo = codice ? indirizzoInvio() : "";
@@ -32,6 +42,19 @@ export default function SaluteImpostazioni() {
       </p>
 
       <div className="space-y-3 rounded-2xl bg-card p-4">
+        <div className="flex items-center justify-between gap-3 text-sm">
+          <span>
+            Ultima sincronizzazione: <b>{tutti?.ultimo ? quandoFa(tutti.ultimo) : "mai"}</b>
+          </span>
+          <a href={linkSincronizza()} data-suono="nessuno" className="shrink-0 rounded-xl bg-ov/10 px-3 py-1.5 text-xs font-semibold">Sincronizza</a>
+        </div>
+        {ultimoAllenamento && (
+          <div className="text-sm text-muted">
+            Ultimo allenamento: {ultimoAllenamento.tipo} · {ultimoAllenamento.giorno}
+            {ultimoAllenamento.minuti ? ` · ${ultimoAllenamento.minuti} min` : ""}
+            {ultimoAllenamento.km ? ` · ${ultimoAllenamento.km.toLocaleString("it-IT")} km` : ""}
+          </div>
+        )}
         <div className="text-sm">
           {ultimo ? (
             <>
@@ -55,27 +78,37 @@ export default function SaluteImpostazioni() {
       <details className="rounded-2xl bg-card p-4 text-sm">
         <summary className="cursor-pointer font-semibold">Come creare il Comando rapido (una volta sola)</summary>
         <ol className="mt-3 list-decimal space-y-2 pl-5">
-          <li>Apri <b>Comandi rapidi</b>, tocca <b>+</b> e chiamalo <b>Keepway Salute</b>.</li>
+          <li>Apri <b>Comandi rapidi</b>, tocca <b>+</b> e chiamalo esattamente <b>Keepway Salute</b> (il pulsante «Sincronizza» lo cerca con questo nome).</li>
           <li>
-            <b>Passi.</b> Aggiungi <b>Trova campioni di Salute</b>: tipo <b>Passi</b>, data di inizio <b>è oggi</b>. Poi aggiungi <b>Calcola statistica</b> (<b>Somma</b>) e dai al risultato il nome <b>Passi</b> (azione <b>Imposta variabile</b>).
+            <b>Passi.</b> Aggiungi <b>Trova campioni di Salute</b>: tipo <b>Passi</b>, data di inizio <b>è oggi</b>. Poi <b>Calcola statistica</b> (<b>Somma</b>) e <b>Imposta variabile</b> con nome <b>Passi</b>.
           </li>
           <li>
-            <b>Sonno.</b> Aggiungi <b>Trova campioni di Salute</b>: tipo <b>Analisi del sonno</b>, data di fine <b>è oggi</b>, e valore <b>Core, Profondo, REM</b> (se c&apos;è anche «Addormentato», includilo). Poi <b>Ottieni dettagli dei campioni di Salute</b> → <b>Durata</b>, e <b>Calcola statistica</b> → <b>Somma</b>. Chiamalo <b>Sonno</b>.
+            <b>Sonno.</b> <b>Trova campioni di Salute</b>: tipo <b>Analisi del sonno</b>, data di fine <b>è oggi</b>, valori <b>Core, Profondo, REM</b>. Poi <b>Ottieni dettagli</b> → <b>Durata</b>, <b>Calcola statistica</b> → <b>Somma</b>, variabile <b>Sonno</b>.
           </li>
           <li>
-            <b>A letto e sveglia.</b> Un secondo <b>Trova campioni di Salute</b> sul sonno di oggi, ordinato per <b>Data di inizio</b> dal più vecchio, limite <b>1</b> → <b>Ottieni dettagli</b>: <b>Data di inizio</b> → <b>Formatta data</b> con formato personalizzato <b>HH:mm</b> → chiamalo <b>Letto</b>. Lo stesso, ordinando per <b>Data di fine</b> dal più recente e prendendo <b>Data di fine</b>, per <b>Sveglia</b>.
+            <b>A letto e sveglia.</b> Un altro <b>Trova campioni di Salute</b> sul sonno di oggi, ordinato per <b>Data di inizio</b> dal più vecchio, limite <b>1</b> → <b>Ottieni dettagli</b>: <b>Data di inizio</b> → <b>Formatta data</b> con formato personalizzato <b>HH:mm</b>, variabile <b>Letto</b>. Lo stesso ordinando per <b>Data di fine</b> dal più recente, per <b>Sveglia</b>.
           </li>
           <li>
-            Infine <b>Ottieni contenuti dell&apos;URL</b> con questo indirizzo, scrivendo di seguito e inserendo le variabili: <span className="break-all font-mono text-[11px]">{indirizzo || "…"}&amp;passi=<i>Passi</i>&amp;sonno=<i>Sonno</i>&amp;letto=<i>Letto</i>&amp;sveglia=<i>Sveglia</i></span>
+            Aggiungi <b>Ottieni contenuti dell&apos;URL</b> con questo indirizzo e le variabili: <span className="break-all font-mono text-[11px]">{indirizzo || "…"}&amp;passi=<i>Passi</i>&amp;sonno=<i>Sonno</i>&amp;letto=<i>Letto</i>&amp;sveglia=<i>Sveglia</i></span>
           </li>
-          <li>Toccalo una volta a mano: l&apos;iPhone chiede il permesso di leggere Salute e di inviare i dati. Poi controlla qui sopra: deve comparire «Ultimo dato ricevuto».</li>
           <li>
-            <b>In automatico.</b> In Comandi rapidi → <b>Automazione</b> → <b>Ora del giorno</b> (per esempio 12:00 e 22:30) → esegui <b>Keepway Salute</b> e scegli <b>Esegui subito</b> (così non chiede conferma ogni volta).
+            <b>Allenamenti.</b> Aggiungi <b>Trova campioni di Salute</b>: tipo <b>Allenamenti</b>, data di inizio <b>è oggi</b>. Poi <b>Ripeti con ciascun elemento</b> e, dentro, un altro <b>Ottieni contenuti dell&apos;URL</b> con: <span className="break-all font-mono text-[11px]">{indirizzo || "…"}&amp;allenamento=<i>Tipo</i>&amp;minuti=<i>Durata</i>&amp;km=<i>Distanza</i>&amp;inizio=<i>Ora di inizio</i></span> (<i>Ora di inizio</i> = <b>Data di inizio</b> con <b>Formatta data</b> <b>HH:mm</b>; la distanza va in <b>km</b>, e per la palestra non serve).
+            Se lo stesso allenamento arriva due volte non c&apos;è problema: Keepway lo riconosce e lo conta una volta sola.
           </li>
+          <li>Toccalo una volta a mano: l&apos;iPhone chiede i permessi per Salute e per inviare i dati. Poi guarda qui sopra: deve comparire «Ultimo dato ricevuto».</li>
+        </ol>
+
+        <h3 className="mt-4 font-semibold">Farlo partire da solo: tre automazioni</h3>
+        <p className="mt-1 text-xs text-muted">In Comandi rapidi → <b>Automazione</b> → <b>+</b>. In tutte scegli <b>Esegui subito</b> (così non chiede conferma) e come azione <b>Esegui comando rapido</b> → <b>Keepway Salute</b>.</p>
+        <ol className="mt-2 list-decimal space-y-2 pl-5">
+          <li><b>Fine allenamento</b> (Apple Watch: «Allenamento» → «Termina»): subito dopo una corsa o la palestra la task si segna da sola.</li>
+          <li><b>Sveglia</b> (Sveglia → «Quando mi sveglio»): porta a Keepway l&apos;orario vero del risveglio e quanto hai dormito.</li>
+          <li><b>Ora del giorno</b>, per esempio <b>12:00</b>, <b>18:00</b> e <b>22:30</b>: sono la rete di sicurezza, nel caso le prime due non partano.</li>
         </ol>
         <p className="mt-3 text-xs text-muted">
-          I nomi delle azioni possono cambiare un po&apos; a seconda della versione di iOS. Se non hai tutti i dati va bene lo stesso: puoi mandare anche solo i passi, o solo il sonno.
-          Il sonno può arrivare in ore, minuti o secondi: Keepway lo riconosce da solo. Se il Comando rapido ti dà qualche difficoltà dimmi a che punto sei e lo sistemiamo insieme.
+          Attenzione: con l&apos;iPhone bloccato l&apos;app Salute è protetta e il comando può non leggere niente. Per questo conviene lasciare qualche orario fisso, e usare il popup di Keepway («Sincronizza») quando serve.
+          Alle <b>22:30</b>, se oggi non è arrivato nulla, Keepway ti manda una notifica (solo se in passato hai già sincronizzato) e un popup con il pulsante «Sincronizza».
+          I nomi delle azioni possono cambiare un po&apos; con la versione di iOS: se non hai tutti i dati va bene lo stesso, puoi mandare anche solo una parte. Il sonno può arrivare in ore, minuti o secondi: Keepway lo riconosce.
         </p>
       </details>
 
