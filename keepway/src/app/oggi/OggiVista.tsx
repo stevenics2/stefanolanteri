@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { caricoGiorno } from "@/lib/carico";
 import { dataLunga } from "@/lib/date";
+import { eventiDelGiorno } from "@/lib/eventi";
+import { hhmm } from "@/lib/sonno";
 import { momentoGiusto } from "@/lib/momento";
 import { èIgnorata, èPrevista, inVacanza } from "@/lib/regole";
 import { titoloTask } from "@/lib/stanze";
@@ -15,6 +17,9 @@ import RiepilogoOggi from "../components/RiepilogoOggi";
 import SonnoCard from "../components/SonnoCard";
 import TurniDaSistemare from "../components/TurniDaSistemare";
 import TaskCard from "../components/TaskCard";
+import GiornataInBreve from "../components/GiornataInBreve";
+import GiornoSeguente from "../components/GiornoSeguente";
+import StrisciaGiorni from "../components/StrisciaGiorni";
 import Timeline from "../components/Timeline";
 import FormEvento from "../task/FormEvento";
 
@@ -26,6 +31,8 @@ export default function OggiVista() {
   const { pronto, stato, oggi, adesso, setVacanza, ripristina, impostazioni } = useStore();
   const [mostraTutte, setMostraTutte] = useState(false);
   const [daModificare, setDaModificare] = useState<Evento | null>(null);
+  const [scelto, setScelto] = useState<string | null>(null); // il giorno guardato (null = oggi)
+  const [tutteLeTask, setTutteLeTask] = useState(false);
   if (!pronto) return null;
 
   const carico = caricoGiorno(oggi);
@@ -49,7 +56,25 @@ export default function OggiVista() {
   const mustPrimaDiDormire = daFare.filter(primaDiDormire).sort(ordina);
 
   const soloMinima = carico === "essenziale" && !mostraTutte;
-  const timeline = stato.impostazioni.vistaOggi === "timeline";
+  const v = stato.impostazioni.vistaOggi as string; // "timeline" è il nome vecchio di "estesa"
+  const vista: "lista" | "compatta" | "estesa" = v === "lista" || v === "compatta" ? v : "estesa";
+  const giorno = scelto ?? oggi;
+
+  // Cosa viene dopo: la prima task (col suo momento consigliato) o il primo appuntamento da adesso in poi
+  const nowMin = adesso > 0 ? new Date(adesso).getHours() * 60 + new Date(adesso).getMinutes() : 0;
+  const eventiOggi = eventiDelGiorno(stato.eventi, oggi, oggi);
+  const candidati = [
+    ...cosaOggi.filter((t) => !èFatta(t)).flatMap((t) => {
+      const m = momentoGiusto(t, oggi, stato.momenti.find((x) => x.taskId === t.id && x.data === oggi));
+      return m && m.a > nowMin ? [{ da: Math.max(m.da, nowMin), testo: m.da <= nowMin ? `ora · ${titoloTask(t, stato, oggi)}` : `${hhmm(m.da)} · ${titoloTask(t, stato, oggi)}` }] : [];
+    }),
+    ...eventiOggi.filter((e) => e.ora && !e.fatto).flatMap((e) => {
+      const m = Number(e.ora!.slice(0, 2)) * 60 + Number(e.ora!.slice(3));
+      return m >= nowMin ? [{ da: m, testo: `${e.ora} · ${e.titolo}` }] : [];
+    }),
+  ].sort((a, b) => a.da - b.da);
+  const prossimo = candidati[0]?.testo ?? null;
+  const daFareOra = cosaOggi.filter((t) => !èFatta(t));
 
   return (
     <section className="space-y-5">
@@ -69,21 +94,27 @@ export default function OggiVista() {
           </button>
         )}
         <div className="inline-flex rounded-full bg-white/10 p-0.5 text-xs" role="group" aria-label="Vista">
-          {([["lista", "Lista", ListChecks], ["timeline", "Timeline", CalendarClock]] as const).map(([v, nome, Icona]) => (
+          {([["lista", "Lista"], ["compatta", "Compatta"], ["estesa", "Estesa"]] as const).map(([vv, nome]) => (
             <button
-              key={v}
+              key={vv}
               data-suono="via"
-              onClick={() => impostazioni({ vistaOggi: v })}
-              aria-pressed={stato.impostazioni.vistaOggi === v}
-              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-semibold ${stato.impostazioni.vistaOggi === v ? "bg-white text-black" : "text-muted"}`}
+              onClick={() => impostazioni({ vistaOggi: vv })}
+              aria-pressed={vista === vv}
+              className={`rounded-full px-2.5 py-1 font-semibold ${vista === vv ? "bg-white text-black" : "text-muted"}`}
             >
-              <Icona size={12} /> {nome}
+              {nome}
             </button>
           ))}
         </div>
         </div>
       </div>
 
+      <StrisciaGiorni oggi={oggi} selezionato={giorno} onScegli={(d) => setScelto(d === oggi ? null : d)} />
+
+      {giorno !== oggi ? (
+        <GiornoSeguente data={giorno} onApri={setDaModificare} />
+      ) : (
+      <>
       <RiepilogoOggi fatte={fatte} totale={daFare.length} />
 
       <TurniDaSistemare />
@@ -115,9 +146,20 @@ export default function OggiVista() {
         </button>
       )}
 
-      {!timeline && <AgendaOggi onModifica={setDaModificare} />}
+      {vista !== "lista" && (
+        <GiornataInBreve
+          data={oggi}
+          nTask={daFare.length}
+          nImpegni={eventiOggi.length}
+          prossimo={prossimo}
+          espansa={vista === "estesa"}
+          onEspandi={() => impostazioni({ vistaOggi: vista === "estesa" ? "compatta" : "estesa" })}
+        />
+      )}
 
-      {timeline && (
+      {vista !== "estesa" && <AgendaOggi onModifica={setDaModificare} />}
+
+      {vista === "estesa" && (
         <div className="space-y-2">
           <h2 className="flex items-center gap-2 text-lg font-bold">
             <CalendarClock size={20} className="text-accent" /> La tua giornata
@@ -126,7 +168,23 @@ export default function OggiVista() {
         </div>
       )}
 
-      {!timeline && cosaOggi.length > 0 && (
+      {vista === "compatta" && cosaOggi.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="flex items-center gap-2 text-lg font-bold">
+            <ListChecks size={20} className="text-accent" /> Prossime
+          </h2>
+          {(tutteLeTask ? cosaOggi : [...daFareOra.slice(0, 3), ...(daFareOra.length === 0 ? cosaOggi.slice(0, 3) : [])]).map((t) => (
+            <TaskCard key={t.id} task={t} soloMinima={soloMinima} />
+          ))}
+          {cosaOggi.length > (daFareOra.length === 0 ? 3 : Math.min(3, daFareOra.length)) && (
+            <button onClick={() => setTutteLeTask((x) => !x)} className="text-sm text-muted underline">
+              {tutteLeTask ? "Mostra meno" : `Mostra tutte (${cosaOggi.length})`}
+            </button>
+          )}
+        </div>
+      )}
+
+      {vista === "lista" && cosaOggi.length > 0 && (
         <div className="space-y-2">
           <h2 className="flex items-center gap-2 text-lg font-bold">
             <ListChecks size={20} className="text-accent" /> Il piano di oggi
@@ -173,6 +231,9 @@ export default function OggiVista() {
 
       {/* Il sonno chiude la giornata: sta in fondo, dopo tutto il resto */}
       <SonnoCard />
+
+      </>
+      )}
 
       {daModificare && <FormEvento key={daModificare.id} tipo={daModificare.tipo} iniziale={daModificare} onClose={() => setDaModificare(null)} />}
     </section>

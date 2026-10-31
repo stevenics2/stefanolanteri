@@ -92,7 +92,7 @@ export type Modifica = {
 // Punti extra che non vengono da una task: il forziere di fine giornata e il boss della settimana.
 export type Bonus = { id: string; data: string; xp: number; tipo: "forziere" | "boss"; testo: string; da: string /* il completamento che lo ha fatto scattare */ };
 
-export type Impostazioni = { suoni: boolean; animazioni: boolean; vibrazione: boolean; suonoTocco: boolean; vistaOggi: "lista" | "timeline" };
+export type Impostazioni = { suoni: boolean; animazioni: boolean; vibrazione: boolean; suonoTocco: boolean; vistaOggi: "lista" | "compatta" | "estesa" };
 
 export type TimerAttivo = {
   taskId: string;
