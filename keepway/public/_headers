@@ -9,3 +9,6 @@
   Cache-Control: no-cache
 /sw.js
   Cache-Control: no-cache
+
+/sounds/*
+  Cache-Control: public, max-age=86400

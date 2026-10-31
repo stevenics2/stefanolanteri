@@ -28,9 +28,42 @@ function nota(freq: number, inizio: number, durata: number, volume = 0.15, onda:
   osc.stop(ctx.currentTime + inizio + durata);
 }
 
+// Suoni registrati (file in public/sounds): si caricano una volta, poi si riproducono dal contesto audio già attivato dal tocco.
+// Se il file non c'è o non si carica, si usa il suono sintetizzato.
+const CAMPIONI: Record<string, string> = { incasso: "/sounds/incasso.mp3" };
+const buffers = new Map<string, AudioBuffer>();
+const inCaricamento = new Set<string>();
+
+async function caricaCampione(nome: string) {
+  if (!ctx || buffers.has(nome) || inCaricamento.has(nome)) return;
+  inCaricamento.add(nome);
+  try {
+    const r = await fetch(CAMPIONI[nome]);
+    if (!r.ok) return;
+    buffers.set(nome, await ctx.decodeAudioData(await r.arrayBuffer()));
+  } catch {
+    // resta il suono sintetizzato
+  } finally {
+    inCaricamento.delete(nome);
+  }
+}
+
+function suonaCampione(nome: string, volume = 0.8): boolean {
+  const b = buffers.get(nome);
+  if (!ctx || !b) return false;
+  const sorgente = ctx.createBufferSource();
+  sorgente.buffer = b;
+  const g = ctx.createGain();
+  g.gain.value = volume;
+  sorgente.connect(g).connect(ctx.destination);
+  sorgente.start();
+  return true;
+}
+
 function avviaAudio() {
   const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
   if (!ctx || ctx.state === "closed") ctx = new AC();
+  for (const nome of Object.keys(CAMPIONI)) void caricaCampione(nome); // si preparano subito, così sono pronti quando servono
   // Su iPhone, dopo che l'app è stata in background (o lo schermo bloccato), l'audio passa a "interrupted" e resta muto
   // finché non lo si riattiva: quindi si riattiva ogni volta che non sta già suonando, non solo se è "suspended".
   if (ctx.state !== "running") void ctx.resume().catch(() => {});
@@ -193,7 +226,7 @@ export function suono(tipo: Suono) {
   try {
     avviaAudio();
     if (tipo === "incasso") {
-      incasso();
+      if (!suonaCampione("incasso")) incasso(); // la registrazione se è pronta, altrimenti il tintinnio sintetizzato
       return;
     }
     if (tipo === "slot") {

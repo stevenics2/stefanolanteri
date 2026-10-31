@@ -160,3 +160,5 @@
 - Commenti all'apertura: corretto il caso «sei al lavoro» detto a chi era appena sveglio o ancora nel sonno previsto. Ora si distingue (situazioneAdesso in lib/sonno.ts): in turno = messaggi sul lavoro; mezz'ora prima del turno = «tra poco inizi il turno»; nel sonno previsto = «Buongiorno! Parti con calma»; altrimenti i messaggi sul ritmo della giornata.
 
 - Suono «incasso» (straordinario e cambio turno pagato): non più la cassa «CHA-CHING» ma monete: una cascata di 10 tintinnii metallici sempre più fitti (note inarmoniche acute con un clic di metallo), poi il «ding» di moneta presa a due note e un ultimo tintinnio. Circa 1,3 s.
+
+- Suono «incasso» (turni pagati): ora è la registrazione 'Cha-Ching' dell'utente (public/sounds/incasso.mp3: tagliata la parte muta iniziale, mono, 2,3 s, dissolvenza finale). Si carica al primo tocco e si riproduce dal contesto audio; se non è pronta o non si carica resta il tintinnio di monete sintetizzato. Altri suoni registrati si aggiungono in CAMPIONI (lib/effetti.ts). Nota: se un giorno l'app sarà per altri utenti, controllare i diritti del file.
