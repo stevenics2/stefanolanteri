@@ -5,6 +5,7 @@ import { dataPiù, GIORNI_LUNGHI, giornoSettimana } from "@/lib/date";
 import { serie } from "@/lib/regole";
 import { useStore } from "@/lib/store";
 import Livello from "../components/Livello";
+import SaluteCard from "../components/SaluteCard";
 
 export default function ProgressiVista() {
   const { pronto, stato, oggi } = useStore();
@@ -30,6 +31,8 @@ export default function ProgressiVista() {
     <section className="stagger space-y-5">
       <h1 className="text-2xl font-bold">Progressi</h1>
       <Livello />
+
+      <SaluteCard />
 
       <div className="rounded-2xl bg-card p-4">
         <div className="text-sm text-muted">Punti negli ultimi 7 giorni</div>

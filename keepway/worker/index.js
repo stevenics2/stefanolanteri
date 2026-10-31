@@ -13,6 +13,8 @@ const SCHEMA = [
   // le notifiche programmate: quando = istante di invio (ms dal 1970)
   'CREATE TABLE IF NOT EXISTS piano (device_id TEXT NOT NULL, id TEXT NOT NULL, quando INTEGER NOT NULL, titolo TEXT NOT NULL, testo TEXT, url TEXT, tag TEXT, urgente INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (device_id, id))',
   'CREATE INDEX IF NOT EXISTS piano_quando ON piano (quando)',
+  // dati di salute mandati dal Comando Rapido dell'iPhone: uno per giorno; `codice` = impronta del codice personale (il codice vero non si salva)
+  'CREATE TABLE IF NOT EXISTS salute (codice TEXT NOT NULL, giorno TEXT NOT NULL, passi INTEGER, sonno_min INTEGER, letto TEXT, sveglia TEXT, aggiornato INTEGER NOT NULL, PRIMARY KEY (codice, giorno))',
 ];
 
 const PUSH_HOSTS = /^(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9.-]+\.push\.apple\.com|[a-z0-9.-]+\.notify\.windows\.com)$/i;
@@ -179,6 +181,67 @@ async function tick(env) {
   return `inviate ${esiti.filter((s) => s >= 200 && s < 300).length}/${dovute.length}`;
 }
 
+// --- Salute: i dati arrivano dal Comando Rapido dell'iPhone (che legge l'app Salute) con un indirizzo web e un codice personale. ---
+const CODICE = /^[A-Za-z0-9]{24,64}$/;
+const impronta = async (testo) => {
+  const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(testo));
+  return [...new Uint8Array(h)].map((b) => b.toString(16).padStart(2, '0')).join('');
+};
+const oggiRoma = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome' }).format(new Date()); // AAAA-MM-GG
+
+// Un numero scritto "all'italiana" dal Comando Rapido: "8.421" (migliaia), "6,7" (decimali), "8421".
+function numero(v) {
+  if (v === null || v === undefined || String(v).trim() === '') return null;
+  let t = String(v).trim().replace(/\s/g, '');
+  if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)) t = t.replace(/\./g, '').replace(',', '.');
+  else t = t.replace(',', '.');
+  const n = Number(t);
+  return Number.isFinite(n) && n >= 0 ? n : null;
+}
+// Il sonno può arrivare in ore (6,7), minuti (402) o secondi (24120): si capisce dal valore.
+function sonnoInMinuti(v) {
+  const n = numero(v);
+  if (n === null) return null;
+  const minuti = n <= 24 ? n * 60 : n <= 1500 ? n : n / 60;
+  return Math.round(Math.min(minuti, 1440));
+}
+const ora = (v) => (/^([01]?\d|2[0-3])[:.]([0-5]\d)$/.test(String(v ?? '').trim()) ? String(v).trim().replace('.', ':').replace(/^(\d):/, '0$1:') : null);
+
+async function inviaSalute(env, url, request) {
+  const dati = request.method === 'POST' ? (await leggiJson(request)) ?? {} : Object.fromEntries(url.searchParams);
+  const t = String(dati.t ?? url.searchParams.get('t') ?? '');
+  if (!CODICE.test(t)) return err('Codice non valido', 401);
+  const giorno = /^\d{4}-\d{2}-\d{2}$/.test(String(dati.giorno ?? '')) ? dati.giorno : oggiRoma();
+  const passi = numero(dati.passi);
+  const sonno = sonnoInMinuti(dati.sonno);
+  const letto = ora(dati.letto);
+  const sveglia = ora(dati.sveglia);
+  if (passi === null && sonno === null && !letto && !sveglia) return err('Nessun dato da salvare');
+  await env.DB.prepare(
+    `INSERT INTO salute (codice, giorno, passi, sonno_min, letto, sveglia, aggiornato) VALUES (?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(codice, giorno) DO UPDATE SET passi = COALESCE(excluded.passi, passi), sonno_min = COALESCE(excluded.sonno_min, sonno_min),
+       letto = COALESCE(excluded.letto, letto), sveglia = COALESCE(excluded.sveglia, sveglia), aggiornato = excluded.aggiornato`,
+  ).bind(await impronta(t), giorno, passi === null ? null : Math.round(passi), sonno, letto, sveglia, Date.now()).run();
+  await env.DB.prepare('DELETE FROM salute WHERE aggiornato < ?').bind(Date.now() - 400 * 86_400_000).run(); // si tiene poco più di un anno
+  return json({ ok: true, giorno, passi: passi === null ? null : Math.round(passi), sonnoMin: sonno, letto, sveglia });
+}
+
+async function leggiSalute(env, url) {
+  const t = String(url.searchParams.get('t') ?? '');
+  if (!CODICE.test(t)) return err('Codice non valido', 401);
+  const giorni = Math.min(60, Math.max(1, Number(url.searchParams.get('giorni')) || 14));
+  const { results } = await env.DB.prepare('SELECT giorno, passi, sonno_min, letto, sveglia, aggiornato FROM salute WHERE codice = ? ORDER BY giorno DESC LIMIT ?')
+    .bind(await impronta(t), giorni).all();
+  return json({ giorni: results.map((r) => ({ giorno: r.giorno, passi: r.passi, sonnoMin: r.sonno_min, letto: r.letto, sveglia: r.sveglia, aggiornato: r.aggiornato })) });
+}
+
+async function cancellaSalute(env, url) {
+  const t = String(url.searchParams.get('t') ?? '');
+  if (!CODICE.test(t)) return err('Codice non valido', 401);
+  await env.DB.prepare('DELETE FROM salute WHERE codice = ?').bind(await impronta(t)).run();
+  return json({ ok: true });
+}
+
 const gestore = {
   async scheduled(_event, env, ctx) {
     if (!env.DB) return; // database non ancora collegato
@@ -198,6 +261,9 @@ const gestore = {
       if (p === '/api/push/unsubscribe' && m === 'POST') return await disiscrivi(env, request);
       if (p === '/api/push/test' && m === 'POST') return await prova(env, request);
       if (p === '/api/piano' && m === 'PUT') return await salvaPiano(env, request);
+      if (p === '/api/salute/invia' && (m === 'GET' || m === 'POST')) return await inviaSalute(env, url, request); // anche GET: più facile da fare nei Comandi Rapidi
+      if (p === '/api/salute' && m === 'GET') return await leggiSalute(env, url);
+      if (p === '/api/salute/cancella' && (m === 'POST' || m === 'DELETE')) return await cancellaSalute(env, url);
       return err('Not found', 404);
     } catch (e) {
       console.log('errore api', String(e));

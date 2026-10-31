@@ -3,10 +3,11 @@
 import Interr from "../components/Interruttore";
 import Segmentato from "../components/Segmentato";
 import { AlarmClock, Moon, Plane, Plus, Sun, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { inVacanza } from "@/lib/regole";
 import { useStore } from "@/lib/store";
 import AreaIcona from "../components/AreaIcona";
+import SaluteImpostazioni from "./SaluteImpostazioni";
 import NotificheImpostazioni from "./NotificheImpostazioni";
 
 export default function ImpostazioniVista() {
@@ -14,6 +15,12 @@ export default function ImpostazioniVista() {
   const [nuovaStanza, setNuovaStanza] = useState("");
   const [dal, setDal] = useState("");
   const [al, setAl] = useState("");
+  // Un indirizzo con # (es. /impostazioni/#salute) porta alla sezione, anche se i dati arrivano dopo
+  useEffect(() => {
+    if (!pronto || !window.location.hash) return;
+    const id = window.location.hash.slice(1);
+    requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ block: "start" }));
+  }, [pronto]);
   if (!pronto) return null;
 
   const esporta = () => {
@@ -75,6 +82,8 @@ export default function ImpostazioniVista() {
       </div>
 
       <NotificheImpostazioni />
+
+      <SaluteImpostazioni />
 
       <div id="sveglia" className="space-y-2">
         <h2 className={`${titolo} flex items-center gap-2`}><AlarmClock size={15} /> Sveglia dell&apos;iPhone</h2>
