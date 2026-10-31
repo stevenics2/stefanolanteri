@@ -31,8 +31,22 @@ const EMOJI_ICONA: Record<string, string> = {
   dottore: "🩺", dentista: "🦷", psicologa: "🧠", lavoro: "💼", auto: "🚗", calendario: "📅", promemoria: "🔔",
 };
 const emojiDi = (chiave: string) => EMOJI_ICONA[chiave] ?? "💡"; // senza un'icona precisa: la lampadina
-// Schema: «→ cosa» sulla prima riga; sulla seconda il dettaglio e, in fondo, l'emoji.
-export const comeArriva = (n: Notifica): Notifica => ({ ...n, titolo: "\u2800", testo: `→ ${corta(n.titolo, RIGA_MAX - 2)}\n${corta(n.testo, n.emoji ? RIGA_MAX - 3 : RIGA_MAX)}${n.emoji ? ` ${n.emoji}` : ""}`, emoji: undefined });
+// Lettere «in grassetto» (Unicode, Mathematical Sans-Serif Bold): il testo di una notifica non ha stili, ma questi caratteri sembrano grassetto.
+// Le accentate = lettera in grassetto + accento combinato. Sono più larghe, quindi la prima riga si accorcia prima.
+export function inGrassetto(testo: string): string {
+  const mappa = (c: string) => {
+    const k = c.codePointAt(0)!;
+    if (k >= 65 && k <= 90) return String.fromCodePoint(0x1d5d4 + k - 65); // A-Z
+    if (k >= 97 && k <= 122) return String.fromCodePoint(0x1d5ee + k - 97); // a-z
+    if (k >= 48 && k <= 57) return String.fromCodePoint(0x1d7ec + k - 48); // 0-9
+    return c;
+  };
+  return [...testo.normalize("NFD")].map(mappa).join("").normalize("NFC");
+}
+const RIGA_GRASSETTO_MAX = 34;
+
+// Schema: «→ cosa» (in grassetto) sulla prima riga; sulla seconda il dettaglio e, in fondo, l'emoji.
+export const comeArriva = (n: Notifica): Notifica => ({ ...n, titolo: "\u2800", testo: `→ ${inGrassetto(corta(n.titolo, RIGA_GRASSETTO_MAX))}\n${corta(n.testo, n.emoji ? RIGA_MAX - 3 : RIGA_MAX)}${n.emoji ? ` ${n.emoji}` : ""}`, emoji: undefined });
 
 const GIORNI_AVANTI = 2; // oggi + i prossimi 2 giorni
 const MAX_NOTIFICHE = 150;

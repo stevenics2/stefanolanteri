@@ -94,7 +94,7 @@ export default function NotificheImpostazioni() {
               <BellOff size={16} /> Disattiva
             </button>
           </div>
-          <div className="text-xs text-muted">Prova con il titolo invisibile e due testi a caso di notifiche vere (compiti, sonno, appuntamenti, turni):</div>
+          <div className="text-xs text-muted">Due testi a caso di notifiche vere (compiti, sonno, appuntamenti, turni):</div>
           <button
             disabled={occupato}
             onClick={() => esegui(async () => {
@@ -103,7 +103,7 @@ export default function NotificheImpostazioni() {
             })}
             className="w-full rounded-xl bg-ov/10 py-2.5 text-sm disabled:opacity-50"
           >
-            Prova con testi veri (titolo invisibile)
+            Prova con testi veri
           </button>
         </div>
       )}
