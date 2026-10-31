@@ -5,6 +5,7 @@ import { giorniTra } from "./eventi";
 import { èIgnorata, èPrevista } from "./regole";
 import { momentoAttuale } from "./momento";
 import { èADormire, èInSilenzio, hhmm, istanteDaMinutiAssoluti, situazioneAdesso, sonniPrevisti } from "./sonno";
+import { iconaTask } from "../app/components/AreaIcona";
 import { titoloTask } from "./stanze";
 import type { Stato, Task } from "./tipi";
 
@@ -17,7 +18,20 @@ export type Notifica = {
   url: string;
   tag: string;
   urgente?: boolean;
+  emoji?: string; // l'emoji davanti alla prima riga
 };
+
+// Come arriva sul telefono: il titolo è un carattere invisibile (così non si legge «Notifica» o il nome dell'app due volte) e il testo ha
+// due righe: l'emoji e cosa, poi il dettaglio (corto, per non essere tagliato con «…»).
+const RIGA_MAX = 44;
+const corta = (t: string) => (t.length > RIGA_MAX ? `${t.slice(0, RIGA_MAX - 1).trimEnd()}…` : t);
+const EMOJI_ICONA: Record<string, string> = {
+  libro: "📖", loto: "🧘", piatti: "🍽️", pulizia: "🧹", lavatrice: "🧺", bucato: "👕", doccia: "🚿", borsa: "🛍️", acqua: "💧", respiro: "🌬️",
+  diario: "✍️", corsa: "🏃", camminata: "🚶", palestra: "💪", freddo: "🧊", stretching: "🤸", yoga: "🧘", bici: "🚴", nuoto: "🏊", cucina: "🍳", spesa: "🛒",
+  dottore: "🩺", dentista: "🦷", psicologa: "🧠", lavoro: "💼", auto: "🚗", calendario: "📅", promemoria: "🔔",
+};
+const emojiDi = (chiave: string) => EMOJI_ICONA[chiave] ?? "✅";
+export const comeArriva = (n: Notifica): Notifica => ({ ...n, titolo: "\u2800", testo: `${n.emoji ? `${n.emoji} ` : ""}${corta(n.titolo)}\n${corta(n.testo)}`, emoji: undefined });
 
 const GIORNI_AVANTI = 2; // oggi + i prossimi 2 giorni
 const MAX_NOTIFICHE = 150;
@@ -61,7 +75,7 @@ export function pianoNotifiche(stato: Stato, ora: number, oggi: string): Notific
     const task = stato.task.find((x) => x.id === t.taskId);
     const quando = t.inizio + t.pausaTotale + t.durataSec * 1000;
     if (task && quando > ora) {
-      out.push({ id: "timer", quando, titolo: "Timer finito", testo: `${titoloTask(task, stato, oggi)}: tempo!`, url: "/oggi/", tag: "timer", urgente: true });
+      out.push({ id: "timer", quando, emoji: "⏱️", titolo: "Timer finito", testo: `${titoloTask(task, stato, oggi)}: tempo!`, url: "/oggi/", tag: "timer", urgente: true });
     }
   }
 
@@ -77,6 +91,7 @@ export function pianoNotifiche(stato: Stato, ora: number, oggi: string): Notific
         if (èIgnorata(stato.ignorati, task.id, oggi)) continue; // saltata oggi
       }
       const titolo = èOggi ? titoloTask(task, stato, oggi) : task.titolo;
+      const emoji = emojiDi(iconaTask(task, stato.aree.find((a) => a.id === task.areaId)?.icona ?? ""));
       const rinvio = èOggi ? stato.rinvii.find((r) => r.taskId === task.id && r.data === oggi) : undefined;
 
       const adessoMin = new Date(ora).getHours() * 60 + new Date(ora).getMinutes();
@@ -93,12 +108,12 @@ export function pianoNotifiche(stato: Stato, ora: number, oggi: string): Notific
           : n === 0
             ? `${minuti ? `${minuti}, ` : ""}ti va di farlo adesso?`
             : "Ancora da fare oggi.";
-        out.push({ id: `${task.id}-${giorno}-${hhmm}`, quando, titolo, testo, url: "/oggi/", tag: task.id });
+        out.push({ id: `${task.id}-${giorno}-${hhmm}`, quando, emoji, titolo, testo, url: "/oggi/", tag: task.id });
       });
 
       // "Più tardi": un avviso all'ora scelta (esplicito, quindi non si silenzia)
       if (rinvio && rinvio.alle > ora) {
-        out.push({ id: `rinvio-${task.id}`, quando: rinvio.alle, titolo, testo: "Eccomi, come promesso: è il momento.", url: "/oggi/", tag: task.id });
+        out.push({ id: `rinvio-${task.id}`, quando: rinvio.alle, emoji, titolo, testo: "Eccomi, come promesso: è il momento.", url: "/oggi/", tag: task.id });
       }
     }
   }
@@ -111,14 +126,14 @@ export function pianoNotifiche(stato: Stato, ora: number, oggi: string): Notific
     let q = t.visibileDa;
     if (q <= ora) continue;
     for (let i = 0; i < 96 && èADormire(q); i++) q += 15 * 60_000;
-    out.push({ id: `seguito-${t.id}`, quando: q, titolo: t.titolo, testo: t.notificaTesto, url: "/oggi/", tag: `seguito-${t.id}`, urgente: true });
+    out.push({ id: `seguito-${t.id}`, quando: q, emoji: emojiDi(iconaTask(t, "")), titolo: t.titolo, testo: t.notificaTesto, url: "/oggi/", tag: `seguito-${t.id}`, urgente: true });
   }
 
   out.push(...notificheSonno(ora));
   out.push(...notificheEventi(stato, ora, oggi));
   out.push(...notificheTurniDaSistemare(ora, oggi));
 
-  return out.sort((a, b) => a.quando - b.quando).slice(0, MAX_NOTIFICHE);
+  return out.sort((a, b) => a.quando - b.quando).slice(0, MAX_NOTIFICHE).map(comeArriva);
 }
 
 // «È ora di andare a letto»: una notifica all'orario consigliato per dormire. Ultimo orario utile: 23:59 (se il consiglio è dopo la mezzanotte,
@@ -148,10 +163,10 @@ function notificheSonno(ora: number): Notifica[] {
     const alle = hhmm(s.aLettoMin);
     const sveglia = hhmm(s.aLettoMin + s.ore);
     const oreTxt = String(Math.round(s.ore / 30) / 2).replace(".", ",");
-    const testo = s.tipo === "riposino"
-      ? `Riposino prima del turno: dalle ${alle}, sveglia alle ${sveglia}.`
-      : `${entro ? `Vai a letto entro le ${alle}` : "È ora di andare a letto"}: sveglia alle ${sveglia}, circa ${oreTxt} ore di sonno.`;
-    out.push({ id: `sonno-${s.aLettoMs}`, quando, titolo: s.tipo === "riposino" ? "Ora del riposino" : "Ora di andare a letto", testo, url: "/oggi/", tag: "sonno", urgente: true });
+    const riposino = s.tipo === "riposino";
+    const titolo = riposino ? "Ora del riposino" : entro ? `Vai a letto entro le ${alle}` : "È ora di andare a letto";
+    const testo = riposino ? `Dalle ${alle}, sveglia alle ${sveglia}.` : `Sveglia alle ${sveglia}, circa ${oreTxt} ore di sonno.`;
+    out.push({ id: `sonno-${s.aLettoMs}`, quando, emoji: riposino ? "😴" : "🌙", titolo, testo, url: "/oggi/", tag: "sonno", urgente: true });
   }
   return out;
 }
@@ -184,7 +199,7 @@ function notificheEventi(stato: Stato, ora: number, oggi: string): Notifica[] {
       const q = alta ? quando : fuoriDalSilenzio(quando);
       if (q === null || q <= ora || q > entro) return;
       if (sigla !== "giorno" && q >= quandoEvento - 30 * 60_000) return; // spostato troppo in là: ormai non servirebbe più
-      out.push({ id: `ev-${e.id}-${sigla}`, quando: q, titolo: e.titolo, testo, url: "/oggi/", tag: `ev-${e.id}`, urgente: alta });
+      out.push({ id: `ev-${e.id}-${sigla}`, quando: q, emoji: emojiDi(e.icona), titolo: e.titolo, testo, url: "/oggi/", tag: `ev-${e.id}`, urgente: alta });
     };
 
     // un avviso per ogni anticipo scelto (es. 1 settimana prima e 3 giorni prima), alle 9:30
@@ -215,7 +230,7 @@ function notificheTurniDaSistemare(ora: number, oggi: string): Notifica[] {
       const q = fuoriDalSilenzio(istante(giorno, hhmm));
       if (q === null || q <= ora || usati.has(q)) continue;
       usati.add(q);
-      out.push({ id: `turni-${giorno}-${hhmm}`, quando: q, titolo: "Attenzione: Conflitto turni", testo, url: "/turni/", tag: "turni", urgente: true });
+      out.push({ id: `turni-${giorno}-${hhmm}`, quando: q, emoji: "⚠️", titolo: "Conflitto turni", testo, url: "/turni/", tag: "turni", urgente: true });
     }
   }
   return out;

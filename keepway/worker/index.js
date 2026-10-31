@@ -160,14 +160,14 @@ async function prova(env, request) {
   // Prova «testi veri»: titolo invisibile (braille vuoto U+2800) e due esempi a caso di notifiche reali, per vedere come escono.
   if (d.variante === 'esempi') {
     const ESEMPI = [
-      ['Sistema il soggiorno', '15 min · ti va di farlo adesso?', 'es-stanza'],
-      ['Meditazione', '10 minuti · ti va di farlo adesso?', 'es-medit'],
-      ['Lettura', '20 minuti · ultima chiamata per oggi.', 'es-lettura'],
-      ['Stendi il bucato', 'Ricordati di stendere il bucato', 'es-bucato'],
-      ['A letto entro le 00:30', 'Sveglia alle 09:30, circa 9 ore di sonno.', 'es-sonno'],
-      ['Psicologa domani alle 16:30', 'Via Roma 12 · parti alle 16:00', 'es-app'],
-      ['Attenzione: Conflitto turni', 'Solo 6 ore di riposo prima del turno 1 del 13/09', 'es-turni'],
-      ['Allenamento: Palestra', 'Momento libero 10:30–11:30 · ti va di farlo adesso?', 'es-palestra'],
+      ['🧹 Sistema il soggiorno', '15 min · ti va di farlo adesso?', 'es-stanza'],
+      ['🧘 Meditazione', '10 minuti · ti va di farlo adesso?', 'es-medit'],
+      ['📖 Lettura', 'Ultima chiamata per oggi.', 'es-lettura'],
+      ['👕 Stendi il bucato', 'Ricordati di stendere il bucato', 'es-bucato'],
+      ['🌙 Vai a letto entro le 00:30', 'Sveglia alle 09:30, circa 9 ore di sonno.', 'es-sonno'],
+      ['🧠 Psicologa', 'Domani alle 16:30', 'es-app'],
+      ['⚠️ Conflitto turni', 'Solo 6 ore di riposo prima del turno 1…', 'es-turni'],
+      ['💪 Palestra', '60 minuti · ti va di farlo adesso?', 'es-palestra'],
     ];
     const scelti = [...ESEMPI].sort(() => Math.random() - 0.5).slice(0, 2);
     let ultimo = { stato: 0, dettaglio: '' };
