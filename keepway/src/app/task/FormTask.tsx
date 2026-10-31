@@ -9,6 +9,7 @@ import { useStore } from "@/lib/store";
 import type { Fascia, Task } from "@/lib/tipi";
 import AreaIcona from "../components/AreaIcona";
 import PianoSettimana from "./PianoSettimana";
+import { usePianifica } from "./usePianifica";
 import { campo, Chip, Etichetta, Interruttore, Riquadro, Schermo } from "./ui";
 
 // Scorciatoie: una stanza in un giorno preciso (la rotazione quotidiana c'è già).
@@ -46,7 +47,8 @@ export default function FormTask({ iniziale, onClose }: { iniziale: Task | null;
   };
 
   // La task com'è nel modulo (serve per salvarla e per l'anteprima della pianificazione automatica)
-  const costruisci = (id: string): Task => ({
+  const [idTask] = useState(() => iniziale?.id ?? nuovoId());
+  const costruisci = (id: string = idTask): Task => ({
     id,
     titolo: titolo.trim() || "Task",
     areaId,
@@ -70,9 +72,10 @@ export default function FormTask({ iniziale, onClose }: { iniziale: Task | null;
 
   const salva = () => {
     if (!valido) return;
-    salvaTask(costruisci(iniziale?.id ?? nuovoId()));
+    salvaTask(costruisci());
     onClose();
   };
+  const { apri: apriPianifica, popup } = usePianifica({ costruisci: () => costruisci(), modifica: !!iniziale && iniziale.ricorrenza.tipo === "auto", onClose, onManuale: () => setTipo("settimana") });
 
   return (
     <Schermo titolo={iniziale ? "Modifica task" : "Nuova task"} onClose={onClose}>
@@ -134,11 +137,18 @@ export default function FormTask({ iniziale, onClose }: { iniziale: Task | null;
               Keepway sceglie i giorni e l&apos;orario tenendo conto di turni, sonno e appuntamenti, e nella fascia che indichi sotto. Nei giorni pesanti (dopo la notte, doppio turno)
               mette solo le task essenziali. Puoi sempre spostare ogni giorno.
             </p>
-            <div>
-              <Etichetta>{iniziale && iniziale.ricorrenza.tipo === "auto" ? "Il piano" : "Anteprima del piano"}</Etichetta>
-              <PianoSettimana task={costruisci(iniziale?.id ?? "anteprima")} modifica={!!iniziale && iniziale.ricorrenza.tipo === "auto"} />
-              {iniziale && iniziale.ricorrenza.tipo === "auto" && <p className="mt-2 text-xs text-muted">Se cambi frequenza, durata o fascia, salva: il piano si ricalcola.</p>}
-            </div>
+            {iniziale && iniziale.ricorrenza.tipo === "auto" ? (
+              <div>
+                <Etichetta>Il piano</Etichetta>
+                <PianoSettimana task={iniziale} modifica />
+                <button type="button" data-suono="via" onClick={apriPianifica} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-ov/10 px-4 py-2.5 text-sm font-semibold">
+                  Nuova pianificazione
+                </button>
+                <p className="mt-2 text-xs text-muted">Se cambi frequenza, durata o fascia, usa «Nuova pianificazione» o salva: il piano si ricalcola.</p>
+              </div>
+            ) : (
+              <p className="text-xs text-muted">Premi «Pianifica» in fondo: Keepway prepara delle proposte e scegli tu quella che preferisci.</p>
+            )}
           </div>
         )}
         {tipo === "settimana" && (
@@ -191,9 +201,10 @@ export default function FormTask({ iniziale, onClose }: { iniziale: Task | null;
         </label>
       )}
 
-      <button data-suono="via" onClick={salva} disabled={!valido} className="w-full rounded-2xl bg-accent py-3.5 text-lg font-bold text-black disabled:opacity-40">
-        Salva
+      <button data-suono="via" onClick={tipo === "auto" && !iniziale ? apriPianifica : salva} disabled={!valido} className="w-full rounded-2xl bg-accent py-3.5 text-lg font-bold text-black disabled:opacity-40">
+        {tipo === "auto" && !iniziale ? "Pianifica" : "Salva"}
       </button>
+      {popup}
       {iniziale && (
         <button
           data-suono="indietro"

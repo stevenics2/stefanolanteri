@@ -179,3 +179,37 @@ export function pianifica(stato: Stato, oggi: string): PianoVoce[] {
   for (const v of stato.pianoAuto) if (v.data >= limiteVecchi && idAuto.has(v.taskId) && !automatiche.some((t) => t.id === v.taskId)) out.push(v);
   return out.sort((a, b) => a.data.localeCompare(b.data) || a.taskId.localeCompare(b.taskId));
 }
+
+// --- Le proposte per il popup «Pianificazione automatica»: 2-3 piani diversi per i prossimi 7 giorni ---
+export type Proposta = { voci: PianoVoce[] }; // i giorni scelti nei prossimi 7 giorni, con il momento di ognuno
+
+// La prima è il piano migliore; le altre sono lo stesso piano ma senza uno dei giorni scelti (così cambia davvero qualcosa), tutte diverse tra loro.
+export function proposte(stato: Stato, bozza: Task, oggi: string, quante = 3): Proposta[] {
+  const fine = dataPiù(oggi, 6);
+  const calcola = (esclusi: string[]) => {
+    const s2: Stato = {
+      ...stato,
+      task: [...stato.task.filter((t) => t.id !== bozza.id), bozza],
+      pianoAuto: [...stato.pianoAuto.filter((v) => v.taskId !== bozza.id), ...esclusi.map((d) => ({ taskId: bozza.id, data: d, tipo: "escluso" as const }))],
+    };
+    return pianifica(s2, oggi).filter((v) => v.taskId === bozza.id && v.tipo === "auto" && v.data >= oggi && v.data <= fine);
+  };
+  const chiave = (v: PianoVoce[]) => v.map((x) => x.data).join("|");
+  const out: Proposta[] = [];
+  const viste = new Set<string>();
+  const aggiungi = (voci: PianoVoce[]) => {
+    const k = chiave(voci);
+    if (voci.length > 0 && !viste.has(k) && out.length < quante) {
+      viste.add(k);
+      out.push({ voci });
+    }
+  };
+  const migliore = calcola([]);
+  aggiungi(migliore);
+  const giorni = migliore.map((v) => v.data);
+  for (const d of giorni) aggiungi(calcola([d])); // senza uno dei giorni
+  if (giorni.length >= 2) aggiungi(calcola([giorni[0], giorni[1]]));
+  // ancora poche: si prova a togliere i giorni scelti dalle altre proposte
+  for (const p of [...out]) for (const v of p.voci) aggiungi(calcola([...new Set([giorni[0], v.data])].filter(Boolean) as string[]));
+  return out;
+}

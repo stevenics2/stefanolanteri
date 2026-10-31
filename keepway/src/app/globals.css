@@ -293,7 +293,7 @@ html {
 /* Schermo a tutta pagina (moduli, menu dei turni, timer): sale dal basso e scende quando si chiude */
 @keyframes foglioSu { from { transform: translate3d(0, 100%, 0); } to { transform: translate3d(0, 0, 0); } }
 @keyframes foglioGiu { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(0, 100%, 0); } }
-.foglio-dentro { animation: foglioSu 0.5s var(--posa) both; }
+.foglio-dentro { animation: foglioSu 0.5s var(--posa) backwards; } /* backwards: dopo l'entrata non resta un transform attivo (altrimenti i popup «fixed» dentro lo schermo si posizionerebbero rispetto a lui) */
 .foglio-fuori { animation: foglioGiu 0.34s cubic-bezier(0.4, 0, 0.2, 1) both; pointer-events: none; }
 
 /* Velo scuro dietro ai popup */
@@ -400,3 +400,21 @@ button:not(:disabled):active, a[href]:active {
 @keyframes chipPop { 0% { transform: scale(0.92); } 55% { transform: scale(1.07); } 100% { transform: scale(1); } }
 .chip-on { animation: chipPop 0.4s var(--molla); }
 @media (prefers-reduced-motion: reduce) { .chip-on, .barra-cresce { animation-duration: 0.01ms; } }
+
+/* Popup «Pianifico…»: anelli che girano, barra che si riempie in 1,5 s, righe che luccicano; poi un lampo */
+@keyframes gira { to { transform: rotate(360deg); } }
+.pianifica-anello { animation: gira 0.9s linear infinite; }
+.pianifica-anello-2 { animation: gira 1.4s linear infinite reverse; }
+@keyframes barraElabora { from { width: 0; } to { width: 100%; } }
+.pianifica-barra { animation: barraElabora 1.5s cubic-bezier(0.45, 0.05, 0.3, 1) both; box-shadow: 0 0 10px var(--accent); }
+@keyframes scheletro { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+.pianifica-scheletro { background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent); animation: scheletro 0.9s ease-in-out infinite; }
+@keyframes punti { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75%, 100% { content: "..."; } }
+.pianifica-punti::after { content: ""; animation: punti 1s steps(1) infinite; }
+@keyframes flashPianifica { 0% { opacity: 0.95; } 100% { opacity: 0; } }
+.flash-pianifica { background: radial-gradient(circle at 50% 35%, #fff6c9 0%, rgba(255, 215, 0, 0.75) 55%, rgba(245, 165, 36, 0.4) 100%); animation: flashPianifica 0.6s ease-out both; }
+@media (prefers-reduced-motion: reduce) { .pianifica-anello, .pianifica-anello-2, .pianifica-scheletro, .flash-pianifica { animation: none; } .pianifica-barra { animation-duration: 0.01ms; } }
+
+/* Un contenitore che scorre di lato senza barra visibile */
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }

@@ -68,6 +68,7 @@ type Contesto = {
   annullaRinvio: (taskId: string) => void;
   sistemaGiornoAuto: (taskId: string, data: string, attivo: boolean) => void;
   ricalcolaPiano: (taskId: string) => void;
+  fissaGiorniAuto: (taskId: string, date: string[]) => void;
   impostaMomento: (taskId: string, momento: { da: number; a: number } | null) => void;
   setStanze: (stanze: string[]) => void;
   setVacanza: (v: Vacanza | null) => void;
@@ -419,6 +420,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       // Torna tutto automatico: si dimenticano i giorni fissati e tolti da oggi in poi
       ricalcolaPiano: (taskId) =>
         aggiorna((x) => ({ ...x, pianoAuto: x.pianoAuto.filter((v) => !(v.taskId === taskId && v.tipo !== "auto" && v.data >= oggiLocale())) })),
+      // La proposta scelta nel popup: quei giorni diventano «fissati» (restano come li hai scelti); il resto lo continua a decidere l'app
+      fissaGiorniAuto: (taskId, date) =>
+        aggiorna((x) => ({
+          ...x,
+          pianoAuto: [
+            ...x.pianoAuto.filter((v) => !(v.taskId === taskId && v.tipo !== "auto" && v.data >= oggiLocale())),
+            ...date.map((data) => ({ taskId, data, tipo: "fissato" as const })),
+          ],
+        })),
       setStanze: (stanze) => aggiorna((x) => ({ ...x, stanze })),
       setVacanza: (vacanza) => aggiorna((x) => ({ ...x, vacanza })),
       salvaEvento: (e) =>

@@ -8,6 +8,7 @@ import { useStore } from "@/lib/store";
 import type { Task } from "@/lib/tipi";
 import { campo, Chip, Etichetta, Schermo } from "./ui";
 import PianoSettimana from "./PianoSettimana";
+import { usePianifica } from "./usePianifica";
 
 // Lavatrice (o altre faccende col seguito): quante volte, quando, e cosa ricordarti dopo il «Fatto».
 export default function FormLavatrice({ onClose, iniziale }: { onClose: () => void; iniziale?: Task | null }) {
@@ -24,7 +25,8 @@ export default function FormLavatrice({ onClose, iniziale }: { onClose: () => vo
 
   const valido = titolo.trim() !== "" && titoloSeguito.trim() !== "" && (automatica ? volte > 0 : giorni.length > 0);
 
-  const costruisci = (id: string): Task => ({
+  const [idTask] = useState(() => iniziale?.id ?? nuovoId());
+  const costruisci = (id: string = idTask): Task => ({
     id, titolo: titolo.trim() || "Lavatrice", areaId: "casa", icona: "lavatrice", durataMin: null, minimaMin: null,
     ricorrenza: automatica ? { tipo: "auto", volte } : { tipo: "settimana", giorni },
     fascia: "qualsiasi", solo: "sempre", soloACasa: true, promemoria: [], adattaATurni: true, essenziale: false,
@@ -34,9 +36,11 @@ export default function FormLavatrice({ onClose, iniziale }: { onClose: () => vo
 
   const salva = () => {
     if (!valido) return;
-    salvaTask(costruisci(iniziale?.id ?? nuovoId()));
+    salvaTask(costruisci());
     onClose();
   };
+
+  const { apri: apriPianifica, popup } = usePianifica({ costruisci: () => costruisci(), modifica: !!iniziale && iniziale.ricorrenza.tipo === "auto", onClose, onManuale: () => setAutomatica(false) });
 
   return (
     <Schermo titolo={iniziale ? "Modifica lavatrice" : "Nuova lavatrice"} onClose={onClose}>
@@ -105,15 +109,25 @@ export default function FormLavatrice({ onClose, iniziale }: { onClose: () => vo
 
       {automatica && (
         <div>
-          <Etichetta>{iniziale ? "Il piano" : "Anteprima del piano"}</Etichetta>
-          <PianoSettimana task={costruisci(iniziale?.id ?? "anteprima")} modifica={!!iniziale && iniziale.ricorrenza.tipo === "auto"} />
-          {iniziale && iniziale.ricorrenza.tipo === "auto" && <p className="mt-2 text-xs text-muted">Se cambi frequenza o tempo, salva: il piano si ricalcola.</p>}
+          {iniziale && iniziale.ricorrenza.tipo === "auto" ? (
+            <>
+              <Etichetta>Il piano</Etichetta>
+              <PianoSettimana task={iniziale} modifica />
+              <button type="button" data-suono="via" onClick={apriPianifica} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-ov/10 px-4 py-2.5 text-sm font-semibold">
+                Nuova pianificazione
+              </button>
+              <p className="mt-2 text-xs text-muted">Se cambi frequenza o tempo, usa «Nuova pianificazione» o salva: il piano si ricalcola.</p>
+            </>
+          ) : (
+            <p className="text-xs text-muted">Premi «Pianifica»: Keepway prepara delle proposte e scegli tu quella che preferisci.</p>
+          )}
         </div>
       )}
 
-      <button data-suono="via" onClick={salva} disabled={!valido} className="w-full rounded-2xl bg-accent py-3.5 text-lg font-bold text-black disabled:opacity-40">
-        {iniziale ? "Salva" : "Salva lavatrice"}
+      <button data-suono="via" onClick={automatica && !iniziale ? apriPianifica : salva} disabled={!valido} className="w-full rounded-2xl bg-accent py-3.5 text-lg font-bold text-black disabled:opacity-40">
+        {automatica && !iniziale ? "Pianifica" : iniziale ? "Salva" : "Salva lavatrice"}
       </button>
+      {popup}
       {iniziale && (
         <button data-suono="indietro" onClick={() => confirm("Eliminare la lavatrice?") && (eliminaTask(iniziale.id), onClose())} className="w-full rounded-2xl bg-red-500/15 py-3 text-red-300">
           Elimina

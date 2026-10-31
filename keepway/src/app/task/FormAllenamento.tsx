@@ -4,6 +4,7 @@ import Segmentato from "../components/Segmentato";
 import { useState } from "react";
 import type { Task } from "@/lib/tipi";
 import PianoSettimana from "./PianoSettimana";
+import { usePianifica } from "./usePianifica";
 import { GIORNI_LUNGHI } from "@/lib/date";
 import { MIN_PER_KM } from "@/lib/durata";
 import { nuovoId } from "@/lib/seed";
@@ -48,17 +49,20 @@ export default function FormAllenamento({ onClose, iniziale }: { onClose: () => 
   const valido = automatica ? volte > 0 : giorni.length > 0;
   const xpFinali = scelta.km ? km * XP_PER_KM : xp;
 
+  const [idTask] = useState(() => iniziale?.id ?? nuovoId());
+  const costruisci = (): Task => ({
+    id: idTask, titolo: scelta.km ? `Corsa ${km} km` : scelta.nome, areaId: "allenamento", icona: scelta.id,
+    durataMin: scelta.km ? null : durata, minimaMin: null, km: scelta.km ? km : undefined, spostamentoMin: spostamento,
+    ricorrenza: automatica ? { tipo: "auto", volte } : { tipo: "settimana", giorni },
+    fascia: "qualsiasi", solo: "sempre", soloACasa: false, promemoria: [], adattaATurni: adatta,
+    punti: xpFinali, essenziale: false, attiva: iniziale?.attiva ?? true, creatoIl: iniziale?.creatoIl ?? oggi,
+  });
   const salva = () => {
     if (!valido) return;
-    salvaTask({
-      id: iniziale?.id ?? nuovoId(), titolo: scelta.km ? `Corsa ${km} km` : scelta.nome, areaId: "allenamento", icona: scelta.id,
-      durataMin: scelta.km ? null : durata, minimaMin: null, km: scelta.km ? km : undefined, spostamentoMin: spostamento,
-      ricorrenza: automatica ? { tipo: "auto", volte } : { tipo: "settimana", giorni },
-      fascia: "qualsiasi", solo: "sempre", soloACasa: false, promemoria: [], adattaATurni: adatta,
-      punti: xpFinali, essenziale: false, attiva: iniziale?.attiva ?? true, creatoIl: iniziale?.creatoIl ?? oggi,
-    });
+    salvaTask(costruisci());
     onClose();
   };
+  const { apri: apriPianifica, popup } = usePianifica({ costruisci, modifica: !!iniziale && iniziale.ricorrenza.tipo === "auto", onClose, onManuale: () => setAutomatica(false) });
 
   return (
     <Schermo titolo={iniziale ? "Modifica allenamento" : "Nuovo allenamento"} onClose={onClose}>
@@ -87,19 +91,18 @@ export default function FormAllenamento({ onClose, iniziale }: { onClose: () => 
               L&apos;app sceglie i giorni e l&apos;ora tenendo conto di turni, sonno e appuntamenti: dopo la notte dal tardo pomeriggio, con 2+3 la sera, con 3+4 la mattina
               (se dormi abbastanza), con 1+4 mai. Distanzia gli allenamenti. Puoi sempre spostare ogni giorno.
             </p>
-            <div>
-              <Etichetta>{iniziale ? "Il piano" : "Anteprima del piano"}</Etichetta>
-              <PianoSettimana
-                task={iniziale && iniziale.ricorrenza.tipo === "auto" ? iniziale : {
-                  id: iniziale?.id ?? "anteprima", titolo: scelta.nome, areaId: "allenamento", icona: scelta.id,
-                  durataMin: scelta.km ? null : durata, minimaMin: null, km: scelta.km ? km : undefined, spostamentoMin: spostamento,
-                  ricorrenza: { tipo: "auto", volte }, fascia: "qualsiasi", solo: "sempre", soloACasa: false, promemoria: [], adattaATurni: adatta,
-                  punti: xpFinali, essenziale: false, attiva: true, creatoIl: oggi,
-                }}
-                modifica={!!iniziale && iniziale.ricorrenza.tipo === "auto"}
-              />
-              {iniziale && iniziale.ricorrenza.tipo === "auto" && <p className="mt-2 text-xs text-muted">Se cambi frequenza, durata o spostamento, salva: il piano si ricalcola.</p>}
-            </div>
+            {iniziale && iniziale.ricorrenza.tipo === "auto" ? (
+              <div>
+                <Etichetta>Il piano</Etichetta>
+                <PianoSettimana task={iniziale} modifica />
+                <button type="button" data-suono="via" onClick={apriPianifica} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-ov/10 px-4 py-2.5 text-sm font-semibold">
+                  Nuova pianificazione
+                </button>
+                <p className="mt-2 text-xs text-muted">Se cambi frequenza, durata o spostamento, usa «Nuova pianificazione» o salva: il piano si ricalcola.</p>
+              </div>
+            ) : (
+              <p className="text-xs text-muted">Premi «Pianifica»: Keepway prepara delle proposte e scegli tu quella che preferisci.</p>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-7 gap-1.5">
@@ -156,9 +159,10 @@ export default function FormAllenamento({ onClose, iniziale }: { onClose: () => 
 
       <Interruttore valore={adatta} onChange={setAdatta}>Adatta ai turni: ti suggerisce il momento libero e ti avvisa lì</Interruttore>
 
-      <button data-suono="via" onClick={salva} disabled={!valido} className="w-full rounded-2xl bg-accent py-3.5 text-lg font-bold text-black disabled:opacity-40">
-        {iniziale ? "Salva" : "Salva allenamento"}
+      <button data-suono="via" onClick={automatica && !iniziale ? apriPianifica : salva} disabled={!valido} className="w-full rounded-2xl bg-accent py-3.5 text-lg font-bold text-black disabled:opacity-40">
+        {automatica && !iniziale ? "Pianifica" : iniziale ? "Salva" : "Salva allenamento"}
       </button>
+      {popup}
       {iniziale && (
         <button data-suono="indietro" onClick={() => confirm("Eliminare questo allenamento?") && (eliminaTask(iniziale.id), onClose())} className="w-full rounded-2xl bg-red-500/15 py-3 text-red-300">
           Elimina
