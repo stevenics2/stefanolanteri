@@ -160,20 +160,20 @@ async function prova(env, request) {
   // Prova «testi veri»: titolo invisibile (braille vuoto U+2800) e due esempi a caso di notifiche reali, per vedere come escono.
   if (d.variante === 'esempi') {
     const ESEMPI = [
-      ['🧹 Sistema il soggiorno', '15 min · ti va di farlo adesso?', 'es-stanza'],
-      ['🧘 Meditazione', '10 minuti · ti va di farlo adesso?', 'es-medit'],
-      ['📖 Lettura', 'Ultima chiamata per oggi.', 'es-lettura'],
-      ['👕 Stendi il bucato', 'Ricordati di stendere il bucato', 'es-bucato'],
-      ['🌙 Vai a letto entro le 00:30', 'Sveglia alle 09:30, circa 9 ore di sonno.', 'es-sonno'],
-      ['🧠 Psicologa', 'Domani alle 16:30', 'es-app'],
-      ['⚠️ Conflitto turni', 'Solo 6 ore di riposo prima del turno 1…', 'es-turni'],
-      ['💪 Palestra', '60 minuti · ti va di farlo adesso?', 'es-palestra'],
+      ['Sistema il soggiorno', '15 min · ti va di farlo adesso? 🧹', 'es-stanza'],
+      ['Meditazione', '10 minuti · ti va di farlo adesso? 🧘', 'es-medit'],
+      ['Lettura', 'Ultima chiamata per oggi. 📖', 'es-lettura'],
+      ['Stendi il bucato', 'Ricordati di stendere il bucato 👕', 'es-bucato'],
+      ['Vai a letto entro le 00:30', 'Sveglia alle 09:30, circa 9 ore di sonno. 🌙', 'es-sonno'],
+      ['Appuntamento Psicologa', 'domani, martedì 5, alle 16:30 📅', 'es-app'],
+      ['Conflitto turni', 'Solo 6 ore di riposo prima del turno 1… ⚠️', 'es-turni'],
+      ['Riordina la scrivania', '20 min · ti va di farlo adesso? 💡', 'es-lampadina'],
     ];
     const scelti = [...ESEMPI].sort(() => Math.random() - 0.5).slice(0, 2);
     let ultimo = { stato: 0, dettaglio: '' };
     for (const [primo, secondo, tag] of scelti) {
       // il «titolo» invisibile + il testo su due righe: prima riga = cosa, seconda = dettaglio
-      ultimo = await spedisci(env, vapid, sub, { titolo: '\u2800', testo: `${primo}\n${secondo}`, tag, urgente: true });
+      ultimo = await spedisci(env, vapid, sub, { titolo: '\u2800', testo: `→ ${primo}\n${secondo}`, tag, urgente: true });
     }
     return json({ ok: ultimo.stato >= 200 && ultimo.stato < 300, stato: ultimo.stato, dettaglio: ultimo.dettaglio, inviate: scelti.map((x) => x[0]) });
   }

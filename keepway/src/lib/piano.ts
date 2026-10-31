@@ -1,5 +1,5 @@
 import { èPianificata } from "./pianoAuto";
-import { dataPiù } from "./date";
+import { dataPiù, GIORNI_LUNGHI, giornoSettimana } from "./date";
 import { violazioniDa } from "./calendario";
 import { giorniTra } from "./eventi";
 import { èIgnorata, èPrevista } from "./regole";
@@ -24,14 +24,15 @@ export type Notifica = {
 // Come arriva sul telefono: il titolo è un carattere invisibile (così non si legge «Notifica» o il nome dell'app due volte) e il testo ha
 // due righe: l'emoji e cosa, poi il dettaglio (corto, per non essere tagliato con «…»).
 const RIGA_MAX = 44;
-const corta = (t: string) => (t.length > RIGA_MAX ? `${t.slice(0, RIGA_MAX - 1).trimEnd()}…` : t);
+const corta = (t: string, max = RIGA_MAX) => (t.length > max ? `${t.slice(0, max - 1).trimEnd()}…` : t);
 const EMOJI_ICONA: Record<string, string> = {
   libro: "📖", loto: "🧘", piatti: "🍽️", pulizia: "🧹", lavatrice: "🧺", bucato: "👕", doccia: "🚿", borsa: "🛍️", acqua: "💧", respiro: "🌬️",
   diario: "✍️", corsa: "🏃", camminata: "🚶", palestra: "💪", freddo: "🧊", stretching: "🤸", yoga: "🧘", bici: "🚴", nuoto: "🏊", cucina: "🍳", spesa: "🛒",
   dottore: "🩺", dentista: "🦷", psicologa: "🧠", lavoro: "💼", auto: "🚗", calendario: "📅", promemoria: "🔔",
 };
-const emojiDi = (chiave: string) => EMOJI_ICONA[chiave] ?? "✅";
-export const comeArriva = (n: Notifica): Notifica => ({ ...n, titolo: "\u2800", testo: `${n.emoji ? `${n.emoji} ` : ""}${corta(n.titolo)}\n${corta(n.testo)}`, emoji: undefined });
+const emojiDi = (chiave: string) => EMOJI_ICONA[chiave] ?? "💡"; // senza un'icona precisa: la lampadina
+// Schema: «→ cosa» sulla prima riga; sulla seconda il dettaglio e, in fondo, l'emoji.
+export const comeArriva = (n: Notifica): Notifica => ({ ...n, titolo: "\u2800", testo: `→ ${corta(n.titolo, RIGA_MAX - 2)}\n${corta(n.testo, n.emoji ? RIGA_MAX - 3 : RIGA_MAX)}${n.emoji ? ` ${n.emoji}` : ""}`, emoji: undefined });
 
 const GIORNI_AVANTI = 2; // oggi + i prossimi 2 giorni
 const MAX_NOTIFICHE = 150;
@@ -194,25 +195,28 @@ function notificheEventi(stato: Stato, ora: number, oggi: string): Notifica[] {
     if (e.fatto || giorniTra(oggi, e.data) < 0) continue;
     const alta = e.priorita === "alta";
     const quandoEvento = istante(e.data, e.ora ?? "09:00");
-    const ora_ = e.ora ? ` alle ${e.ora}` : "";
+    const ora_ = e.ora ? `, alle ${e.ora}` : "";
+    const quandoTesto = `${GIORNI_LUNGHI[giornoSettimana(e.data)]} ${Number(e.data.slice(8))}${ora_}`; // «martedì 5, alle 16:30»
+    const titoloEv = `${e.tipo === "appuntamento" ? "Appuntamento" : "Promemoria"} ${e.titolo}`;
+    const emojiEv = e.tipo === "appuntamento" ? "📅" : "🔔";
     const aggiungi = (sigla: string, quando: number, testo: string) => {
       const q = alta ? quando : fuoriDalSilenzio(quando);
       if (q === null || q <= ora || q > entro) return;
       if (sigla !== "giorno" && q >= quandoEvento - 30 * 60_000) return; // spostato troppo in là: ormai non servirebbe più
-      out.push({ id: `ev-${e.id}-${sigla}`, quando: q, emoji: emojiDi(e.icona), titolo: e.titolo, testo, url: "/oggi/", tag: `ev-${e.id}`, urgente: alta });
+      out.push({ id: `ev-${e.id}-${sigla}`, quando: q, emoji: emojiEv, titolo: titoloEv, testo, url: "/oggi/", tag: `ev-${e.id}`, urgente: alta });
     };
 
     // un avviso per ogni anticipo scelto (es. 1 settimana prima e 3 giorni prima), alle 9:30
     for (const n of e.avvisi.filter((x) => x > 1)) {
-      const quando = n === 7 ? "Tra una settimana" : n === 14 ? "Tra due settimane" : `Tra ${n} giorni`;
-      aggiungi(`anticipo${n}`, istante(dataPiù(e.data, -n), "09:30"), `${quando}, ${e.data.split("-").reverse().slice(0, 2).join("/")}${ora_}`);
+      const quando = n === 7 ? "tra una settimana" : n === 14 ? "tra due settimane" : `tra ${n} giorni`;
+      aggiungi(`anticipo${n}`, istante(dataPiù(e.data, -n), "09:30"), `${quando}, ${quandoTesto}`);
     }
     // la sera prima, alle 18:30
-    if (e.tipo === "appuntamento" || e.avvisi.length > 0) aggiungi("vigilia", istante(dataPiù(e.data, -1), "18:30"), `Domani${ora_}`);
+    if (e.tipo === "appuntamento" || e.avvisi.length > 0) aggiungi("vigilia", istante(dataPiù(e.data, -1), "18:30"), `domani, ${quandoTesto}`);
     // poche ore prima (solo se c'è un orario)
-    if (e.ora) aggiungi("ore", quandoEvento - 2 * 3_600_000, "Tra 2 ore");
+    if (e.ora) aggiungi("ore", quandoEvento - 2 * 3_600_000, `tra 2 ore, alle ${e.ora}`);
     // promemoria senza orario: la mattina stessa
-    if (!e.ora) aggiungi("giorno", istante(e.data, "09:00"), "Oggi");
+    if (!e.ora) aggiungi("giorno", istante(e.data, "09:00"), `oggi, ${quandoTesto}`);
   }
   return out;
 }
