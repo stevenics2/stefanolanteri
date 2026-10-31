@@ -54,8 +54,8 @@ export type GiornoEffettivo = {
   orario: string; // "07:00–19:00"
   unita: string;
   modifica?: Modifica;
-  // Solo per lo straordinario: il turno di prima e quello aggiunto, scritti separati (es. 07:00–13:00 e 13:00–19:00)
-  straordinario?: { codiciOriginali: string[]; etichettaOriginale: string; orarioOriginale: string; extra: string[]; orarioExtra: string };
+  // Solo per lo straordinario: gli orari dei turni uno sotto l'altro, nell'ordine del tempo (es. 07:00–13:00 e 13:00–19:00), senza unirli
+  straordinario?: { orari: string[] };
 };
 
 const NOMI_ASSENZA: Record<Assenza, string> = { ferie: "FERIE", malattia: "MALATTIA", permesso: "PERMESSO", altro: "ASSENZA" };
@@ -96,16 +96,7 @@ export function giornoEffettivo(data: string): GiornoEffettivo | undefined {
   else if (riposo) etichetta = `${r.t === "RD" ? "RD" : "R"}${m?.mostraEx && m.ex ? ` - (ex ${m.ex})` : ""}`;
   else etichetta = `${unisci(codici)}${m?.mostraEx && m.ex ? ` - (ex ${m.ex})` : ""}`;
 
-  const straordinario =
-    m?.tipo === "straordinario" && m.extra?.length
-      ? {
-          codiciOriginali: baseCodici,
-          etichettaOriginale: baseCodici.length ? unisci(baseCodici) : "R",
-          orarioOriginale: orarioDi(baseCodici),
-          extra: m.extra,
-          orarioExtra: orarioDi(m.extra),
-        }
-      : undefined;
+  const straordinario = m?.tipo === "straordinario" && m.extra?.length ? { orari: ordina(codici).map((c) => TURNI[c]).filter(Boolean).map((i) => `${hh(i.da)}–${hh(i.a)}`) } : undefined;
   return { data, codiceBase: r.t, baseCodici, codici, riposo, etichetta, orario: riposo ? "" : orarioDi(codici), unita: r.u, modifica: m, straordinario };
 }
 

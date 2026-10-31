@@ -11,7 +11,7 @@ export type RiepilogoGiorno = {
   sveglia: string | null;
   aLetto: string | null;
   liberoMin: number;
-  straordinario?: { etichettaOriginale: string; orarioOriginale: string; orarioExtra: string }; // doppio turno per straordinario: i due orari separati
+  straordinario?: { orari: string[] }; // doppio turno per straordinario: gli orari uno sotto l'altro, in ordine
 };
 
 export function riepilogoGiorno(data: string): RiepilogoGiorno {

@@ -106,20 +106,13 @@ export default function CalendarioMese() {
             <div className="text-lg font-bold first-letter:uppercase">{dataLunga(sel)}</div>
             {geSel ? (
               <div className="mt-1 overflow-hidden rounded-xl">
-                {geSel.straordinario ? (
-                  <>
-                    <div className={`px-3 py-2 ${geSel.straordinario.codiciOriginali.length ? "bg-blue-700 text-white" : "bg-emerald-500/20 text-emerald-100"}`}>
-                      <span className="font-bold">{geSel.straordinario.etichettaOriginale}</span>
-                      {geSel.straordinario.orarioOriginale && <span className="ml-2 text-sm opacity-90">{geSel.straordinario.orarioOriginale}</span>}
-                    </div>
-                    <div className="bg-violet-500 px-3 py-2 font-bold text-white">{geSel.straordinario.orarioExtra}</div>
-                  </>
-                ) : (
-                  <div className={`px-3 py-2 ${stileTurno(geSel)}`}>
+                <div className={`px-3 py-2 ${stileTurno(geSel)}`}>
+                  <div>
                     <span className="font-bold">{geSel.etichetta}</span>
-                    {geSel.orario && <span className="ml-2 text-sm opacity-90">{geSel.orario}</span>}
+                    {!geSel.straordinario && geSel.orario && <span className="ml-2 text-sm opacity-90">{geSel.orario}</span>}
                   </div>
-                )}
+                  {geSel.straordinario?.orari.map((o) => <div key={o} className="text-sm opacity-90">{o}</div>)}
+                </div>
                 <Banda m={geSel.modifica} />
               </div>
             ) : (
