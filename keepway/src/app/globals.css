@@ -190,7 +190,7 @@ html {
   12% { transform: translateY(0) scale(1.04); opacity: 1; }
   20% { transform: scale(1); }
   88% { opacity: 1; }
-  100% { transform: translateY(-8px); opacity: 0; }
+  100% { transform: translateY(-8px) scale(0.96); opacity: 0; filter: blur(4px); }
 }
 .feedback { animation: feedback 2.9s ease-out forwards; }
 
@@ -246,15 +246,15 @@ html {
   0% { transform: scale(0.8); opacity: 0; }
   10% { transform: scale(1.05); opacity: 1; }
   16% { transform: scale(1); }
-  72% { opacity: 1; }
-  100% { opacity: 0; }
+  72% { opacity: 1; transform: scale(1); filter: blur(0); }
+  100% { opacity: 0; transform: scale(0.95); filter: blur(5px); }
 }
 @keyframes risultatoCombo {
   0% { transform: scale(0.8); opacity: 0; }
   10% { transform: scale(1.05); opacity: 1; }
   16% { transform: scale(1); }
-  90% { opacity: 1; }
-  100% { opacity: 0; }
+  90% { opacity: 1; transform: scale(1); filter: blur(0); }
+  100% { opacity: 0; transform: scale(0.95); filter: blur(5px); }
 }
 .risultato-combo { animation: risultatoCombo 2.4s ease-out both; }
 @media (prefers-reduced-motion: reduce) { .risultato-combo { animation: none; } }
@@ -279,3 +279,123 @@ html {
 }
 .pulsa { animation: pulsa 1s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .scuoti, .feedback, .riga-flash, .riga-oro, .pulsa { animation: none; } }
+
+/* ================= Movimento in stile Apple =================
+   Tre curve: «molla» (entra e rimbalza appena), «posa» (parte veloce e si ferma piano, come iOS) e «fuga» (le uscite: partono piano e accelerano).
+   Le entrate durano 0,4-0,5 s, le uscite 0,25-0,35 s: le cose spariscono più in fretta di come arrivano. */
+:root {
+  --molla: cubic-bezier(0.34, 1.45, 0.64, 1);
+  --posa: cubic-bezier(0.16, 1, 0.3, 1);
+  --fuga: cubic-bezier(0.5, 0, 0.9, 0.5);
+}
+
+/* Schermo a tutta pagina (moduli, menu dei turni, timer): sale dal basso e scende quando si chiude */
+@keyframes foglioSu { from { transform: translate3d(0, 100%, 0); } to { transform: translate3d(0, 0, 0); } }
+@keyframes foglioGiu { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(0, 100%, 0); } }
+.foglio-dentro { animation: foglioSu 0.5s var(--posa) both; }
+.foglio-fuori { animation: foglioGiu 0.34s cubic-bezier(0.4, 0, 0.2, 1) both; pointer-events: none; }
+
+/* Velo scuro dietro ai popup */
+@keyframes velaDentro { from { opacity: 0; } to { opacity: 1; } }
+@keyframes velaFuori { from { opacity: 1; } to { opacity: 0; } }
+.vela-dentro { animation: velaDentro 0.32s ease-out both; }
+.vela-fuori { animation: velaFuori 0.28s ease-in both; pointer-events: none; }
+
+/* Scheda di un popup al centro: entra con una piccola molla, esce rimpicciolendosi e sfocandosi */
+@keyframes cartaDentro { from { opacity: 0; transform: translate3d(0, 16px, 0) scale(0.9); } to { opacity: 1; transform: none; } }
+@keyframes cartaFuori { from { opacity: 1; transform: none; filter: blur(0); } to { opacity: 0; transform: translate3d(0, 8px, 0) scale(0.94); filter: blur(6px); } }
+.carta-dentro { animation: cartaDentro 0.5s var(--molla) both; }
+.carta-fuori { animation: cartaFuori 0.26s var(--fuga) both; pointer-events: none; }
+
+/* Avvisi in basso (Annulla, recap): salgono con una molla e scendono sfumando */
+@keyframes avvisoDentro { from { opacity: 0; transform: translate3d(0, 28px, 0) scale(0.94); } to { opacity: 1; transform: none; } }
+@keyframes avvisoFuori { from { opacity: 1; transform: none; filter: blur(0); } to { opacity: 0; transform: translate3d(0, 20px, 0) scale(0.96); filter: blur(5px); } }
+.avviso-dentro { animation: avvisoDentro 0.5s var(--molla) both; }
+.avviso-fuori { animation: avvisoFuori 0.26s var(--fuga) both; pointer-events: none; }
+
+/* Banner dall'alto (nuovo livello) */
+@keyframes altoDentro { from { opacity: 0; transform: translate3d(0, -28px, 0) scale(0.9); } to { opacity: 1; transform: none; } }
+@keyframes altoFuori { from { opacity: 1; transform: none; filter: blur(0); } to { opacity: 0; transform: translate3d(0, -20px, 0) scale(0.95); filter: blur(5px); } }
+.alto-dentro { animation: altoDentro 0.55s var(--molla) both; }
+.alto-fuori { animation: altoFuori 0.28s var(--fuga) both; pointer-events: none; }
+
+/* Entrata morbida di un pezzo di pagina (schede, righe, cambio di vista) */
+@keyframes entra { from { opacity: 0; transform: translate3d(0, 12px, 0) scale(0.985); } to { opacity: 1; transform: none; } }
+.entra { animation: entra 0.5s var(--posa) backwards; } /* «backwards»: dopo l'animazione non resta nessun effetto di movimento attivo (un transform ancora «in corso» farebbe da riferimento ai figli con position: fixed e li sposterebbe) */
+@keyframes dissolve { from { opacity: 0; } to { opacity: 1; } }
+.dissolve { animation: dissolve 0.28s ease-out both; }
+
+/* Tocco: ogni pulsante si schiaccia un po' sotto il dito e torna con una molla (come sull'iPhone) */
+button, a[href], summary, [role="button"] {
+  transition: transform 0.3s var(--posa), background-color 0.25s ease, color 0.25s ease, opacity 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+button:not(:disabled):active, a[href]:active {
+  transform: scale(0.965);
+  transition-duration: 0.09s;
+}
+
+/* Chi preferisce meno movimento, o chi spegne le animazioni nelle Impostazioni: tutto istantaneo */
+@media (prefers-reduced-motion: reduce) {
+  .foglio-dentro, .foglio-fuori, .vela-dentro, .vela-fuori, .carta-dentro, .carta-fuori, .avviso-dentro, .avviso-fuori, .alto-dentro, .alto-fuori, .entra, .dissolve {
+    animation-duration: 0.01ms;
+  }
+}
+:root[data-animazioni="off"] *, :root[data-animazioni="off"] *::before, :root[data-animazioni="off"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-delay: 0s !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* Dettagli dei popup: l'icona che cambia fa un piccolo salto, i punti entrano ingranditi */
+@keyframes iconaPop { 0% { transform: scale(0.55) rotate(-8deg); opacity: 0; } 60% { transform: scale(1.14) rotate(3deg); opacity: 1; } 100% { transform: none; } }
+.icona-pop { animation: iconaPop 0.55s var(--molla) both; }
+@keyframes xpPop { 0% { transform: scale(0.6); opacity: 0; } 55% { transform: scale(1.12); opacity: 1; } 100% { transform: none; } }
+.xp-pop { animation: xpPop 0.55s var(--molla) both; }
+
+/* Cambio di schermata */
+@keyframes paginaDentro { from { opacity: 0; transform: translate3d(0, 14px, 0); } to { opacity: 1; transform: none; } }
+.pagina-dentro { animation: paginaDentro 0.45s var(--posa) backwards; }
+@media (prefers-reduced-motion: reduce) { .pagina-dentro { animation-duration: 0.01ms; } }
+
+/* Elenchi: le righe entrano una dopo l'altra (--base = ritardo di partenza) */
+.stagger > * { animation: entra 0.55s var(--posa) backwards; }
+.stagger > *:nth-child(1) { animation-delay: calc(var(--base, 0ms) + 0ms); }
+.stagger > *:nth-child(2) { animation-delay: calc(var(--base, 0ms) + 55ms); }
+.stagger > *:nth-child(3) { animation-delay: calc(var(--base, 0ms) + 110ms); }
+.stagger > *:nth-child(4) { animation-delay: calc(var(--base, 0ms) + 165ms); }
+.stagger > *:nth-child(5) { animation-delay: calc(var(--base, 0ms) + 220ms); }
+.stagger > *:nth-child(6) { animation-delay: calc(var(--base, 0ms) + 275ms); }
+.stagger > *:nth-child(7) { animation-delay: calc(var(--base, 0ms) + 330ms); }
+.stagger > *:nth-child(8) { animation-delay: calc(var(--base, 0ms) + 385ms); }
+.stagger > *:nth-child(9) { animation-delay: calc(var(--base, 0ms) + 440ms); }
+.stagger > *:nth-child(10) { animation-delay: calc(var(--base, 0ms) + 495ms); }
+.stagger > *:nth-child(11) { animation-delay: calc(var(--base, 0ms) + 550ms); }
+.stagger > *:nth-child(12) { animation-delay: calc(var(--base, 0ms) + 605ms); }
+.stagger > *:nth-child(n+13) { animation-delay: calc(var(--base, 0ms) + 660ms); }
+@media (prefers-reduced-motion: reduce) { .stagger > * { animation-duration: 0.01ms; } }
+
+/* Task fatta: la riga viene barrata con un tratto che scorre da sinistra a destra */
+.barrato {
+  background: linear-gradient(currentColor, currentColor) 0 56% / 0% 2px no-repeat;
+  transition: background-size 0.55s var(--posa), opacity 0.4s ease;
+}
+.barrato.fatto { background-size: 100% 2px; }
+
+/* La scheda di una task che si apre: cresce un po' dall'alto, con una molla leggera */
+@keyframes apriScheda { from { opacity: 0.4; transform: scale(0.97); } to { opacity: 1; transform: none; } }
+.apri-scheda { animation: apriScheda 0.42s var(--molla) backwards; transform-origin: top center; }
+@media (prefers-reduced-motion: reduce) { .apri-scheda { animation-duration: 0.01ms; } }
+
+/* Interruttore: la pallina scorre con una molla e si allunga mentre è premuta */
+.switch-pallina { transition: transform 0.45s var(--molla), width 0.25s var(--posa); }
+.switch:active .switch-pallina { width: 33px; }
+.switch[aria-checked="true"]:active .switch-pallina { transform: translateX(14px) !important; }
+
+/* Una barra che cresce da sinistra quando compare */
+@keyframes barraCresce { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.barra-cresce { animation: barraCresce 0.9s var(--posa) both; transform-origin: left center; }
+
+/* Chip e riquadri: quando si accendono fanno un piccolo salto */
+@keyframes chipPop { 0% { transform: scale(0.92); } 55% { transform: scale(1.07); } 100% { transform: scale(1); } }
+.chip-on { animation: chipPop 0.4s var(--molla); }
+@media (prefers-reduced-motion: reduce) { .chip-on, .barra-cresce { animation-duration: 0.01ms; } }

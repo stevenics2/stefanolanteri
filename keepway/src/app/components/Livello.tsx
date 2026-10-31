@@ -20,7 +20,7 @@ export default function Livello() {
         </div>
       </div>
       <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-ov/10">
-        <div className="h-full rounded-full bg-accent transition-all duration-700" style={{ width: `${Math.round(l.progresso * 100)}%` }} />
+        <div className="barra-cresce h-full rounded-full bg-accent transition-all duration-700" style={{ width: `${Math.round(l.progresso * 100)}%` }} />
       </div>
       <div className="mt-1.5 text-xs text-muted">
         {l.prossimo ? `Ancora ${l.mancano} XP per «${l.prossimo.nome}»` : "Livello massimo raggiunto"}

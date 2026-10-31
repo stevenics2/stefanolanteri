@@ -9,6 +9,10 @@ export const CHIAVE_TEMA = "keepway-tema";
 export default function TemaApplicato() {
   const { stato } = useStore();
   const tema = stato.impostazioni.tema === "chiaro" ? "chiaro" : "scuro";
+  const animazioni = stato.impostazioni.animazioni;
+  useEffect(() => {
+    document.documentElement.dataset.animazioni = animazioni ? "on" : "off"; // con le animazioni spente tutto il movimento diventa istantaneo
+  }, [animazioni]);
   useEffect(() => {
     document.documentElement.dataset.tema = tema;
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content", tema === "chiaro" ? "#eef1f5" : "#0b0f14");

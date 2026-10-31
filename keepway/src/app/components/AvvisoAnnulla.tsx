@@ -4,6 +4,7 @@ import { confermaAnnulla } from "@/lib/annulla";
 import { Undo2 } from "lucide-react";
 import { useEffect } from "react";
 import { useStore } from "@/lib/store";
+import Presenza from "./Presenza";
 
 // "Fatto. Annulla": compare dopo una modifica ai turni e sparisce da sola.
 export default function AvvisoAnnulla() {
@@ -14,15 +15,18 @@ export default function AvvisoAnnulla() {
     const t = setTimeout(chiudiAvviso, 9000);
     return () => clearTimeout(t);
   }, [id, chiudiAvviso]);
-  if (!avviso) return null;
   return (
-    <div className="pop fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+5rem)] z-50 flex justify-center px-4">
-      <div className="flex w-full max-w-sm items-center gap-3 rounded-2xl bg-card p-3 shadow-xl ring-1 ring-ov/10">
-        <span className="flex-1 text-sm">{avviso.testo}</span>
-        <button data-suono="nessuno" onClick={() => confermaAnnulla("Annullare questa modifica?", stato.impostazioni.suoni) && annullaAvviso()} className="inline-flex items-center gap-1.5 rounded-lg bg-ov/10 px-3 py-1.5 text-sm font-semibold">
-          <Undo2 size={14} /> Annulla
-        </button>
-      </div>
-    </div>
+    <Presenza dato={avviso} ms={300}>
+      {(av, uscendo) => (
+        <div className={`fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+5rem)] z-50 flex justify-center px-4 ${uscendo ? "avviso-fuori" : "avviso-dentro"}`}>
+          <div className="flex w-full max-w-sm items-center gap-3 rounded-2xl bg-card p-3 shadow-xl ring-1 ring-ov/10">
+            <span className="flex-1 text-sm">{av.testo}</span>
+            <button data-suono="nessuno" onClick={() => confermaAnnulla("Annullare questa modifica?", stato.impostazioni.suoni) && annullaAvviso()} className="inline-flex items-center gap-1.5 rounded-lg bg-ov/10 px-3 py-1.5 text-sm font-semibold">
+              <Undo2 size={14} /> Annulla
+            </button>
+          </div>
+        </div>
+      )}
+    </Presenza>
   );
 }

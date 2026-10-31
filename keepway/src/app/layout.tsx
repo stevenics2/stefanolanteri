@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import BottomNav from "./components/BottomNav";
 import Providers from "./components/Providers";
+import TransizionePagina from "./components/TransizionePagina";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
@@ -33,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="flex flex-col">
         <Providers>
           <main className="flex-1 px-4 pb-28 pt-[var(--pt-pagina)]">
-            {children}
+            <TransizionePagina>{children}</TransizionePagina>
           </main>
           <BottomNav />
         </Providers>

@@ -1,5 +1,6 @@
 "use client";
 
+import Segmentato from "../components/Segmentato";
 import { useState } from "react";
 import type { Task } from "@/lib/tipi";
 import PianoSettimana from "./PianoSettimana";
@@ -74,13 +75,8 @@ export default function FormAllenamento({ onClose, iniziale }: { onClose: () => 
 
       <div>
         <Etichetta>Quando?</Etichetta>
-        <div className="mb-3 grid grid-cols-2 gap-2">
-          <button type="button" onClick={() => setAutomatica(true)} className={`rounded-xl py-2.5 text-sm font-semibold ${automatica ? "bg-accent text-black" : "bg-ov/10"}`}>
-            Decide l&apos;app
-          </button>
-          <button type="button" onClick={() => setAutomatica(false)} className={`rounded-xl py-2.5 text-sm font-semibold ${!automatica ? "bg-accent text-black" : "bg-ov/10"}`}>
-            Scelgo i giorni
-          </button>
+        <div className="mb-3">
+          <Segmentato voci={[{ id: "app", etichetta: "Decide l'app" }, { id: "io", etichetta: "Scelgo i giorni" }]} valore={automatica ? "app" : "io"} onCambia={(v) => setAutomatica(v === "app")} aria="Chi sceglie i giorni" />
         </div>
         {automatica ? (
           <div className="space-y-3">

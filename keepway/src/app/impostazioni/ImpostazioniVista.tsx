@@ -1,5 +1,7 @@
 "use client";
 
+import Interr from "../components/Interruttore";
+import Segmentato from "../components/Segmentato";
 import { AlarmClock, Moon, Plane, Plus, Sun, X } from "lucide-react";
 import { useState } from "react";
 import { inVacanza } from "@/lib/regole";
@@ -35,41 +37,40 @@ export default function ImpostazioniVista() {
   const campo = "mt-1 w-full rounded-xl bg-card px-3 py-2.5 text-foreground outline-none";
   const titolo = "text-sm font-semibold uppercase tracking-wide text-muted";
   return (
-    <section className="space-y-6">
+    <section className="stagger space-y-6">
       <h1 className="text-2xl font-bold">Impostazioni</h1>
 
       <div className="space-y-2">
         <div className={riga}>
           <span>Tema</span>
-          <div className="inline-flex rounded-full bg-ov/10 p-0.5 text-sm" role="group" aria-label="Tema">
-            {([["scuro", "Scuro", Moon], ["chiaro", "Chiaro", Sun]] as const).map(([t, nome, Icona]) => (
-              <button
-                key={t}
-                data-suono="via"
-                onClick={() => impostazioni({ tema: t })}
-                aria-pressed={stato.impostazioni.tema === t}
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-semibold ${stato.impostazioni.tema === t ? "bg-foreground text-background" : "text-muted"}`}
-              >
-                <Icona size={14} /> {nome}
-              </button>
-            ))}
-          </div>
+          <Segmentato
+            inline
+            voci={[{ id: "scuro" as const, etichetta: <><Moon size={14} /> Scuro</> }, { id: "chiaro" as const, etichetta: <><Sun size={14} /> Chiaro</> }]}
+            valore={stato.impostazioni.tema}
+            onCambia={(t) => impostazioni({ tema: t })}
+            contenitore="rounded-full bg-ov/10 text-sm"
+            pillola="rounded-full bg-foreground"
+            testoAttivo="text-background"
+            bottone="py-1.5 text-sm"
+            margine={2}
+            aria="Tema"
+          />
         </div>
         <label className={riga}>
           <span>Suoni</span>
-          <input type="checkbox" className="h-5 w-5" checked={stato.impostazioni.suoni} onChange={(e) => impostazioni({ suoni: e.target.checked })} />
+          <Interr valore={stato.impostazioni.suoni} onChange={(v) => impostazioni({ suoni: v })} />
         </label>
         <label className={riga}>
           <span>Suono a ogni tocco</span>
-          <input type="checkbox" className="h-5 w-5" checked={stato.impostazioni.suonoTocco} onChange={(e) => impostazioni({ suonoTocco: e.target.checked })} />
+          <Interr valore={stato.impostazioni.suonoTocco} onChange={(v) => impostazioni({ suonoTocco: v })} />
         </label>
         <label className={riga}>
           <span>Vibrazione a ogni tocco<span className="block text-xs text-muted">Su iPhone potrebbe non funzionare</span></span>
-          <input type="checkbox" className="h-5 w-5" checked={stato.impostazioni.vibrazione} onChange={(e) => impostazioni({ vibrazione: e.target.checked })} />
+          <Interr valore={stato.impostazioni.vibrazione} onChange={(v) => impostazioni({ vibrazione: v })} />
         </label>
         <label className={riga}>
           <span>Animazioni e coriandoli</span>
-          <input type="checkbox" className="h-5 w-5" checked={stato.impostazioni.animazioni} onChange={(e) => impostazioni({ animazioni: e.target.checked })} />
+          <Interr valore={stato.impostazioni.animazioni} onChange={(v) => impostazioni({ animazioni: v })} />
         </label>
       </div>
 

@@ -142,7 +142,7 @@ function MenuGiorno({ data, onClose, onVai }: { data: string; onClose: () => voi
       </div>
 
       {attenzione && (
-        <div className="space-y-3 rounded-2xl border border-red-500/50 bg-red-500/10 p-4">
+        <div className="entra space-y-3 rounded-2xl border border-red-500/50 bg-red-500/10 p-4">
           <div className="flex items-center gap-2 text-lg font-bold text-red-200">
             <AlertTriangle size={22} /> Attenzione: Conflitto turni
           </div>
@@ -164,7 +164,7 @@ function MenuGiorno({ data, onClose, onVai }: { data: string; onClose: () => voi
       )}
 
       {!attenzione && (
-        <>
+        <div key={vista} className="entra space-y-5">
       {vista === "menu" && (
         <>
           {ge.modifica && (
@@ -295,7 +295,7 @@ function MenuGiorno({ data, onClose, onVai }: { data: string; onClose: () => voi
           </button>
         </div>
       )}
-        </>
+        </div>
       )}
     </Schermo>
   );

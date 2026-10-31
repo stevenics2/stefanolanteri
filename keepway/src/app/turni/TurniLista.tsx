@@ -1,5 +1,7 @@
 "use client";
 
+import Segmentato from "../components/Segmentato";
+import Presenza from "../components/Presenza";
 import { CalendarCheck } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { dateConCalendario, giornoEffettivo, notaGiorno, violazioniDa, type GiornoEffettivo } from "@/lib/calendario";
@@ -57,12 +59,8 @@ export default function TurniLista() {
             </button>
           )}
         </div>
-        <div className="mt-3 grid grid-cols-3 gap-1 rounded-xl bg-ov/10 p-1 text-sm font-medium">
-          {([["lista", "Roster"], ["mese", "Calendario"], ["recap", "Recap"]] as const).map(([v, nome]) => (
-            <button key={v} onClick={() => setVista(v)} className={`rounded-lg py-1.5 ${vista === v ? "bg-accent text-black" : "text-muted"}`}>
-              {nome}
-            </button>
-          ))}
+        <div className="mt-3">
+          <Segmentato voci={[{ id: "lista", etichetta: "Roster" }, { id: "mese", etichetta: "Calendario" }, { id: "recap", etichetta: "Recap" }]} valore={vista} onCambia={setVista} aria="Vista dei turni" />
         </div>
         {vista === "lista" && (
           <div className="mt-3 flex gap-2 text-sm">
@@ -77,35 +75,39 @@ export default function TurniLista() {
 
       <TurniDaSistemare className="mx-4 mt-4" />
 
-      {vista === "mese" ? (
-        <CalendarioMese />
-      ) : vista === "recap" ? (
-        <RecapVista />
-      ) : (
-        <>
-          <ul>
-            {visibili.map((g) => {
-              const [a, m, gg] = g.data.split("-").map(Number);
-              const data = new Date(a, m - 1, gg);
-              const èOggi = g.data === oggi;
-              return (
-                <li key={g.data} ref={èOggi ? rigaOggi : undefined} className="border-b border-ov/10">
-                  <button onClick={() => setAperto(g.data)} className="flex w-full items-center gap-3 px-4 py-3 text-left">
-                    <div className={`w-16 shrink-0 rounded-xl py-1.5 text-center leading-tight ${èOggi ? "bg-accent text-black" : "text-sky-300"}`}>
-                      <div className="text-sm">{GIORNI_BREVI[data.getDay()]}</div>
-                      <div className="text-3xl font-light">{gg}</div>
-                      <div className="text-sm">{MESI_BREVI[m - 1]}</div>
-                    </div>
-                    <Blocco g={g} avviso={problemi.get(g.data)} />
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </>
-      )}
+      <div key={vista} className="dissolve">
+        {vista === "mese" ? (
+          <CalendarioMese />
+        ) : vista === "recap" ? (
+          <RecapVista />
+        ) : (
+          <>
+            <ul>
+              {visibili.map((g) => {
+                const [a, m, gg] = g.data.split("-").map(Number);
+                const data = new Date(a, m - 1, gg);
+                const èOggi = g.data === oggi;
+                return (
+                  <li key={g.data} ref={èOggi ? rigaOggi : undefined} className="border-b border-ov/10">
+                    <button onClick={() => setAperto(g.data)} className="flex w-full items-center gap-3 px-4 py-3 text-left">
+                      <div className={`w-16 shrink-0 rounded-xl py-1.5 text-center leading-tight ${èOggi ? "bg-accent text-black" : "text-sky-300"}`}>
+                        <div className="text-sm">{GIORNI_BREVI[data.getDay()]}</div>
+                        <div className="text-3xl font-light">{gg}</div>
+                        <div className="text-sm">{MESI_BREVI[m - 1]}</div>
+                      </div>
+                      <Blocco g={g} avviso={problemi.get(g.data)} />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </>
+        )}
+      </div>
 
-      {aperto && <MenuTurno key={aperto} data={aperto} onClose={() => setAperto(null)} />}
+      <Presenza dato={aperto} ms={340}>
+        {(d) => <MenuTurno key={d} data={d} onClose={() => setAperto(null)} />}
+      </Presenza>
     </section>
   );
 }

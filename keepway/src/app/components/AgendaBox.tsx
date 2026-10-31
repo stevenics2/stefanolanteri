@@ -60,7 +60,7 @@ export function AgendaOggi({ onModifica }: { onModifica?: (e: Evento) => void })
   const lista = eventiDelGiorno(stato.eventi, oggi, oggi).filter((e) => !(e.tipo === "promemoria" && e.fatto && e.data < oggi));
   if (lista.length === 0) return null;
   return (
-    <div className="space-y-2">
+    <div className="entra space-y-2">
       <Titolo icona={CalendarClock} testo="Oggi hai:" />
       {lista.map((e) => (
         <RigaEvento key={e.id} e={e} oggi={oggi} alTocco={onModifica && (() => onModifica(e))} />
@@ -75,7 +75,7 @@ export function AgendaDomani({ onModifica }: { onModifica?: (e: Evento) => void 
   const lista = eventiDelGiorno(stato.eventi, domani(oggi), oggi);
   if (lista.length === 0) return null;
   return (
-    <div className="space-y-2">
+    <div className="entra space-y-2">
       <Titolo icona={CalendarClock} testo="Domani hai:" />
       {lista.map((e) => (
         <RigaEvento key={e.id} e={e} oggi={oggi} alTocco={onModifica && (() => onModifica(e))} />
@@ -90,7 +90,7 @@ export function InArrivo({ onModifica }: { onModifica?: (e: Evento) => void }) {
   const lista = inArrivo(stato.eventi, oggi);
   if (lista.length === 0) return null;
   return (
-    <div className="space-y-2">
+    <div className="entra space-y-2">
       <Titolo icona={CalendarRange} testo="In arrivo:" />
       {lista.map((e) => (
         <RigaEvento key={e.id} e={e} oggi={oggi} conData alTocco={onModifica && (() => onModifica(e))} />

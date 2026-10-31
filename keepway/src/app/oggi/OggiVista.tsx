@@ -1,5 +1,6 @@
 "use client";
 
+import Segmentato from "../components/Segmentato";
 import { CalendarClock, ListChecks, Moon, Plane, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -16,6 +17,8 @@ import SonnoCard from "../components/SonnoCard";
 import TurniDaSistemare from "../components/TurniDaSistemare";
 import TaskCard from "../components/TaskCard";
 import BloccoTurno from "../components/BloccoTurno";
+import ListaFlip from "../components/ListaFlip";
+import Presenza from "../components/Presenza";
 import InterruttoreTema from "../components/InterruttoreTema";
 import GiornoSeguente from "../components/GiornoSeguente";
 import StrisciaGiorni from "../components/StrisciaGiorni";
@@ -78,30 +81,35 @@ export default function OggiVista() {
             </button>
           )}
         </div>
-        <div className="inline-flex rounded-full bg-ov/10 p-0.5 text-xs" role="group" aria-label="Vista">
-          {([["compatta", "Compatta"], ["estesa", "Estesa"]] as const).map(([vv, nome]) => (
-            <button
-              key={vv}
-              data-suono="via"
-              onClick={() => impostazioni({ vistaOggi: vv })}
-              aria-pressed={vista === vv}
-              className={`rounded-full px-2.5 py-1 font-semibold ${vista === vv ? "bg-foreground text-background" : "text-muted"}`}
-            >
-              {nome}
-            </button>
-          ))}
-        </div>
+        <Segmentato
+          inline
+          voci={[{ id: "compatta", etichetta: "Compatta" }, { id: "estesa", etichetta: "Estesa" }]}
+          valore={vista}
+          onCambia={(vv) => impostazioni({ vistaOggi: vv })}
+          contenitore="rounded-full bg-ov/10 text-xs"
+          pillola="rounded-full bg-foreground"
+          testoAttivo="text-background"
+          bottone="py-1 text-xs"
+          margine={2}
+          aria="Vista"
+        />
         </div>
       </div>
 
-      <RiepilogoOggi fatte={fatte} totale={daFare.length} />
+      <div className="entra">
+        <RiepilogoOggi fatte={fatte} totale={daFare.length} />
+      </div>
 
-      <StrisciaGiorni oggi={oggi} selezionato={giorno} onScegli={(d) => setScelto(d === oggi ? null : d)} />
+      <div className="entra" style={{ animationDelay: "70ms" }}>
+        <StrisciaGiorni oggi={oggi} selezionato={giorno} onScegli={(d) => setScelto(d === oggi ? null : d)} />
+      </div>
 
       {giorno !== oggi ? (
-        <GiornoSeguente data={giorno} onApri={setDaModificare} />
+        <div key={giorno} className="entra">
+          <GiornoSeguente data={giorno} onApri={setDaModificare} />
+        </div>
       ) : (
-      <>
+      <div className="dissolve space-y-5">
       
 
       <TurniDaSistemare />
@@ -133,7 +141,9 @@ export default function OggiVista() {
         </button>
       )}
 
-      <BloccoTurno data={oggi} />
+      <div className="entra" style={{ animationDelay: "130ms" }}>
+        <BloccoTurno data={oggi} />
+      </div>
 
       {vista === "compatta" && <AgendaOggi onModifica={setDaModificare} />}
 
@@ -151,9 +161,13 @@ export default function OggiVista() {
           <h2 className="flex items-center gap-2 text-lg font-bold">
             <ListChecks size={20} className="text-accent" /> Il piano di oggi
           </h2>
-          {cosaOggi.map((t) => (
-            <TaskCard key={t.id} task={t} soloMinima={soloMinima} />
-          ))}
+          <ListaFlip className="stagger space-y-2" >
+            {cosaOggi.map((t) => (
+              <div key={t.id} data-flip={t.id}>
+                <TaskCard task={t} soloMinima={soloMinima} />
+              </div>
+            ))}
+          </ListaFlip>
         </div>
       )}
 
@@ -162,9 +176,13 @@ export default function OggiVista() {
           <h2 className="flex items-center gap-2 text-lg font-extrabold uppercase tracking-wide text-amber-300">
             <Moon size={20} /> Must before sleep:
           </h2>
-          {mustPrimaDiDormire.map((t) => (
-            <TaskCard key={t.id} task={t} soloMinima={soloMinima} />
-          ))}
+          <ListaFlip className="stagger space-y-2">
+            {mustPrimaDiDormire.map((t) => (
+              <div key={t.id} data-flip={t.id}>
+                <TaskCard task={t} soloMinima={soloMinima} />
+              </div>
+            ))}
+          </ListaFlip>
         </div>
       )}
 
@@ -194,10 +212,12 @@ export default function OggiVista() {
       {/* Il sonno chiude la giornata: sta in fondo, dopo tutto il resto */}
       <SonnoCard />
 
-      </>
+      </div>
       )}
 
-      {daModificare && <FormEvento key={daModificare.id} tipo={daModificare.tipo} iniziale={daModificare} onClose={() => setDaModificare(null)} />}
+      <Presenza dato={daModificare} ms={340}>
+        {(e) => <FormEvento key={e.id} tipo={e.tipo} iniziale={e} onClose={() => setDaModificare(null)} />}
+      </Presenza>
     </section>
   );
 }

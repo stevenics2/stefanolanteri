@@ -51,12 +51,12 @@ export default function TaskCard({ task, soloMinima, senzaOrario = false }: { ta
       <button
         data-suono="via"
         onClick={() => setAperta(true)}
-        className={`flex w-full items-center gap-3 rounded-2xl bg-card px-3 py-2.5 text-left ${fatto ? "opacity-60" : ""}`}
+        className={`dissolve flex w-full items-center gap-3 rounded-2xl bg-card px-3 py-2.5 text-left ${fatto ? "opacity-60" : ""}`}
         style={{ borderLeft: `4px solid ${colore}` }}
       >
         <AreaIcona nome={iconaTask(task, area?.icona ?? "")} colore={colore} />
         <span className="min-w-0 flex-1">
-          <span className={`block font-semibold leading-tight ${fatto ? "line-through" : ""}`}>{titoloTask(task, stato, oggi)}</span>
+          <span className="block font-semibold leading-tight"><span className={`barrato ${fatto ? "fatto" : ""}`}>{titoloTask(task, stato, oggi)}</span></span>
           <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted">
             {finestra && !senzaOrario ? (
               <span className="inline-flex items-center gap-1 whitespace-nowrap font-semibold text-emerald-300">
@@ -73,7 +73,7 @@ export default function TaskCard({ task, soloMinima, senzaOrario = false }: { ta
         </span>
         {fatto ? (
           <span className="inline-flex items-center gap-1 whitespace-nowrap text-sm font-bold text-emerald-400">
-            <Check size={16} /> +{fatto.punti + fatto.bonus}
+            <span className="icona-pop inline-flex"><Check size={16} /></span> +{fatto.punti + fatto.bonus}
           </span>
         ) : (
           <span className="flex shrink-0 items-center gap-2">
@@ -91,12 +91,12 @@ export default function TaskCard({ task, soloMinima, senzaOrario = false }: { ta
   }
 
   return (
-    <div className={`rounded-2xl bg-card p-4 ${fatto ? "opacity-60" : ""}`} style={{ borderLeft: `4px solid ${colore}` }}>
+    <div className={`apri-scheda rounded-2xl bg-card p-4 transition-opacity duration-500 ${fatto ? "opacity-60" : ""}`} style={{ borderLeft: `4px solid ${colore}` }}>
       <div className="flex items-start gap-3">
         <AreaIcona nome={iconaTask(task, area?.icona ?? "")} colore={colore} />
         <div className="flex-1">
-          <div className={`flex items-start justify-between gap-2 font-semibold ${fatto ? "line-through" : ""}`}>
-            <span>{titoloTask(task, stato, oggi)}</span>
+          <div className="flex items-start justify-between gap-2 font-semibold">
+            <span className={`barrato ${fatto ? "fatto" : ""}`}>{titoloTask(task, stato, oggi)}</span>
             <button data-suono="indietro" onClick={() => setAperta(false)} aria-label="Chiudi" className="-mt-1 shrink-0 p-1 text-muted">
               <ChevronDown size={18} className="rotate-180" />
             </button>

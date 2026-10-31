@@ -1,5 +1,6 @@
 "use client";
 
+import Presenza from "../components/Presenza";
 import { BellRing, CalendarPlus, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 import { useState } from "react";
 import { giornoEffettivo, violazioniDa, type GiornoEffettivo } from "@/lib/calendario";
@@ -72,7 +73,7 @@ export default function CalendarioMese() {
       <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted">
         {SETTIMANA.map((g, i) => <div key={i}>{g}</div>)}
       </div>
-      <div className="grid grid-cols-7 gap-1">
+      <div key={`${a}-${m}`} className="dissolve grid grid-cols-7 gap-1">
         {celle.map((d, i) => {
           if (!d) return <div key={i} />;
           const g = giornoEffettivo(d);
@@ -101,7 +102,7 @@ export default function CalendarioMese() {
       </div>
 
       {sel && (
-        <div className="space-y-3 rounded-3xl bg-card p-4">
+        <div key={sel} className="entra space-y-3 rounded-3xl bg-card p-4">
           <div>
             <div className="text-lg font-bold first-letter:uppercase">{dataLunga(sel)}</div>
             {geSel ? (
@@ -146,10 +147,12 @@ export default function CalendarioMese() {
         </div>
       )}
 
-      {modulo && (
-        <FormEvento key={modulo.evento?.id ?? modulo.tipo + modulo.data} tipo={modulo.tipo} iniziale={modulo.evento} dataIniziale={modulo.data} onClose={() => setModulo(null)} />
-      )}
-      {menu && <MenuTurno key={menu} data={menu} onClose={() => setMenu(null)} />}
+      <Presenza dato={modulo} ms={340}>
+        {(m) => <FormEvento key={m.evento?.id ?? m.tipo + m.data} tipo={m.tipo} iniziale={m.evento} dataIniziale={m.data} onClose={() => setModulo(null)} />}
+      </Presenza>
+      <Presenza dato={menu} ms={340}>
+        {(d) => <MenuTurno key={d} data={d} onClose={() => setMenu(null)} />}
+      </Presenza>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import ListaFlip from "./ListaFlip";
 import { ChevronDown } from "lucide-react";
 import { Fragment, useState } from "react";
 import { eventiDelGiorno } from "@/lib/eventi";
@@ -52,16 +53,16 @@ export default function Timeline({
 
   return (
     <div className="space-y-4">
-      <div className="space-y-5">
+      <ListaFlip className="stagger space-y-5">
         {nPassate > 0 && (
           <button onClick={() => setMostraPassato((x) => !x)} className="inline-flex items-center gap-1 text-xs font-semibold text-muted">
             {mostraPassato ? "Nascondi il passato" : `Già passato (${nPassate})`} <ChevronDown size={13} className={mostraPassato ? "rotate-180" : ""} />
           </button>
         )}
-        {visibili.map((v, i) => {
+        {visibili.map((v) => {
           if (v.tipo === "adesso") {
             return (
-              <div key="adesso" className="flex items-center gap-2">
+              <div key="adesso" data-flip="adesso" className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-red-500 shadow-[0_0_8px_2px_rgba(239,68,68,0.7)]" />
                 <span className="h-px flex-1 bg-red-500/70" />
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-red-400">adesso {hhmm(v.t)}</span>
@@ -69,8 +70,9 @@ export default function Timeline({
             );
           }
           const etichetta = v.tipo === "task" ? `${hhmm(v.t)}–${hhmm(v.fine)}` : v.t < 0 ? "oggi" : hhmm(v.t);
+          const chiave = v.tipo === "task" ? `t-${v.task.id}` : `e-${v.evento.id}`;
           return (
-            <div key={i} className="relative">
+            <div key={chiave} data-flip={chiave} className="relative">
               <span className="absolute -top-2.5 left-4 z-10 rounded-full bg-background px-2.5 py-0.5 text-[11px] font-extrabold tabular-nums text-emerald-300 ring-1 ring-emerald-400/40">
                 {etichetta}
               </span>
@@ -82,7 +84,7 @@ export default function Timeline({
             </div>
           );
         })}
-      </div>
+      </ListaFlip>
 
       {senzaOrario.length > 0 && (
         <Fragment>

@@ -27,7 +27,7 @@ export default function ProgressiVista() {
   const totale = stato.completamenti.length;
 
   return (
-    <section className="space-y-5">
+    <section className="stagger space-y-5">
       <h1 className="text-2xl font-bold">Progressi</h1>
       <Livello />
 

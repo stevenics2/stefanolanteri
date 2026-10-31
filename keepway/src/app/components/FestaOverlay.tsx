@@ -4,6 +4,7 @@ import { Gift, PackageOpen, Swords, Trophy, Zap } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { coriandoli, monete, suono } from "@/lib/effetti";
 import { useStore } from "@/lib/store";
+import Presenza from "./Presenza";
 
 export const EVENTO_FIAMMATA = "keepway-fiammata";
 export const EVENTO_COMBO = "keepway-combo"; // la combo compare nel riquadro di avanzamento
@@ -64,24 +65,30 @@ export default function FestaOverlay() {
     };
   }, [id, tipo]);
 
-  if (!f || visibileId !== f.id || nelBoxId === f.id) return null;
-  const aperto = apertoId === f.id;
-  const Icona = f.tipo === "forziere" && aperto ? PackageOpen : ICONE[f.tipo];
-  const colore = COLORI[f.tipo];
+  const daMostrare = f && visibileId === f.id && nelBoxId !== f.id ? f : null;
   return (
-    <div onClick={chiudiFesta} className="fixed inset-0 z-[60] flex items-center justify-center bg-black/65 px-6 backdrop-blur-sm">
-      <div className="pop w-full max-w-xs rounded-3xl border bg-card p-6 text-center" style={{ borderColor: colore, boxShadow: `0 0 60px -8px ${colore}` }}>
-        <Icona size={64} strokeWidth={1.6} className={`mx-auto ${f.tipo === "forziere" && !aperto ? "scuoti" : ""}`} style={{ color: colore }} />
-        <div className="mt-3 text-2xl font-black tracking-wide" style={{ color: colore }}>
-          {f.tipo === "forziere" && !aperto ? "COMPLETATO!" : f.titolo}
-        </div>
-        {(f.tipo !== "forziere" || aperto) && (
-          <>
-            <p className="mt-2 text-sm">{f.testo}</p>
-            {f.xp > 0 && <div className="mt-3 text-4xl font-black text-accent">+{f.xp} XP</div>}
-          </>
-        )}
-      </div>
-    </div>
+    <Presenza dato={daMostrare} ms={300}>
+      {(fe, uscendo) => {
+        const aperto = apertoId === fe.id;
+        const Icona = fe.tipo === "forziere" && aperto ? PackageOpen : ICONE[fe.tipo];
+        const colore = COLORI[fe.tipo];
+        return (
+          <div onClick={chiudiFesta} className={`fixed inset-0 z-[60] flex items-center justify-center bg-black/65 px-6 backdrop-blur-sm ${uscendo ? "vela-fuori" : "vela-dentro"}`}>
+            <div className={`w-full max-w-xs rounded-3xl border bg-card p-6 text-center ${uscendo ? "carta-fuori" : "carta-dentro"}`} style={{ borderColor: colore, boxShadow: `0 0 60px -8px ${colore}` }}>
+              <Icona key={`${fe.id}-${aperto}`} size={64} strokeWidth={1.6} className={`mx-auto ${fe.tipo === "forziere" && !aperto ? "scuoti" : "icona-pop"}`} style={{ color: colore }} />
+              <div key={aperto ? "aperto" : "chiuso"} className="dissolve mt-3 text-2xl font-black tracking-wide" style={{ color: colore }}>
+                {fe.tipo === "forziere" && !aperto ? "COMPLETATO!" : fe.titolo}
+              </div>
+              {(fe.tipo !== "forziere" || aperto) && (
+                <>
+                  <p className="entra mt-2 text-sm" style={{ animationDelay: "0.08s" }}>{fe.testo}</p>
+                  {fe.xp > 0 && <div className="xp-pop mt-3 text-4xl font-black text-accent" style={{ animationDelay: "0.16s" }}>+{fe.xp} XP</div>}
+                </>
+              )}
+            </div>
+          </div>
+        );
+      }}
+    </Presenza>
   );
 }

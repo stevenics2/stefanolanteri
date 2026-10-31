@@ -9,6 +9,7 @@ import { useStore } from "@/lib/store";
 import type { Evento, Task } from "@/lib/tipi";
 import { RigaEvento } from "../components/AgendaBox";
 import AreaIcona, { iconaTask } from "../components/AreaIcona";
+import Presenza from "../components/Presenza";
 import FormAllenamento from "./FormAllenamento";
 import FormEvento from "./FormEvento";
 import FormLavatrice from "./FormLavatrice";
@@ -62,7 +63,7 @@ export default function TaskHub() {
     <section className="space-y-6">
       <h1 className="text-2xl font-bold">Task</h1>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="stagger grid grid-cols-2 gap-3">
         {RIQUADRI.map(({ id, nome, sotto, Icona, classe }) => (
           <button
             key={id}
@@ -122,12 +123,19 @@ export default function TaskHub() {
         );
       })}
 
-      {modo?.tipo === "task" && <FormTask key={modo.task?.id ?? "nuova"} iniziale={modo.task} onClose={chiudi} />}
-      {modo?.tipo === "lavatrice" && <FormLavatrice key={modo.task?.id ?? "nuova"} iniziale={modo.task} onClose={chiudi} />}
-      {modo?.tipo === "allenamento" && <FormAllenamento key={modo.task?.id ?? "nuovo"} iniziale={modo.task} onClose={chiudi} />}
-      {(modo?.tipo === "appuntamento" || modo?.tipo === "promemoria") && (
-        <FormEvento key={modo.evento?.id ?? modo.tipo} tipo={modo.tipo} iniziale={modo.evento} onClose={chiudi} />
-      )}
+      <Presenza dato={modo} ms={340}>
+        {(m) =>
+          m.tipo === "task" ? (
+            <FormTask key={m.task?.id ?? "nuova"} iniziale={m.task} onClose={chiudi} />
+          ) : m.tipo === "lavatrice" ? (
+            <FormLavatrice key={m.task?.id ?? "nuova"} iniziale={m.task} onClose={chiudi} />
+          ) : m.tipo === "allenamento" ? (
+            <FormAllenamento key={m.task?.id ?? "nuovo"} iniziale={m.task} onClose={chiudi} />
+          ) : (
+            <FormEvento key={m.evento?.id ?? m.tipo} tipo={m.tipo} iniziale={m.evento} onClose={chiudi} />
+          )
+        }
+      </Presenza>
     </section>
   );
 }

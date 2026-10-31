@@ -1,5 +1,6 @@
 "use client";
 
+import Presenza from "./Presenza";
 import { AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { formatoGiornoMese, violazioniDa } from "@/lib/calendario";
@@ -34,7 +35,9 @@ export default function TurniDaSistemare({ className = "" }: { className?: strin
           </div>
         );
       })}
-      {apri && <MenuTurno key={apri} data={apri} onClose={() => setApri(null)} />}
+      <Presenza dato={apri} ms={340}>
+        {(d) => <MenuTurno key={d} data={d} onClose={() => setApri(null)} />}
+      </Presenza>
     </div>
   );
 }
