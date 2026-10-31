@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import type { Task } from "@/lib/tipi";
+import PianoSettimana from "./PianoSettimana";
 import { GIORNI_LUNGHI } from "@/lib/date";
 import { MIN_PER_KM } from "@/lib/durata";
 import { nuovoId } from "@/lib/seed";
@@ -23,15 +25,18 @@ const ATTIVITA = [
   { id: "yoga", nome: "Yoga", durata: 30, durate: [20, 30, 45, 60], xp: 30, spostamento: 0, km: false },
 ];
 
-export default function FormAllenamento({ onClose }: { onClose: () => void }) {
-  const { oggi, salvaTask } = useStore();
-  const [scelta, setScelta] = useState(ATTIVITA[0]);
-  const [durata, setDurata] = useState(ATTIVITA[0].durata);
-  const [km, setKm] = useState(5);
-  const [xp, setXp] = useState(ATTIVITA[0].xp);
-  const [spostamento, setSpostamento] = useState(ATTIVITA[0].spostamento);
-  const [giorni, setGiorni] = useState<number[]>([]);
-  const [adatta, setAdatta] = useState(true);
+export default function FormAllenamento({ onClose, iniziale }: { onClose: () => void; iniziale?: Task | null }) {
+  const { oggi, salvaTask, eliminaTask } = useStore();
+  const attivitaIniziale = ATTIVITA.find((a) => a.id === iniziale?.icona) ?? ATTIVITA[0];
+  const [scelta, setScelta] = useState(attivitaIniziale);
+  const [durata, setDurata] = useState(iniziale?.durataMin ?? attivitaIniziale.durata);
+  const [km, setKm] = useState(iniziale?.km ?? 5);
+  const [xp, setXp] = useState(iniziale && !iniziale.km ? iniziale.punti : attivitaIniziale.xp);
+  const [spostamento, setSpostamento] = useState(iniziale?.spostamentoMin ?? attivitaIniziale.spostamento);
+  const [giorni, setGiorni] = useState<number[]>(iniziale?.ricorrenza.tipo === "settimana" ? iniziale.ricorrenza.giorni : []);
+  const [adatta, setAdatta] = useState(iniziale?.adattaATurni ?? true);
+  const [automatica, setAutomatica] = useState(iniziale ? iniziale.ricorrenza.tipo === "auto" : true); // il modo predefinito: sceglie l'app
+  const [volte, setVolte] = useState(iniziale?.ricorrenza.tipo === "auto" ? iniziale.ricorrenza.volte : 3);
 
   const cambia = (a: (typeof ATTIVITA)[number]) => {
     setScelta(a);
@@ -39,23 +44,23 @@ export default function FormAllenamento({ onClose }: { onClose: () => void }) {
     setXp(a.xp);
     setSpostamento(a.spostamento);
   };
-  const valido = giorni.length > 0;
+  const valido = automatica ? volte > 0 : giorni.length > 0;
   const xpFinali = scelta.km ? km * XP_PER_KM : xp;
 
   const salva = () => {
     if (!valido) return;
     salvaTask({
-      id: nuovoId(), titolo: scelta.km ? `Corsa ${km} km` : scelta.nome, areaId: "allenamento", icona: scelta.id,
+      id: iniziale?.id ?? nuovoId(), titolo: scelta.km ? `Corsa ${km} km` : scelta.nome, areaId: "allenamento", icona: scelta.id,
       durataMin: scelta.km ? null : durata, minimaMin: null, km: scelta.km ? km : undefined, spostamentoMin: spostamento,
-      ricorrenza: { tipo: "settimana", giorni },
+      ricorrenza: automatica ? { tipo: "auto", volte } : { tipo: "settimana", giorni },
       fascia: "qualsiasi", solo: "sempre", soloACasa: false, promemoria: [], adattaATurni: adatta,
-      punti: xpFinali, essenziale: false, attiva: true, creatoIl: oggi,
+      punti: xpFinali, essenziale: false, attiva: iniziale?.attiva ?? true, creatoIl: iniziale?.creatoIl ?? oggi,
     });
     onClose();
   };
 
   return (
-    <Schermo titolo="Nuovo allenamento" onClose={onClose}>
+    <Schermo titolo={iniziale ? "Modifica allenamento" : "Nuovo allenamento"} onClose={onClose}>
       <div>
         <Etichetta>Che allenamento?</Etichetta>
         <div className="grid grid-cols-4 gap-2">
@@ -69,21 +74,54 @@ export default function FormAllenamento({ onClose }: { onClose: () => void }) {
 
       <div>
         <Etichetta>Quando?</Etichetta>
-        <div className="grid grid-cols-7 gap-1.5">
-          {[1, 2, 3, 4, 5, 6, 0].map((g) => {
-            const attivo = giorni.includes(g);
-            return (
-              <button
-                key={g}
-                type="button"
-                onClick={() => setGiorni((x) => (x.includes(g) ? x.filter((y) => y !== g) : [...x, g]))}
-                className={`rounded-xl py-2.5 text-sm font-semibold ${attivo ? "bg-accent text-black" : "bg-white/10"}`}
-              >
-                {GIORNI_LUNGHI[g].slice(0, 3)}
-              </button>
-            );
-          })}
+        <div className="mb-3 grid grid-cols-2 gap-2">
+          <button type="button" onClick={() => setAutomatica(true)} className={`rounded-xl py-2.5 text-sm font-semibold ${automatica ? "bg-accent text-black" : "bg-white/10"}`}>
+            Decide l&apos;app
+          </button>
+          <button type="button" onClick={() => setAutomatica(false)} className={`rounded-xl py-2.5 text-sm font-semibold ${!automatica ? "bg-accent text-black" : "bg-white/10"}`}>
+            Scelgo i giorni
+          </button>
         </div>
+        {automatica ? (
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              {[1, 2, 3, 4, 5].map((n) => <Chip key={n} attivo={volte === n} onClick={() => setVolte(n)}>{n} {n === 1 ? "volta" : "volte"} a settimana</Chip>)}
+            </div>
+            <p className="text-xs text-muted">
+              L&apos;app sceglie i giorni e l&apos;ora tenendo conto di turni, sonno e appuntamenti: dopo la notte dal tardo pomeriggio, con 2+3 la sera, con 3+4 la mattina
+              (se dormi abbastanza), con 1+4 mai. Distanzia gli allenamenti. Puoi sempre spostare ogni giorno.
+            </p>
+            <div>
+              <Etichetta>{iniziale ? "Il piano" : "Anteprima del piano"}</Etichetta>
+              <PianoSettimana
+                task={iniziale && iniziale.ricorrenza.tipo === "auto" ? iniziale : {
+                  id: iniziale?.id ?? "anteprima", titolo: scelta.nome, areaId: "allenamento", icona: scelta.id,
+                  durataMin: scelta.km ? null : durata, minimaMin: null, km: scelta.km ? km : undefined, spostamentoMin: spostamento,
+                  ricorrenza: { tipo: "auto", volte }, fascia: "qualsiasi", solo: "sempre", soloACasa: false, promemoria: [], adattaATurni: adatta,
+                  punti: xpFinali, essenziale: false, attiva: true, creatoIl: oggi,
+                }}
+                modifica={!!iniziale && iniziale.ricorrenza.tipo === "auto"}
+              />
+              {iniziale && iniziale.ricorrenza.tipo === "auto" && <p className="mt-2 text-xs text-muted">Se cambi frequenza, durata o spostamento, salva: il piano si ricalcola.</p>}
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-7 gap-1.5">
+            {[1, 2, 3, 4, 5, 6, 0].map((g) => {
+              const attivo = giorni.includes(g);
+              return (
+                <button
+                  key={g}
+                  type="button"
+                  onClick={() => setGiorni((x) => (x.includes(g) ? x.filter((y) => y !== g) : [...x, g]))}
+                  className={`rounded-xl py-2.5 text-sm font-semibold ${attivo ? "bg-accent text-black" : "bg-white/10"}`}
+                >
+                  {GIORNI_LUNGHI[g].slice(0, 3)}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {scelta.km ? (
@@ -123,8 +161,13 @@ export default function FormAllenamento({ onClose }: { onClose: () => void }) {
       <Interruttore valore={adatta} onChange={setAdatta}>Adatta ai turni: ti suggerisce il momento libero e ti avvisa lì</Interruttore>
 
       <button data-suono="via" onClick={salva} disabled={!valido} className="w-full rounded-2xl bg-accent py-3.5 text-lg font-bold text-black disabled:opacity-40">
-        Salva allenamento
+        {iniziale ? "Salva" : "Salva allenamento"}
       </button>
+      {iniziale && (
+        <button data-suono="indietro" onClick={() => confirm("Eliminare questo allenamento?") && (eliminaTask(iniziale.id), onClose())} className="w-full rounded-2xl bg-red-500/15 py-3 text-red-300">
+          Elimina
+        </button>
+      )}
     </Schermo>
   );
 }

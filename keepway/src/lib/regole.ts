@@ -1,3 +1,4 @@
+import { nelPianoAuto } from "./pianoAuto";
 import { caricoGiorno, tipoGiorno } from "./carico";
 import { dataPiù, giornoSettimana, inizioSettimana } from "./date";
 import type { Bonus, Completamento, Ignorato, Stato, Task, Vacanza } from "./tipi";
@@ -50,6 +51,7 @@ export function èPrevista(t: Task, data: string, p?: Previsione): boolean {
   if (!t.attiva) return false;
   if (t.soloACasa && inVacanza(p?.vacanza ?? null, data)) return false;
   const r = t.ricorrenza;
+  if (r.tipo === "auto") return data >= t.creatoIl && nelPianoAuto(t.id, data); // il piano ha già tenuto conto di turni, sonno e carico
   if (r.tipo === "una_volta") {
     if (r.data !== data) return false;
   } else {

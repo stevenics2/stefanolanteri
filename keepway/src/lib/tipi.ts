@@ -6,7 +6,8 @@ export type Area = { id: string; nome: string; colore: string; icona: string; fr
 export type Ricorrenza =
   | { tipo: "giornaliera" }
   | { tipo: "settimana"; giorni: number[] } // 0 = domenica ... 6 = sabato
-  | { tipo: "una_volta"; data: string };
+  | { tipo: "una_volta"; data: string }
+  | { tipo: "auto"; volte: number }; // N volte a settimana: i giorni li sceglie l'app (vedi PianoVoce)
 
 export type Fascia = "mattina" | "pomeriggio" | "sera" | "qualsiasi";
 
@@ -92,6 +93,10 @@ export type Modifica = {
 // Punti extra che non vengono da una task: il forziere di fine giornata e il boss della settimana.
 export type Bonus = { id: string; data: string; xp: number; tipo: "forziere" | "boss"; testo: string; da: string /* il completamento che lo ha fatto scattare */ };
 
+// Il piano automatico di una task "N volte a settimana". `auto` = scelto dall'app (si ricalcola da solo), `fissato` = scelto da te
+// (resta), `escluso` = un giorno che hai tolto (l'app non lo propone più). da/a = minuti dalla mezzanotte, il momento proposto.
+export type PianoVoce = { taskId: string; data: string; tipo: "auto" | "fissato" | "escluso"; da?: number; a?: number };
+
 export type Impostazioni = { suoni: boolean; animazioni: boolean; vibrazione: boolean; suonoTocco: boolean; vistaOggi: "compatta" | "estesa" };
 
 export type TimerAttivo = {
@@ -114,6 +119,7 @@ export type Stato = {
   ignorati: Ignorato[];
   rinvii: Rinvio[];
   momenti: Momento[];
+  pianoAuto: PianoVoce[];
   vacanza: Vacanza | null;
   eventi: Evento[];
   modifiche: Modifica[];

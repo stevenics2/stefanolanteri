@@ -211,6 +211,13 @@ export function finestreLibere(data: string, da = 8 * 60, a = 22 * 60 + 30, minD
   return out;
 }
 
+// Quanto si dorme (minuti) prima della mattina di `data`: il sonno che finisce tra mezzanotte e mezzogiorno di quel giorno.
+export function oreSonnoPrima(data: string): number | null {
+  const base = mezzanotte(data);
+  const s = elencoSonni().find((x) => x.sveglia >= base && x.sveglia < base + 12 * 60);
+  return s ? s.ore : null;
+}
+
 // Turni e sonno di un giorno, in minuti dalla mezzanotte di quel giorno (ritagliati a 0–1440), per la timeline.
 export type ImpegnoGiorno = { tipo: "turno" | "sonno"; da: number; a: number; etichetta: string; daIeri: boolean; fineDopo: boolean };
 export function impegniGiorno(data: string): ImpegnoGiorno[] {

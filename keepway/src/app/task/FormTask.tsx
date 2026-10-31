@@ -19,7 +19,7 @@ export default function FormTask({ iniziale, onClose }: { iniziale: Task | null;
   const [areaId, setAreaId] = useState(iniziale?.areaId ?? "abitudini");
   const [durata, setDurata] = useState<number | null>(iniziale ? iniziale.durataMin : 15);
   const [minima, setMinima] = useState<number | null>(iniziale ? iniziale.minimaMin : 5);
-  const [tipo, setTipo] = useState<"giornaliera" | "settimana" | "una_volta">(iniziale?.ricorrenza.tipo ?? "giornaliera");
+  const [tipo, setTipo] = useState<"giornaliera" | "settimana" | "una_volta">(iniziale?.ricorrenza.tipo === "settimana" || iniziale?.ricorrenza.tipo === "una_volta" ? iniziale.ricorrenza.tipo : "giornaliera");
   const [giorni, setGiorni] = useState<number[]>(iniziale?.ricorrenza.tipo === "settimana" ? iniziale.ricorrenza.giorni : []);
   const [data, setData] = useState(iniziale?.ricorrenza.tipo === "una_volta" ? iniziale.ricorrenza.data : oggi);
   const [fascia, setFascia] = useState<Fascia>(iniziale?.fascia ?? "qualsiasi");

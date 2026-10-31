@@ -1,7 +1,9 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { pianifica } from "./allenamento";
 import { impostaModifiche } from "./calendario";
+import { impostaPianoAuto } from "./pianoAuto";
 import { inizioSettimana, oggiLocale } from "./date";
 import { bossSettimana, giornata, livello, puntiMinima, xpTotali } from "./regole";
 import { nuovoId, statoIniziale, statoVuoto, taskStanza } from "./seed";
@@ -64,6 +66,8 @@ type Contesto = {
   ripristina: (taskId: string) => void;
   rimanda: (taskId: string, alle: number) => void;
   annullaRinvio: (taskId: string) => void;
+  sistemaGiornoAuto: (taskId: string, data: string, attivo: boolean) => void;
+  ricalcolaPiano: (taskId: string) => void;
   impostaMomento: (taskId: string, momento: { da: number; a: number } | null) => void;
   setStanze: (stanze: string[]) => void;
   setVacanza: (v: Vacanza | null) => void;
@@ -125,6 +129,7 @@ function carica(): Stato {
           ignorati: s.ignorati ?? [],
           rinvii: s.rinvii ?? [],
           momenti: s.momenti ?? [],
+          pianoAuto: s.pianoAuto ?? [],
           vacanza: s.vacanza ?? null,
           eventi: (s.eventi ?? []).map((e) => {
             // Vecchio formato: un solo anticipo (anticipoGiorni). Ora sono più avvisi e lo spostamento.
@@ -142,6 +147,17 @@ function carica(): Stato {
   return statoIniziale();
 }
 
+// Ricalcola il piano automatico delle task "N volte a settimana" (e lo mette a disposizione di chi lo legge).
+function conPiano(s: Stato): Stato {
+  if (!s.task.some((t) => t.ricorrenza.tipo === "auto")) {
+    impostaPianoAuto([]);
+    return s.pianoAuto.length ? { ...s, pianoAuto: [] } : s;
+  }
+  const piano = pianifica(s, oggiLocale());
+  impostaPianoAuto(piano);
+  return { ...s, pianoAuto: piano };
+}
+
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [stato, setStato] = useState<Stato>(statoVuoto);
   const [pronto, setPronto] = useState(false);
@@ -154,15 +170,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const aggiorna = useCallback((fn: (s: Stato) => Stato) => {
     const prima = ref.current;
-    ref.current = fn(prima);
-    if (ref.current.modifiche !== prima.modifiche) impostaModifiche(ref.current.modifiche); // sonno, conflitti e carico leggono il calendario aggiornato
+    const dopo = fn(prima);
+    if (dopo.modifiche !== prima.modifiche) impostaModifiche(dopo.modifiche); // sonno, conflitti e carico leggono il calendario aggiornato
+    ref.current = conPiano(dopo);
     setStato(ref.current);
   }, []);
 
   // Carico dal telefono solo dopo l'avvio (sul server non esiste localStorage).
   useEffect(() => {
-    ref.current = carica();
-    impostaModifiche(ref.current.modifiche);
+    const caricato = carica();
+    impostaModifiche(caricato.modifiche);
+    ref.current = conPiano(caricato);
     setStato(ref.current);
     setOggi(oggiLocale());
     setAdesso(Date.now());
@@ -177,6 +195,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       // memoria piena o bloccata: l'app continua a funzionare
     }
   }, [stato, pronto]);
+
+  // Il piano automatico si ricalcola quando cambia il giorno
+  useEffect(() => {
+    if (pronto && oggi) aggiorna((x) => x);
+  }, [pronto, oggi, aggiorna]);
 
   // A mezzanotte "oggi" cambia da solo.
   useEffect(() => {
@@ -330,6 +353,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           ...x,
           momenti: [...x.momenti.filter((m) => !(m.taskId === taskId && m.data === oggiLocale())), ...(momento ? [{ taskId, data: oggiLocale(), ...momento }] : [])],
         })),
+      // Un giorno del piano automatico: acceso = lo fissi tu; spento = lo togli (l'app non lo propone più)
+      sistemaGiornoAuto: (taskId, data, attivo) =>
+        aggiorna((x) => ({
+          ...x,
+          pianoAuto: [
+            ...x.pianoAuto.filter((v) => !(v.taskId === taskId && v.data === data && v.tipo !== "auto")),
+            { taskId, data, tipo: attivo ? "fissato" : "escluso" },
+          ],
+        })),
+      // Torna tutto automatico: si dimenticano i giorni fissati e tolti da oggi in poi
+      ricalcolaPiano: (taskId) =>
+        aggiorna((x) => ({ ...x, pianoAuto: x.pianoAuto.filter((v) => !(v.taskId === taskId && v.tipo !== "auto" && v.data >= oggiLocale())) })),
       setStanze: (stanze) => aggiorna((x) => ({ ...x, stanze })),
       setVacanza: (vacanza) => aggiorna((x) => ({ ...x, vacanza })),
       salvaEvento: (e) =>

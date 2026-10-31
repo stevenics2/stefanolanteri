@@ -15,7 +15,7 @@ import FormTask from "./FormTask";
 
 type Modo =
   | { tipo: "task"; task: Task | null }
-  | { tipo: "allenamento" }
+  | { tipo: "allenamento"; task: Task | null }
   | { tipo: "promemoria" | "appuntamento"; evento: Evento | null };
 
 const quando = (t: Task) =>
@@ -23,7 +23,9 @@ const quando = (t: Task) =>
     ? "ogni giorno"
     : t.ricorrenza.tipo === "settimana"
       ? t.ricorrenza.giorni.map((g) => GIORNI_LUNGHI[g].slice(0, 3)).join(", ")
-      : t.ricorrenza.data;
+      : t.ricorrenza.tipo === "auto"
+        ? `${t.ricorrenza.volte} ${t.ricorrenza.volte === 1 ? "volta" : "volte"} a settimana · automatico`
+        : t.ricorrenza.data;
 
 // I quattro riquadri grandi, con la loro icona.
 const RIQUADRI = [
@@ -39,7 +41,7 @@ export default function TaskHub() {
   if (!pronto) return null;
 
   const apri = (id: (typeof RIQUADRI)[number]["id"]) =>
-    setModo(id === "task" ? { tipo: "task", task: null } : id === "allenamento" ? { tipo: "allenamento" } : { tipo: id, evento: null });
+    setModo(id === "task" ? { tipo: "task", task: null } : id === "allenamento" ? { tipo: "allenamento", task: null } : { tipo: id, evento: null });
   const chiudi = () => setModo(null);
 
   // Appuntamenti e promemoria che devono ancora succedere (o promemoria scaduti non fatti)
@@ -90,7 +92,7 @@ export default function TaskHub() {
             {lista.map((t) => (
               <div key={t.id} className={`flex items-center gap-3 rounded-2xl bg-card p-3 ${t.attiva ? "" : "opacity-50"}`}>
                 <AreaIcona nome={iconaTask(t, a.icona)} colore={a.colore} size={16} />
-                <button onClick={() => setModo({ tipo: "task", task: t })} className="flex-1 text-left">
+                <button onClick={() => setModo(t.areaId === "allenamento" ? { tipo: "allenamento", task: t } : { tipo: "task", task: t })} className="flex-1 text-left">
                   <div className="font-medium">{t.tipo === "stanza" ? "Sistema una stanza (a rotazione)" : t.titolo}</div>
                   <div className="text-xs text-muted">
                     {quando(t)}
@@ -112,7 +114,7 @@ export default function TaskHub() {
       })}
 
       {modo?.tipo === "task" && <FormTask key={modo.task?.id ?? "nuova"} iniziale={modo.task} onClose={chiudi} />}
-      {modo?.tipo === "allenamento" && <FormAllenamento onClose={chiudi} />}
+      {modo?.tipo === "allenamento" && <FormAllenamento key={modo.task?.id ?? "nuovo"} iniziale={modo.task} onClose={chiudi} />}
       {(modo?.tipo === "appuntamento" || modo?.tipo === "promemoria") && (
         <FormEvento key={modo.evento?.id ?? modo.tipo} tipo={modo.tipo} iniziale={modo.evento} onClose={chiudi} />
       )}
