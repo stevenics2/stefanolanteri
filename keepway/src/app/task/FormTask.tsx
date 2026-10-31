@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarCheck, CalendarDays, Repeat } from "lucide-react";
+import { CalendarCheck, CalendarClock, CalendarDays, Repeat } from "lucide-react";
 import { useState } from "react";
 import { GIORNI_LUNGHI } from "@/lib/date";
 import { puntiAuto } from "@/lib/regole";
@@ -8,6 +8,7 @@ import { nuovoId } from "@/lib/seed";
 import { useStore } from "@/lib/store";
 import type { Fascia, Task } from "@/lib/tipi";
 import AreaIcona from "../components/AreaIcona";
+import PianoSettimana from "./PianoSettimana";
 import { campo, Chip, Etichetta, Interruttore, Riquadro, Schermo } from "./ui";
 
 // Scorciatoie: una stanza in un giorno preciso (la rotazione quotidiana c'è già).
@@ -19,7 +20,8 @@ export default function FormTask({ iniziale, onClose }: { iniziale: Task | null;
   const [areaId, setAreaId] = useState(iniziale?.areaId ?? "abitudini");
   const [durata, setDurata] = useState<number | null>(iniziale ? iniziale.durataMin : 15);
   const [minima, setMinima] = useState<number | null>(iniziale ? iniziale.minimaMin : 5);
-  const [tipo, setTipo] = useState<"giornaliera" | "settimana" | "una_volta">(iniziale?.ricorrenza.tipo === "settimana" || iniziale?.ricorrenza.tipo === "una_volta" ? iniziale.ricorrenza.tipo : "giornaliera");
+  const [tipo, setTipo] = useState<"giornaliera" | "settimana" | "una_volta" | "auto">(iniziale?.ricorrenza.tipo ?? "giornaliera");
+  const [volte, setVolte] = useState(iniziale?.ricorrenza.tipo === "auto" ? iniziale.ricorrenza.volte : 3);
   const [giorni, setGiorni] = useState<number[]>(iniziale?.ricorrenza.tipo === "settimana" ? iniziale.ricorrenza.giorni : []);
   const [data, setData] = useState(iniziale?.ricorrenza.tipo === "una_volta" ? iniziale.ricorrenza.data : oggi);
   const [fascia, setFascia] = useState<Fascia>(iniziale?.fascia ?? "qualsiasi");
@@ -43,29 +45,32 @@ export default function FormTask({ iniziale, onClose }: { iniziale: Task | null;
     setXp(50);
   };
 
+  // La task com'è nel modulo (serve per salvarla e per l'anteprima della pianificazione automatica)
+  const costruisci = (id: string): Task => ({
+    id,
+    titolo: titolo.trim() || "Task",
+    areaId,
+    icona: iniziale?.icona,
+    durataMin: durata,
+    minimaMin: durata ? minima : null,
+    ricorrenza: tipo === "giornaliera" ? { tipo } : tipo === "settimana" ? { tipo, giorni } : tipo === "auto" ? { tipo, volte } : { tipo, data },
+    fascia,
+    solo: iniziale?.solo ?? "sempre",
+    punti: puntiFinali,
+    essenziale,
+    soloACasa,
+    adattaATurni: adatta,
+    km: iniziale?.km,
+    spostamentoMin: spostamento,
+    promemoria: promemoria.split(/[,\s]+/).filter((o) => /^\d{1,2}:\d{2}$/.test(o)).map((o) => o.padStart(5, "0")),
+    tipo: iniziale?.tipo,
+    attiva: iniziale?.attiva ?? true,
+    creatoIl: iniziale?.creatoIl ?? oggi,
+  });
+
   const salva = () => {
     if (!valido) return;
-    salvaTask({
-      id: iniziale?.id ?? nuovoId(),
-      titolo: titolo.trim(),
-      areaId,
-      icona: iniziale?.icona,
-      durataMin: durata,
-      minimaMin: durata ? minima : null,
-      ricorrenza: tipo === "giornaliera" ? { tipo } : tipo === "settimana" ? { tipo, giorni } : { tipo, data },
-      fascia,
-      solo: iniziale?.solo ?? "sempre",
-      punti: puntiFinali,
-      essenziale,
-      soloACasa,
-      adattaATurni: adatta,
-      km: iniziale?.km,
-      spostamentoMin: spostamento,
-      promemoria: promemoria.split(/[,\s]+/).filter((o) => /^\d{1,2}:\d{2}$/.test(o)).map((o) => o.padStart(5, "0")),
-      tipo: iniziale?.tipo,
-      attiva: iniziale?.attiva ?? true,
-      creatoIl: iniziale?.creatoIl ?? oggi,
-    });
+    salvaTask(costruisci(iniziale?.id ?? nuovoId()));
     onClose();
   };
 
@@ -114,11 +119,28 @@ export default function FormTask({ iniziale, onClose }: { iniziale: Task | null;
 
       <div>
         <Etichetta>Quando</Etichetta>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <Riquadro attivo={tipo === "giornaliera"} nome="Ogni giorno" onClick={() => setTipo("giornaliera")} icona={<Repeat size={22} />} />
           <Riquadro attivo={tipo === "settimana"} nome="Giorni fissi" onClick={() => setTipo("settimana")} icona={<CalendarDays size={22} />} />
           <Riquadro attivo={tipo === "una_volta"} nome="Una volta" onClick={() => setTipo("una_volta")} icona={<CalendarCheck size={22} />} />
+          <Riquadro attivo={tipo === "auto"} nome="Pianificazione automatica" onClick={() => setTipo("auto")} icona={<CalendarClock size={22} />} />
         </div>
+        {tipo === "auto" && (
+          <div className="mt-3 space-y-3">
+            <div className="flex flex-wrap gap-2">
+              {[1, 2, 3, 4, 5, 6].map((n) => <Chip key={n} attivo={volte === n} onClick={() => setVolte(n)}>{n} {n === 1 ? "volta" : "volte"} a settimana</Chip>)}
+            </div>
+            <p className="text-xs text-muted">
+              Keepway sceglie i giorni e l&apos;orario tenendo conto di turni, sonno e appuntamenti, e nella fascia che indichi sotto. Nei giorni pesanti (dopo la notte, doppio turno)
+              mette solo le task essenziali. Puoi sempre spostare ogni giorno.
+            </p>
+            <div>
+              <Etichetta>{iniziale && iniziale.ricorrenza.tipo === "auto" ? "Il piano" : "Anteprima del piano"}</Etichetta>
+              <PianoSettimana task={costruisci(iniziale?.id ?? "anteprima")} modifica={!!iniziale && iniziale.ricorrenza.tipo === "auto"} />
+              {iniziale && iniziale.ricorrenza.tipo === "auto" && <p className="mt-2 text-xs text-muted">Se cambi frequenza, durata o fascia, salva: il piano si ricalcola.</p>}
+            </div>
+          </div>
+        )}
         {tipo === "settimana" && (
           <div className="mt-2 flex flex-wrap gap-2">
             {[1, 2, 3, 4, 5, 6, 0].map((g) => (

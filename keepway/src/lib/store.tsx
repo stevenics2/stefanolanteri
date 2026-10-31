@@ -171,7 +171,7 @@ function creaSeguito(t: Task, completamentoId: string, ts: number): { task: Task
 // I seguiti vecchi (di ieri e prima) si ripuliscono.
 function sistemaTaskAutomatiche(s: Stato, oggi: string): Stato {
   let task = s.task;
-  const haAuto = task.some((t) => t.attiva && t.ricorrenza.tipo === "auto" && !t.seguito);
+  const haAuto = task.some((t) => t.attiva && t.ricorrenza.tipo === "auto" && !t.seguito && t.areaId === "allenamento"); // solo gli allenamenti
   const programmazione = task.find((t) => t.id === PROGRAMMAZIONE_ID);
   if (haAuto && !programmazione) {
     task = [...task, {

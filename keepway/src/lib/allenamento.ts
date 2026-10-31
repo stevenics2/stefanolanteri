@@ -1,7 +1,8 @@
 import { giornoEffettivo } from "./calendario";
+import { caricoGiorno } from "./carico";
 import { dataPiù, inizioSettimana } from "./date";
 import { durataMin, durataTotaleMin } from "./durata";
-import { finestreLibere, oreSonnoPrima, type Finestra } from "./sonno";
+import { finestreLibere, limiteSerale, oreSonnoPrima, type Finestra } from "./sonno";
 import type { Evento, PianoVoce, Stato, Task } from "./tipi";
 
 // --- Quando ha senso allenarsi, in base ai turni del giorno ---
@@ -74,10 +75,29 @@ function analizzaFaccenda(task: Task, data: string, eventi: Evento[], dopoMin = 
   return { slot: { da: adatti[0].da, a: adatti[0].da + serve }, qualita: 1, nota: "a fine ciclo potresti essere in turno o a dormire" };
 }
 
+// Una task qualsiasi con la pianificazione automatica: niente nei giorni pesanti (solo l'essenziale se è essenziale), nella fascia scelta
+// (mattina, pomeriggio, prima di dormire), nel primo momento libero abbastanza lungo tra turni, sonno e appuntamenti.
+function analizzaGenerica(task: Task, data: string, eventi: Evento[], dopoMin = 0): AnalisiGiorno {
+  const carico = caricoGiorno(data);
+  if (carico === "nessuna") return { slot: null, qualita: 0, nota: "", motivo: "notte + sera: giornata di recupero" };
+  if (carico === "essenziale" && !task.essenziale) return { slot: null, qualita: 0, nota: "", motivo: "giornata pesante: solo l'essenziale" };
+  const g = giornoEffettivo(data);
+  const tranquilla = /medit|lettur|leggi/i.test(task.titolo);
+  const sera = tranquilla ? Math.max(22 * 60 + 30, limiteSerale(data)) : 22 * 60 + 30;
+  const [da, a, nota] =
+    task.fascia === "mattina" ? [8 * 60, 13 * 60, "mattina"] : task.fascia === "pomeriggio" ? [13 * 60, 19 * 60, "pomeriggio"] : task.fascia === "sera" ? [18 * 60, sera, "prima di dormire"] : [8 * 60, sera, "quando sei libero"];
+  const serveMin = durataTotaleMin(task);
+  const liberi = senzaEventi(finestreLibere(data, Math.max(da, dopoMin), a, 15), eventi, data).filter((f) => f.a - f.da >= serveMin);
+  if (liberi.length === 0) return { slot: null, qualita: 0, nota, motivo: "nessun momento libero adatto" };
+  const f = liberi[0];
+  return { slot: { da: f.da, a: f.da + serveMin }, qualita: (g?.riposo ? 3 : carico === "normale" ? 2 : 1), nota };
+}
+
 // Un giorno per una task: il momento proposto (o perché no).
 // `dopoMin` = non prima di quest'ora (minuti dalla mezzanotte): serve per cercare un nuovo momento quando quello di prima è passato.
 export function analizzaGiorno(task: Task, data: string, eventi: Evento[], dopoMin = 0): AnalisiGiorno {
   if (task.seguito) return analizzaFaccenda(task, data, eventi, dopoMin);
+  if (task.areaId !== "allenamento") return analizzaGenerica(task, data, eventi, dopoMin); // gli allenamenti hanno le loro regole sui turni
   const e = regolaAllenamento(data);
   if ("motivo" in e) return { slot: null, qualita: 0, nota: "", motivo: e.motivo };
   const serve = durataTotaleMin(task);

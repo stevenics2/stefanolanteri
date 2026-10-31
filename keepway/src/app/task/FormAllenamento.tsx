@@ -76,7 +76,7 @@ export default function FormAllenamento({ onClose, iniziale }: { onClose: () => 
       <div>
         <Etichetta>Quando?</Etichetta>
         <div className="mb-3">
-          <Segmentato voci={[{ id: "app", etichetta: "Decide l'app" }, { id: "io", etichetta: "Scelgo i giorni" }]} valore={automatica ? "app" : "io"} onCambia={(v) => setAutomatica(v === "app")} aria="Chi sceglie i giorni" />
+          <Segmentato voci={[{ id: "app", etichetta: "Pianificazione automatica" }, { id: "io", etichetta: "Scelgo i giorni" }]} valore={automatica ? "app" : "io"} onCambia={(v) => setAutomatica(v === "app")} aria="Chi sceglie i giorni" />
         </div>
         {automatica ? (
           <div className="space-y-3">

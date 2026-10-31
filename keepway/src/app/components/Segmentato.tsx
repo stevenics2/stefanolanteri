@@ -8,7 +8,7 @@ type Voce<T extends string> = { id: T; etichetta: ReactNode };
 // e il testo cambia colore in dissolvenza. Le voci hanno tutte la stessa larghezza.
 export default function Segmentato<T extends string>({
   voci, valore, onCambia, contenitore = "rounded-xl bg-ov/10", pillola = "rounded-lg bg-accent", testoAttivo = "text-black", testoSpento = "text-muted",
-  bottone = "py-1.5 text-sm font-medium", margine = 4, aria, inline = false,
+  bottone = "py-1.5 text-sm font-medium leading-tight", margine = 4, aria, inline = false,
 }: {
   voci: Voce<T>[];
   valore: T;
