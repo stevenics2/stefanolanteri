@@ -7,7 +7,8 @@ export type Ricorrenza =
   | { tipo: "giornaliera" }
   | { tipo: "settimana"; giorni: number[] } // 0 = domenica ... 6 = sabato
   | { tipo: "una_volta"; data: string }
-  | { tipo: "auto"; volte: number }; // N volte a settimana: i giorni li sceglie l'app (vedi PianoVoce)
+  | { tipo: "auto"; volte: number } // N volte a settimana: i giorni li sceglie l'app (vedi PianoVoce)
+  | { tipo: "intervallo"; ogni: number; tolleranza: number }; // ogni N giorni (±tolleranza) dall'ultima volta che l'hai fatta: es. il giardino ogni 7 giorni esatti
 
 export type Fascia = "mattina" | "pomeriggio" | "sera" | "qualsiasi";
 

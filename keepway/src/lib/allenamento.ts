@@ -4,6 +4,7 @@ import { dataPiù, inizioSettimana } from "./date";
 import { durataMin, durataTotaleMin } from "./durata";
 import { finestreLibere, limiteSerale, oreSonnoPrima, type Finestra } from "./sonno";
 import type { Evento, PianoVoce, Stato, Task } from "./tipi";
+import { èPianificata } from "./pianoAuto";
 
 // --- Quando ha senso allenarsi, in base ai turni del giorno ---
 // dopo/prima = in che fascia oraria (minuti dalla mezzanotte); qualita = quanto è un buon giorno (3 = il migliore).
@@ -119,12 +120,12 @@ export function pianifica(stato: Stato, oggi: string): PianoVoce[] {
   const out: PianoVoce[] = [];
 
   // Le voci di task non più automatiche (o eliminate) spariscono
-  const automatiche = stato.task.filter((t) => t.attiva && t.ricorrenza.tipo === "auto");
-  const idAuto = new Set(stato.task.filter((t) => t.ricorrenza.tipo === "auto").map((t) => t.id));
+  const automatiche = stato.task.filter((t) => t.attiva && èPianificata(t));
+  const idAuto = new Set(stato.task.filter(èPianificata).map((t) => t.id));
 
   for (const task of automatiche) {
-    if (task.ricorrenza.tipo !== "auto") continue;
-    const volte = task.ricorrenza.volte;
+    const ric = task.ricorrenza;
+    if (ric.tipo !== "auto" && ric.tipo !== "intervallo") continue;
     const sue = stato.pianoAuto.filter((v) => v.taskId === task.id && v.data >= limiteVecchi);
     const fatti = new Set(stato.completamenti.filter((c) => c.taskId === task.id).map((c) => c.data));
     const tenute: PianoVoce[] = [];
@@ -142,7 +143,54 @@ export function pianifica(stato: Stato, oggi: string): PianoVoce[] {
     for (const i of stato.ignorati) if (i.taskId === task.id) esclusi.add(i.data);
 
     const scelti: PianoVoce[] = [];
-    for (let sett = 0; sett < 2; sett++) {
+    if (ric.tipo === "intervallo") {
+      // «Ogni N giorni»: si parte dall'ultima volta che l'hai fatta e si conta N giorni da lì (se la fai prima o dopo, si riparte da quel giorno).
+      // Nei giorni impossibili (turni pesanti) si prende il più vicino a quello giusto, prima nella tolleranza e poi il primo possibile dopo.
+      const { ogni, tolleranza } = ric;
+      const orizzonte = dataPiù(oggi, 27);
+      const ok = (d: string) => d >= oggi && !esclusi.has(d) ? analizzaGiorno(task, d, eventi) : null;
+      let prec: string | null = [...fatti].filter((d) => d <= oggi).sort().pop() ?? null;
+      const fissati = tenute.filter((v) => v.tipo === "fissato" && v.data >= oggi).map((v) => v.data).sort();
+      for (let giro = 0; giro < 12; giro++) {
+        let da: string;
+        let a: string;
+        if (prec === null) {
+          da = oggi;
+          a = dataPiù(oggi, 2); // la prima volta: nei prossimi giorni
+        } else {
+          da = dataPiù(prec, ogni - tolleranza);
+          a = dataPiù(prec, ogni + tolleranza);
+          if (a < oggi) { da = oggi; a = dataPiù(oggi, 1); } // in ritardo: appena possibile
+          if (da < oggi) da = oggi;
+        }
+        const bersaglio = prec === null ? oggi : dataPiù(prec, ogni);
+        let scelta: { d: string; a: AnalisiGiorno } | null = null;
+        const fis = fissati.find((d) => d >= da && d <= a);
+        if (fis) scelta = { d: fis, a: analizzaGiorno(task, fis, eventi) };
+        else {
+          let migliore: { d: string; a: AnalisiGiorno; p: number } | null = null;
+          for (let d = da; d <= a; d = dataPiù(d, 1)) {
+            const x = ok(d);
+            if (!x || !x.slot) continue;
+            const p = x.qualita * 10 - Math.abs(giorniTraDate(bersaglio, d)) * 8;
+            if (!migliore || p > migliore.p) migliore = { d, a: x, p };
+          }
+          if (migliore) scelta = migliore;
+          else {
+            // nessun giorno possibile nella finestra: il primo possibile dopo (fino a metà intervallo), altrimenti prima
+            for (let d = dataPiù(a, 1); d <= dataPiù(a, Math.max(2, Math.floor(ogni / 2))); d = dataPiù(d, 1)) {
+              const x = ok(d);
+              if (x?.slot) { scelta = { d, a: x }; break; }
+            }
+          }
+        }
+        if (!scelta || scelta.d > orizzonte || !scelta.a.slot) break;
+        scelti.push({ taskId: task.id, data: scelta.d, tipo: "auto", da: scelta.a.slot.da, a: scelta.a.slot.a });
+        prec = scelta.d;
+      }
+    }
+    for (let sett = 0; sett < (ric.tipo === "auto" ? 2 : 0); sett++) {
+      const volte = ric.tipo === "auto" ? ric.volte : 0;
       const giorni = Array.from({ length: 7 }, (_, i) => dataPiù(lunedi, sett * 7 + i));
       const inSett = (d: string) => giorni.includes(d);
       const gia = [...contanti].filter(inSett).length;
@@ -185,14 +233,15 @@ export type Proposta = { voci: PianoVoce[] }; // i giorni scelti nei prossimi 7 
 
 // La prima è il piano migliore; le altre sono lo stesso piano ma senza uno dei giorni scelti (così cambia davvero qualcosa), tutte diverse tra loro.
 export function proposte(stato: Stato, bozza: Task, oggi: string, quante = 3): Proposta[] {
-  const fine = dataPiù(oggi, 6);
+  const intervallo = bozza.ricorrenza.tipo === "intervallo";
+  const fine = dataPiù(oggi, intervallo ? 27 : 6);
   const calcola = (esclusi: string[]) => {
     const s2: Stato = {
       ...stato,
       task: [...stato.task.filter((t) => t.id !== bozza.id), bozza],
       pianoAuto: [...stato.pianoAuto.filter((v) => v.taskId !== bozza.id), ...esclusi.map((d) => ({ taskId: bozza.id, data: d, tipo: "escluso" as const }))],
     };
-    return pianifica(s2, oggi).filter((v) => v.taskId === bozza.id && v.tipo === "auto" && v.data >= oggi && v.data <= fine);
+    return pianifica(s2, oggi).filter((v) => v.taskId === bozza.id && v.tipo === "auto" && v.data >= oggi && v.data <= fine).slice(0, intervallo ? 4 : 99);
   };
   const chiave = (v: PianoVoce[]) => v.map((x) => x.data).join("|");
   const out: Proposta[] = [];

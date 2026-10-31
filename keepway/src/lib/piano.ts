@@ -1,3 +1,4 @@
+import { èPianificata } from "./pianoAuto";
 import { dataPiù } from "./date";
 import { violazioniDa } from "./calendario";
 import { giorniTra } from "./eventi";
@@ -40,7 +41,7 @@ function orariPerGiorno(task: Task, giorno: string, ctx: { oggi: string; adessoM
     return [hhmm(f.da)]; // abitudini legate al turno (meditazione, lettura): un promemoria all'inizio del momento giusto
   }
   if (!f) return [];
-  if (task.ricorrenza.tipo === "auto" && f.a - f.da < 60) return [hhmm(f.da)]; // un momento corto (es. la lavatrice): un solo avviso, all'inizio
+  if (èPianificata(task) && f.a - f.da < 60) return [hhmm(f.da)]; // un momento corto (es. la lavatrice): un solo avviso, all'inizio
   const candidati = [f.da + 15, f.da + 15 + 180, f.a - 45].filter((m) => m >= f.da && m <= f.a - 15).sort((a, b) => a - b);
   const scelti: number[] = [];
   for (const m of candidati) if (!scelti.length || m - scelti[scelti.length - 1] >= 90) scelti.push(m);

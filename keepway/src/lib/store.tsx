@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { pianifica } from "./allenamento";
 import { impostaModifiche } from "./calendario";
-import { impostaPianoAuto } from "./pianoAuto";
+import { èPianificata, impostaPianoAuto } from "./pianoAuto";
 import { dataPiù, inizioSettimana, oggiLocale } from "./date";
 import { bossSettimana, giornata, livello, puntiMinima, xpTotali } from "./regole";
 import { nuovoId, statoIniziale, statoVuoto, taskStanza } from "./seed";
@@ -172,7 +172,7 @@ function creaSeguito(t: Task, completamentoId: string, ts: number): { task: Task
 // I seguiti vecchi (di ieri e prima) si ripuliscono.
 function sistemaTaskAutomatiche(s: Stato, oggi: string): Stato {
   let task = s.task;
-  const haAuto = task.some((t) => t.attiva && t.ricorrenza.tipo === "auto" && !t.seguito && t.areaId === "allenamento"); // solo gli allenamenti
+  const haAuto = task.some((t) => t.attiva && èPianificata(t) && !t.seguito && t.areaId === "allenamento"); // solo gli allenamenti
   const programmazione = task.find((t) => t.id === PROGRAMMAZIONE_ID);
   if (haAuto && !programmazione) {
     task = [...task, {
@@ -192,7 +192,7 @@ function sistemaTaskAutomatiche(s: Stato, oggi: string): Stato {
 // Ricalcola il piano automatico delle task "N volte a settimana" (e lo mette a disposizione di chi lo legge).
 function conPiano(stato: Stato): Stato {
   const s = sistemaTaskAutomatiche(stato, oggiLocale());
-  if (!s.task.some((t) => t.ricorrenza.tipo === "auto")) {
+  if (!s.task.some(èPianificata)) {
     impostaPianoAuto([]);
     return s.pianoAuto.length ? { ...s, pianoAuto: [] } : s;
   }

@@ -1,5 +1,5 @@
 import { analizzaGiorno, senzaEventi } from "./allenamento";
-import { voceAuto } from "./pianoAuto";
+import { èPianificata, voceAuto } from "./pianoAuto";
 import { durataMin, durataTotaleMin } from "./durata";
 import { finestraMigliore, finestreLibere, limiteSerale, momentoLettura, momentoMeditazione, type Finestra } from "./sonno";
 import type { Evento, Task } from "./tipi";
@@ -7,7 +7,7 @@ import type { Evento, Task } from "./tipi";
 // Il momento giusto di una task in un giorno: quello scelto a mano, oppure quello calcolato dai turni.
 export function momentoGiusto(task: Task, data: string, scelto?: Finestra): Finestra | null {
   if (scelto) return scelto;
-  if (task.ricorrenza.tipo === "auto") {
+  if (èPianificata(task)) {
     const v = voceAuto(task.id, data);
     return v && v.da !== undefined && v.a !== undefined ? { da: v.da, a: v.a } : null;
   }
@@ -19,7 +19,7 @@ export function momentoGiusto(task: Task, data: string, scelto?: Finestra): Fine
 const prossimoQuarto = (min: number) => Math.ceil(min / 15) * 15;
 
 // Quanto tempo serve davvero alla task per stare in un momento (durata, più andata e ritorno se è fuori casa).
-const serve = (task: Task) => (task.ricorrenza.tipo === "auto" || task.spostamentoMin ? durataTotaleMin(task) : durataMin(task) || 15);
+const serve = (task: Task) => (èPianificata(task) || task.spostamentoMin ? durataTotaleMin(task) : durataMin(task) || 15);
 
 // Lettura e meditazione si possono fare anche subito prima di andare a letto (un allenamento no).
 export const èTranquilla = (task: Task) => task.id === "meditazione" || task.id === "lettura" || /medit|lettur|leggi/i.test(task.titolo);
@@ -43,7 +43,7 @@ export function momentoAttuale(
 
   // Il momento suggerito è passato: il prossimo
   const ora = prossimoQuarto(opz.adessoMin);
-  if (task.ricorrenza.tipo === "auto") {
+  if (èPianificata(task)) {
     const nuovo = analizzaGiorno(task, data, opz.eventi, ora).slot;
     return nuovo ? { finestra: nuovo, spostato: true, primaDiDormire: false, esaurito: false } : { finestra: null, spostato: true, primaDiDormire: false, esaurito: true };
   }

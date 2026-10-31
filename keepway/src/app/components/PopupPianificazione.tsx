@@ -57,7 +57,8 @@ function Contenuto({
   };
   const vaiA = (i: number) => scorri.current?.scrollTo({ left: i * (scorri.current?.clientWidth ?? 0), behavior: "smooth" });
 
-  const volte = bozza.ricorrenza.tipo === "auto" ? bozza.ricorrenza.volte : 0;
+  const r = bozza.ricorrenza;
+  const ritmo = r.tipo === "auto" ? `${r.volte} ${r.volte === 1 ? "volta" : "volte"} a settimana` : r.tipo === "intervallo" ? `ogni ${r.ogni} giorni${r.tolleranza ? ` (±${r.tolleranza})` : " esatti"}` : "";
   const tutteViste = elenco.length > 0 && viste.length >= elenco.length;
 
   return (
@@ -66,9 +67,10 @@ function Contenuto({
         {!pronta ? (
           <div className="py-4 text-center">
             <div className="relative mx-auto flex h-20 w-20 items-center justify-center">
-              <span className="pianifica-anello absolute inset-0 rounded-full border-2 border-accent/30 border-t-accent" />
-              <span className="pianifica-anello-2 absolute inset-2 rounded-full border-2 border-sky-400/30 border-b-sky-400" />
-              <CalendarClock size={26} className="text-accent" />
+              <span className="pianifica-anello absolute inset-0 rounded-full border-[3px]" style={{ borderColor: "rgba(250,17,79,0.25)", borderTopColor: "#fa114f" }} />
+              <span className="pianifica-anello-2 absolute inset-[7px] rounded-full border-[3px]" style={{ borderColor: "rgba(146,240,0,0.25)", borderBottomColor: "#92f000" }} />
+              <span className="pianifica-anello absolute inset-[14px] rounded-full border-[3px]" style={{ borderColor: "rgba(0,217,232,0.25)", borderTopColor: "#00d9e8", animationDuration: "0.7s" }} />
+              <CalendarClock size={22} className="text-foreground" />
             </div>
             <div className="mt-4 text-xl font-bold">Pianifico<span className="pianifica-punti" /></div>
             <div className="mt-1 text-sm text-muted">Controllo turni, sonno e appuntamenti</div>
@@ -88,9 +90,10 @@ function Contenuto({
             <span key="flash" className="flash-pianifica pointer-events-none absolute inset-0 z-20" aria-hidden />
             <div className="entra">
               <div className="text-xs font-semibold uppercase tracking-wide text-muted">
-                {bozza.titolo}{volte ? ` · ${volte} ${volte === 1 ? "volta" : "volte"} a settimana` : ""}
+                {bozza.titolo}{ritmo ? ` · ${ritmo}` : ""}
               </div>
               <div className="mt-0.5 text-xl font-bold">Ecco la proposta</div>
+              {r.tipo === "intervallo" && <div className="mt-0.5 text-xs text-muted">Le date successive si contano dall&apos;ultima volta che la fai.</div>}
             </div>
 
             {elenco.length === 0 ? (
@@ -141,11 +144,14 @@ function Contenuto({
                   Pianifica
                 </button>
               )}
-              {(tutteViste || elenco.length <= 1) && (
-                <button data-suono="via" onClick={onManuale} className="entra inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-ov/10 py-3 font-semibold">
-                  <CalendarCog size={18} /> Pianificazione manuale
-                </button>
-              )}
+              {/* «Pianificazione manuale» compare molto piano, e la scheda si allarga con dolcezza */}
+              <div className={`compare-piano ${tutteViste || elenco.length <= 1 ? "visibile" : ""}`} aria-hidden={!(tutteViste || elenco.length <= 1)}>
+                <div>
+                  <button tabIndex={tutteViste || elenco.length <= 1 ? 0 : -1} data-suono="via" onClick={onManuale} className="mb-0.5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-ov/10 py-3 font-semibold">
+                    <CalendarCog size={18} /> Pianificazione manuale
+                  </button>
+                </div>
+              </div>
               <button data-suono="indietro" onClick={onChiudi} className="w-full py-2 text-sm text-muted">Annulla</button>
             </div>
           </>

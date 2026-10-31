@@ -28,7 +28,9 @@ const quando = (t: Task) =>
       ? t.ricorrenza.giorni.map((g) => GIORNI_LUNGHI[g].slice(0, 3)).join(", ")
       : t.ricorrenza.tipo === "auto"
         ? `${t.ricorrenza.volte} ${t.ricorrenza.volte === 1 ? "volta" : "volte"} a settimana · automatico`
-        : t.ricorrenza.data;
+        : t.ricorrenza.tipo === "intervallo"
+          ? `ogni ${t.ricorrenza.ogni} giorni${t.ricorrenza.tolleranza ? ` (±${t.ricorrenza.tolleranza})` : " esatti"} · automatico`
+          : t.ricorrenza.data;
 
 // I quattro riquadri grandi, con la loro icona.
 const RIQUADRI = [

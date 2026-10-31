@@ -9,7 +9,9 @@ import { useStore } from "@/lib/store";
 import type { Fascia, Task } from "@/lib/tipi";
 import AreaIcona from "../components/AreaIcona";
 import PianoSettimana from "./PianoSettimana";
+import { èPianificata } from "@/lib/pianoAuto";
 import { usePianifica } from "./usePianifica";
+import Segmentato from "../components/Segmentato";
 import { campo, Chip, Etichetta, Interruttore, Riquadro, Schermo } from "./ui";
 
 // Scorciatoie: una stanza in un giorno preciso (la rotazione quotidiana c'è già).
@@ -21,7 +23,10 @@ export default function FormTask({ iniziale, onClose }: { iniziale: Task | null;
   const [areaId, setAreaId] = useState(iniziale?.areaId ?? "abitudini");
   const [durata, setDurata] = useState<number | null>(iniziale ? iniziale.durataMin : 15);
   const [minima, setMinima] = useState<number | null>(iniziale ? iniziale.minimaMin : 5);
-  const [tipo, setTipo] = useState<"giornaliera" | "settimana" | "una_volta" | "auto">(iniziale?.ricorrenza.tipo ?? "giornaliera");
+  const [tipo, setTipo] = useState<"giornaliera" | "settimana" | "una_volta" | "auto">(iniziale?.ricorrenza.tipo === "intervallo" ? "auto" : (iniziale?.ricorrenza.tipo ?? "giornaliera"));
+  const [ritmo, setRitmo] = useState<"settimana" | "intervallo">(iniziale?.ricorrenza.tipo === "intervallo" ? "intervallo" : "settimana");
+  const [ogni, setOgni] = useState(iniziale?.ricorrenza.tipo === "intervallo" ? iniziale.ricorrenza.ogni : 7);
+  const [tolleranza, setTolleranza] = useState(iniziale?.ricorrenza.tipo === "intervallo" ? iniziale.ricorrenza.tolleranza : 0);
   const [volte, setVolte] = useState(iniziale?.ricorrenza.tipo === "auto" ? iniziale.ricorrenza.volte : 3);
   const [giorni, setGiorni] = useState<number[]>(iniziale?.ricorrenza.tipo === "settimana" ? iniziale.ricorrenza.giorni : []);
   const [data, setData] = useState(iniziale?.ricorrenza.tipo === "una_volta" ? iniziale.ricorrenza.data : oggi);
@@ -55,7 +60,7 @@ export default function FormTask({ iniziale, onClose }: { iniziale: Task | null;
     icona: iniziale?.icona,
     durataMin: durata,
     minimaMin: durata ? minima : null,
-    ricorrenza: tipo === "giornaliera" ? { tipo } : tipo === "settimana" ? { tipo, giorni } : tipo === "auto" ? { tipo, volte } : { tipo, data },
+    ricorrenza: tipo === "giornaliera" ? { tipo } : tipo === "settimana" ? { tipo, giorni } : tipo === "auto" ? (ritmo === "intervallo" ? { tipo: "intervallo" as const, ogni, tolleranza } : { tipo, volte }) : { tipo, data },
     fascia,
     solo: iniziale?.solo ?? "sempre",
     punti: puntiFinali,
@@ -75,7 +80,7 @@ export default function FormTask({ iniziale, onClose }: { iniziale: Task | null;
     salvaTask(costruisci());
     onClose();
   };
-  const { apri: apriPianifica, popup } = usePianifica({ costruisci: () => costruisci(), modifica: !!iniziale && iniziale.ricorrenza.tipo === "auto", onClose, onManuale: () => setTipo("settimana") });
+  const { apri: apriPianifica, popup } = usePianifica({ costruisci: () => costruisci(), modifica: !!iniziale && èPianificata(iniziale), onClose, onManuale: () => setTipo("settimana") });
 
   return (
     <Schermo titolo={iniziale ? "Modifica task" : "Nuova task"} onClose={onClose}>
@@ -130,21 +135,45 @@ export default function FormTask({ iniziale, onClose }: { iniziale: Task | null;
         </div>
         {tipo === "auto" && (
           <div className="mt-3 space-y-3">
-            <div className="flex flex-wrap gap-2">
-              {[1, 2, 3, 4, 5, 6].map((n) => <Chip key={n} attivo={volte === n} onClick={() => setVolte(n)}>{n} {n === 1 ? "volta" : "volte"} a settimana</Chip>)}
-            </div>
+            <Segmentato
+              voci={[{ id: "settimana", etichetta: "Volte a settimana" }, { id: "intervallo", etichetta: "Ogni N giorni" }]}
+              valore={ritmo}
+              onCambia={setRitmo}
+              aria="Ritmo"
+            />
+            {ritmo === "settimana" ? (
+              <div className="flex flex-wrap gap-2">
+                {[1, 2, 3, 4, 5, 6].map((n) => <Chip key={n} attivo={volte === n} onClick={() => setVolte(n)}>{n} {n === 1 ? "volta" : "volte"} a settimana</Chip>)}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-2">
+                  {[2, 3, 4, 5, 7, 10, 14, 21, 30].map((n) => <Chip key={n} attivo={ogni === n} onClick={() => setOgni(n)}>ogni {n} giorni</Chip>)}
+                </div>
+                <div>
+                  <div className="mb-1 text-xs text-muted">Quanto è rigida la distanza?</div>
+                  <div className="flex flex-wrap gap-2">
+                    {[[0, "Esatta"], [1, "±1 giorno"], [2, "±2 giorni"]].map(([t, nome]) => <Chip key={String(t)} attivo={tolleranza === t} onClick={() => setTolleranza(t as number)}>{nome}</Chip>)}
+                  </div>
+                </div>
+                <p className="text-xs text-muted">
+                  I giorni si contano dall&apos;ultima volta che l&apos;hai fatta: se la fai prima o dopo, il conto riparte da quel giorno. Così, per esempio, il giardino cade sempre a 7 giorni esatti dal precedente,
+                  e la barba ogni 3-4 giorni, mai a ridosso.
+                </p>
+              </div>
+            )}
             <p className="text-xs text-muted">
               Keepway sceglie i giorni e l&apos;orario tenendo conto di turni, sonno e appuntamenti, e nella fascia che indichi sotto. Nei giorni pesanti (dopo la notte, doppio turno)
-              mette solo le task essenziali. Puoi sempre spostare ogni giorno.
+              mette solo le task essenziali. Se il giorno giusto è impossibile prende quello più vicino.
             </p>
-            {iniziale && iniziale.ricorrenza.tipo === "auto" ? (
+            {iniziale && èPianificata(iniziale) ? (
               <div>
                 <Etichetta>Il piano</Etichetta>
                 <PianoSettimana task={iniziale} modifica />
                 <button type="button" data-suono="via" onClick={apriPianifica} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-ov/10 px-4 py-2.5 text-sm font-semibold">
                   Nuova pianificazione
                 </button>
-                <p className="mt-2 text-xs text-muted">Se cambi frequenza, durata o fascia, usa «Nuova pianificazione» o salva: il piano si ricalcola.</p>
+                <p className="mt-2 text-xs text-muted">Se cambi il ritmo, la durata o la fascia, usa «Nuova pianificazione» o salva: il piano si ricalcola.</p>
               </div>
             ) : (
               <p className="text-xs text-muted">Premi «Pianifica» in fondo: Keepway prepara delle proposte e scegli tu quella che preferisci.</p>
