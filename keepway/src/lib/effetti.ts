@@ -98,10 +98,11 @@ export function tic() {
 //   vittoria = fine timer                  (fanfara)
 //   incasso  = straordinario / cambio turno (monete che cadono e tintinnano, poi il "ding" di moneta presa)
 //   slot     = task completata: una scala in salita che arriva a un accordo brillante
+//   scalaGiu = annullata una modifica: una scala che scende e rallenta, sempre più piano
 //   calcolo  = apertura dell'app (un computer che elabora, poi un "ding" di approvazione)
-export type Suono = "via" | "indietro" | "pausa" | "riprendi" | "ok" | "livello" | "vittoria" | "incasso" | "calcolo" | "slot";
+export type Suono = "via" | "indietro" | "pausa" | "riprendi" | "ok" | "livello" | "vittoria" | "incasso" | "calcolo" | "slot" | "scalaGiu";
 
-const NOTE: Record<Exclude<Suono, "incasso" | "calcolo" | "slot">, [freq: number, inizio: number, durata: number, volume?: number][]> = {
+const NOTE: Record<Exclude<Suono, "incasso" | "calcolo" | "slot" | "scalaGiu">, [freq: number, inizio: number, durata: number, volume?: number][]> = {
   via: [[587, 0, 0.09], [740, 0.1, 0.09], [880, 0.2, 0.18]],
   indietro: [[294, 0, 0.14, 0.18]],
   pausa: [[587, 0, 0.1], [440, 0.11, 0.16]],
@@ -222,11 +223,27 @@ function slot() {
   campana(fine, 2093, 0.08, 0.7);
 }
 
+// Annullato (~1 s): la scala della task completata al contrario. Scende di un gradino alla volta, rallenta e si spegne.
+function scalaGiu() {
+  const scala = [2093, 1976, 1760, 1568, 1397, 1319, 1175, 1047, 988, 880, 784, 698, 659, 587, 523]; // do6 -> do4
+  let t = 0;
+  scala.forEach((f, i) => {
+    const volume = 0.14 - (i / scala.length) * 0.08; // cala man mano che scende
+    nota(f, t, 0.18, volume, "triangle");
+    t += 0.045 + i * 0.0035; // rallenta
+  });
+  nota(262, t, 0.5, 0.07, "triangle"); // l'ultima nota, bassa e lunga
+}
+
 export function suono(tipo: Suono) {
   try {
     avviaAudio();
     if (tipo === "incasso") {
       if (!suonaCampione("incasso")) incasso(); // la registrazione se è pronta, altrimenti il tintinnio sintetizzato
+      return;
+    }
+    if (tipo === "scalaGiu") {
+      scalaGiu();
       return;
     }
     if (tipo === "slot") {

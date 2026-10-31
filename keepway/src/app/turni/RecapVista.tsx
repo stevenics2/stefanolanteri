@@ -1,5 +1,6 @@
 "use client";
 
+import { confermaAnnulla } from "@/lib/annulla";
 import { ChevronLeft, ChevronRight, Undo2 } from "lucide-react";
 import { useState } from "react";
 import { giornoEffettivo, recapMese } from "@/lib/calendario";
@@ -72,8 +73,8 @@ export default function RecapVista() {
                 )}
               </div>
               <button
-                data-suono="indietro"
-                onClick={() => confirm(x.gruppo ? "Annullare questa modifica e quella collegata?" : "Annullare questa modifica?") && annullaModifiche([x.id])}
+                data-suono="nessuno"
+                onClick={() => confermaAnnulla(x.gruppo ? "Annullare questa modifica e quella collegata?" : "Annullare questa modifica?", stato.impostazioni.suoni) && annullaModifiche([x.id])}
                 className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-white/10 px-2.5 py-1.5 text-xs"
               >
                 <Undo2 size={13} /> Annulla

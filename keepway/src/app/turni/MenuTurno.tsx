@@ -1,5 +1,6 @@
 "use client";
 
+import { confermaAnnulla } from "@/lib/annulla";
 import { AlertTriangle, ArrowLeftRight, CalendarOff, ChevronLeft, PlusCircle, Undo2 } from "lucide-react";
 import { useState } from "react";
 import { combinazioneValida, DOPPI_CONSENTITI, etichettaBase, etichettaCodici, extraConsentiti, formatoGiornoMese, giornoEffettivo, violazioni, type Violazione } from "@/lib/calendario";
@@ -160,8 +161,9 @@ function MenuGiorno({ data, onClose, onVai }: { data: string; onClose: () => voi
         <>
           {ge.modifica && (
             <button
-              data-suono="indietro"
+              data-suono="nessuno"
               onClick={() => {
+                if (!confermaAnnulla(ge.modifica!.gruppo ? "Annullare questa modifica e quella collegata?" : "Annullare la modifica di questo giorno?", stato.impostazioni.suoni)) return;
                 annullaModifiche([ge.modifica!.id]);
                 onClose();
               }}
