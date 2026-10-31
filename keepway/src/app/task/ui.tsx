@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronsUpDown } from "lucide-react";
 import type { ReactNode } from "react";
 import Interr from "../components/Interruttore";
 import { useInUscita } from "../components/Presenza";
@@ -68,3 +69,35 @@ export const aMinuti = (hhmm: string) => {
   const [h, m] = hhmm.split(":").map(Number);
   return h * 60 + m;
 };
+
+// Un gruppo di righe ordinate dentro una scheda (etichetta a sinistra, scelta a destra).
+export function Gruppo({ children }: { children: ReactNode }) {
+  return <div className="divide-y divide-ov/10 overflow-hidden rounded-2xl bg-ov/5">{children}</div>;
+}
+
+// Una riga con l'etichetta a sinistra e un menu a tendina a destra (su iPhone si apre la rotellina di iOS).
+export function RigaSelect<T extends string | number | null>({
+  etichetta, sotto, valore, opzioni, onCambia,
+}: { etichetta: string; sotto?: string; valore: T; opzioni: [T, string][]; onCambia: (v: T) => void }) {
+  const chiave = (v: T) => (v === null ? "__nessuno" : String(v));
+  return (
+    <label className="flex items-center justify-between gap-3 px-4 py-3">
+      <span className="min-w-0">
+        <span className="block text-sm">{etichetta}</span>
+        {sotto && <span className="block text-xs text-muted">{sotto}</span>}
+      </span>
+      <span className="relative inline-flex shrink-0 items-center">
+        <select
+          value={chiave(valore)}
+          onChange={(e) => onCambia((opzioni.find(([v]) => chiave(v) === e.target.value) ?? opzioni[0])[0])}
+          className="cursor-pointer appearance-none rounded-lg bg-ov/10 py-1.5 pl-3 pr-8 text-right text-sm font-semibold text-accent outline-none"
+        >
+          {opzioni.map(([v, nome]) => (
+            <option key={chiave(v)} value={chiave(v)} className="bg-card text-foreground">{nome}</option>
+          ))}
+        </select>
+        <ChevronsUpDown size={14} className="pointer-events-none absolute right-2 text-muted" />
+      </span>
+    </label>
+  );
+}

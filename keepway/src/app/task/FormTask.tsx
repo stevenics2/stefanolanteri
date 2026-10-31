@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarCheck, CalendarClock, CalendarDays, Repeat } from "lucide-react";
+import { CalendarCheck, CalendarClock, CalendarDays, Check, Repeat } from "lucide-react";
 import { useState } from "react";
 import { GIORNI_LUNGHI } from "@/lib/date";
 import { puntiAuto } from "@/lib/regole";
@@ -12,10 +12,7 @@ import PianoSettimana from "./PianoSettimana";
 import { èPianificata } from "@/lib/pianoAuto";
 import { usePianifica } from "./usePianifica";
 import Segmentato from "../components/Segmentato";
-import { campo, Chip, Etichetta, Interruttore, Riquadro, Schermo } from "./ui";
-
-// Scorciatoie: una stanza in un giorno preciso (la rotazione quotidiana c'è già).
-const STANZE = ["Sistema il soggiorno", "Sistema il bagno", "Sistema la camera", "Sistema la cucina", "Sistema l'ingresso", "Sistema il balcone"];
+import { campo, Chip, Etichetta, Gruppo, Interruttore, Riquadro, RigaSelect, Schermo } from "./ui";
 
 export default function FormTask({ iniziale, onClose }: { iniziale: Task | null; onClose: () => void }) {
   const { stato, oggi, salvaTask, eliminaTask } = useStore();
@@ -30,26 +27,18 @@ export default function FormTask({ iniziale, onClose }: { iniziale: Task | null;
   const [volte, setVolte] = useState(iniziale?.ricorrenza.tipo === "auto" ? iniziale.ricorrenza.volte : 3);
   const [giorni, setGiorni] = useState<number[]>(iniziale?.ricorrenza.tipo === "settimana" ? iniziale.ricorrenza.giorni : []);
   const [data, setData] = useState(iniziale?.ricorrenza.tipo === "una_volta" ? iniziale.ricorrenza.data : oggi);
-  const [fascia, setFascia] = useState<Fascia>(iniziale?.fascia ?? "qualsiasi");
+  const fascia: Fascia = iniziale?.fascia ?? "qualsiasi"; // la fascia non si chiede più: il momento lo sceglie Keepway (le task esistenti la mantengono)
   const [xp, setXp] = useState<number | null>(iniziale ? iniziale.punti : null);
   const [essenziale, setEssenziale] = useState(iniziale?.essenziale ?? false);
-  const [soloACasa, setSoloACasa] = useState(iniziale?.soloACasa ?? false);
-  const [adatta, setAdatta] = useState(iniziale?.adattaATurni ?? false);
+  const [soloACasa, setSoloACasa] = useState(iniziale?.soloACasa ?? true); // «Da casa» (spostamento 0) = si fa solo a casa
   const [spostamento, setSpostamento] = useState(iniziale?.spostamentoMin ?? 0);
-  const [promemoria, setPromemoria] = useState((iniziale?.promemoria ?? []).join(", "));
+  const scegliSpostamento = (m: number) => {
+    setSpostamento(m);
+    setSoloACasa(m === 0); // da casa = solo a casa; se devi spostarti, si fa anche fuori
+  };
 
   const puntiFinali = xp ?? puntiAuto(durata);
   const valido = titolo.trim() !== "" && (tipo !== "settimana" || giorni.length > 0);
-
-  const stanza = (nome: string) => {
-    setTitolo(nome);
-    setAreaId("casa");
-    setDurata(15);
-    setMinima(5);
-    setSoloACasa(true);
-    setTipo("una_volta");
-    setXp(50);
-  };
 
   // La task com'è nel modulo (serve per salvarla e per l'anteprima della pianificazione automatica)
   const [idTask] = useState(() => iniziale?.id ?? nuovoId());
@@ -66,10 +55,10 @@ export default function FormTask({ iniziale, onClose }: { iniziale: Task | null;
     punti: puntiFinali,
     essenziale,
     soloACasa,
-    adattaATurni: adatta,
+    adattaATurni: true, // il momento giusto e gli avvisi si scelgono sempre tra turni, sonno e impegni
     km: iniziale?.km,
     spostamentoMin: spostamento,
-    promemoria: promemoria.split(/[,\s]+/).filter((o) => /^\d{1,2}:\d{2}$/.test(o)).map((o) => o.padStart(5, "0")),
+    promemoria: iniziale?.promemoria ?? [], // l'avviso è automatico: gli orari a mano non si chiedono più (restano quelli che c'erano)
     tipo: iniziale?.tipo,
     attiva: iniziale?.attiva ?? true,
     creatoIl: iniziale?.creatoIl ?? oggi,
@@ -82,17 +71,13 @@ export default function FormTask({ iniziale, onClose }: { iniziale: Task | null;
   };
   const { apri: apriPianifica, popup } = usePianifica({ costruisci: () => costruisci(), modifica: !!iniziale && èPianificata(iniziale), onClose, onManuale: () => setTipo("settimana") });
 
+  const opzioniDurata: [number | null, string][] = [[null, "Senza timer"], ...[5, 10, 15, 20, 30, 45, 60].map((m): [number | null, string] => [m, `${m} min`])];
+  const opzioniMinima: [number | null, string][] = [[null, "Nessuna"], ...[2, 3, 5, 10].map((m): [number | null, string] => [m, `${m} min`])];
+  const opzioniXp: [number | null, string][] = [[null, `Automatici (+${puntiAuto(durata)})`], ...[10, 20, 30, 50, 100].map((v): [number | null, string] => [v, `+${v}`])];
+  const opzioniSpostamento: [number, string][] = [[0, "Da casa"], ...[10, 20, 30, 45].map((m): [number, string] => [m, `${m} min`])];
+
   return (
     <Schermo titolo={iniziale ? "Modifica task" : "Nuova task"} onClose={onClose}>
-      {!iniziale && (
-        <div>
-          <Etichetta>Una stanza in un giorno preciso:</Etichetta>
-          <div className="flex flex-wrap gap-2">
-            {STANZE.map((s) => <Chip key={s} attivo={titolo === s} onClick={() => stanza(s)}>{s.replace("Sistema ", "")}</Chip>)}
-          </div>
-        </div>
-      )}
-
       <label className="block text-sm text-muted">
         Cosa devi fare
         <input value={titolo} onChange={(e) => setTitolo(e.target.value)} placeholder="Es. Studiare 20 minuti" className={campo} />
@@ -108,22 +93,12 @@ export default function FormTask({ iniziale, onClose }: { iniziale: Task | null;
         </div>
       </div>
 
-      <div>
-        <Etichetta>Quanto dura (minuti)</Etichetta>
-        <div className="flex flex-wrap gap-2">
-          <Chip attivo={durata === null} onClick={() => setDurata(null)}>Senza timer</Chip>
-          {[5, 10, 15, 20, 30, 45, 60].map((m) => <Chip key={m} attivo={durata === m} onClick={() => setDurata(m)}>{m}</Chip>)}
-        </div>
-      </div>
-      {durata !== null && (
-        <div>
-          <Etichetta>Versione minima (basta questa per tenere la serie)</Etichetta>
-          <div className="flex flex-wrap gap-2">
-            <Chip attivo={minima === null} onClick={() => setMinima(null)}>Nessuna</Chip>
-            {[2, 3, 5, 10].map((m) => <Chip key={m} attivo={minima === m} onClick={() => setMinima(m)}>{m} min</Chip>)}
-          </div>
-        </div>
-      )}
+      <Gruppo>
+        <RigaSelect etichetta="Quanto dura" valore={durata} opzioni={opzioniDurata} onCambia={setDurata} />
+        {durata !== null && <RigaSelect etichetta="Versione minima" sotto="Basta questa per tenere la serie" valore={minima} opzioni={opzioniMinima} onCambia={setMinima} />}
+        <RigaSelect etichetta="Quanti XP vale" valore={xp} opzioni={opzioniXp} onCambia={setXp} />
+        <RigaSelect etichetta="Spostamento" sotto="Andata, e altrettanto per il ritorno" valore={spostamento} opzioni={opzioniSpostamento} onCambia={scegliSpostamento} />
+      </Gruppo>
 
       <div>
         <Etichetta>Quando</Etichetta>
@@ -141,30 +116,40 @@ export default function FormTask({ iniziale, onClose }: { iniziale: Task | null;
               onCambia={setRitmo}
               aria="Ritmo"
             />
-            {ritmo === "settimana" ? (
-              <div className="flex flex-wrap gap-2">
-                {[1, 2, 3, 4, 5, 6].map((n) => <Chip key={n} attivo={volte === n} onClick={() => setVolte(n)}>{n} {n === 1 ? "volta" : "volte"} a settimana</Chip>)}
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <div className="flex flex-wrap gap-2">
-                  {[2, 3, 4, 5, 7, 10, 14, 21, 30].map((n) => <Chip key={n} attivo={ogni === n} onClick={() => setOgni(n)}>ogni {n} giorni</Chip>)}
-                </div>
-                <div>
-                  <div className="mb-1 text-xs text-muted">Quanto può slittare, al massimo? (mai prima)</div>
-                  <div className="flex flex-wrap gap-2">
-                    {[[0, "Esatta"], [1, "+1 giorno"], [2, "+2 giorni"]].map(([t, nome]) => <Chip key={String(t)} attivo={tolleranza === t} onClick={() => setTolleranza(t as number)}>{nome}</Chip>)}
-                  </div>
-                </div>
-                <p className="text-xs text-muted">
-                  I giorni si contano dall&apos;ultima volta che l&apos;hai fatta e non passano mai meno di N giorni: se la fai prima o dopo, il conto riparte da quel giorno. Così il giardino cade sempre a 7 giorni esatti dal precedente
-                  e la barba da 3 a 4 giorni dopo (ogni 3 giorni, +1): mai il lunedì dopo il sabato.
-                </p>
-              </div>
+            <Gruppo>
+              {ritmo === "settimana" ? (
+                <RigaSelect
+                  etichetta="Quante volte"
+                  valore={volte}
+                  opzioni={[1, 2, 3, 4, 5, 6].map((n): [number, string] => [n, `${n} ${n === 1 ? "volta" : "volte"} a settimana`])}
+                  onCambia={setVolte}
+                />
+              ) : (
+                <>
+                  <RigaSelect
+                    etichetta="Ogni quanti giorni"
+                    valore={ogni}
+                    opzioni={[2, 3, 4, 5, 7, 10, 14, 21, 30].map((n): [number, string] => [n, `ogni ${n} giorni`])}
+                    onCambia={setOgni}
+                  />
+                  <RigaSelect
+                    etichetta="Quanto può slittare"
+                    sotto="Al massimo, mai prima"
+                    valore={tolleranza}
+                    opzioni={[[0, "Esatta"], [1, "+1 giorno"], [2, "+2 giorni"]] as [number, string][]}
+                    onCambia={setTolleranza}
+                  />
+                </>
+              )}
+            </Gruppo>
+            {ritmo === "intervallo" && (
+              <p className="text-xs text-muted">
+                I giorni si contano dall&apos;ultima volta che l&apos;hai fatta e non passano mai meno di N giorni: se la fai prima o dopo, il conto riparte da quel giorno. Così il giardino cade sempre a 7 giorni esatti dal precedente
+                e la barba da 3 a 4 giorni dopo (ogni 3 giorni, +1): mai il lunedì dopo il sabato.
+              </p>
             )}
             <p className="text-xs text-muted">
-              Keepway sceglie i giorni e l&apos;orario tenendo conto di turni, sonno e appuntamenti, e nella fascia che indichi sotto. Nei giorni pesanti (dopo la notte, doppio turno)
-              mette solo le task essenziali. Se il giorno giusto è impossibile prende quello più vicino.
+              Keepway sceglie i giorni e l&apos;orario tenendo conto di turni, sonno e appuntamenti. Nei giorni pesanti (dopo la notte, doppio turno) mette solo le task essenziali. Se il giorno giusto è impossibile prende quello più vicino.
             </p>
             {iniziale && èPianificata(iniziale) ? (
               <div>
@@ -173,7 +158,7 @@ export default function FormTask({ iniziale, onClose }: { iniziale: Task | null;
                 <button type="button" data-suono="via" onClick={apriPianifica} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-ov/10 px-4 py-2.5 text-sm font-semibold">
                   Nuova pianificazione
                 </button>
-                <p className="mt-2 text-xs text-muted">Se cambi il ritmo, la durata o la fascia, usa «Nuova pianificazione» o salva: il piano si ricalcola.</p>
+                <p className="mt-2 text-xs text-muted">Se cambi il ritmo o la durata, usa «Nuova pianificazione» o salva: il piano si ricalcola.</p>
               </div>
             ) : (
               <p className="text-xs text-muted">Premi «Pianifica» in fondo: Keepway prepara delle proposte e scegli tu quella che preferisci.</p>
@@ -192,43 +177,17 @@ export default function FormTask({ iniziale, onClose }: { iniziale: Task | null;
         {tipo === "una_volta" && <input type="date" value={data} onChange={(e) => setData(e.target.value)} className={campo} aria-label="Giorno" />}
       </div>
 
-      <div>
-        <Etichetta>Spostamento (andata, e altrettanto per il ritorno)</Etichetta>
-        <div className="flex flex-wrap gap-2">
-          {[0, 10, 20, 30, 45].map((m) => <Chip key={m} attivo={spostamento === m} onClick={() => setSpostamento(m)}>{m === 0 ? "Da casa" : `${m} min`}</Chip>)}
-        </div>
-      </div>
-
-      <div>
-        <Etichetta>In che momento</Etichetta>
-        <div className="flex flex-wrap gap-2">
-          {([["qualsiasi", "Quando vuoi"], ["mattina", "Mattina"], ["pomeriggio", "Pomeriggio"], ["sera", "Prima di dormire"]] as const).map(([v, n]) => (
-            <Chip key={v} attivo={fascia === v} onClick={() => setFascia(v)}>{n}</Chip>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <Etichetta>Quanti XP vale</Etichetta>
-        <div className="flex flex-wrap gap-2">
-          <Chip attivo={xp === null} onClick={() => setXp(null)}>Auto (+{puntiAuto(durata)})</Chip>
-          {[10, 20, 30, 50, 100].map((v) => <Chip key={v} attivo={xp === v} onClick={() => setXp(v)}>+{v}</Chip>)}
-        </div>
-      </div>
-
       <div className="space-y-2">
-        <Interruttore valore={adatta} onChange={setAdatta}>Adatta ai turni: suggerisce il momento libero e avvisa lì</Interruttore>
+        <div className="flex items-start gap-3 rounded-2xl bg-ov/5 px-4 py-3 text-sm">
+          <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white"><Check size={13} strokeWidth={3} /></span>
+          <span>
+            <span className="block font-medium">Adatta ai turni e agli impegni</span>
+            <span className="block text-xs text-muted">Suggerisce il momento libero tra turni, sonno e appuntamenti e ti avvisa lì. Sempre attivo.</span>
+          </span>
+        </div>
         <Interruttore valore={essenziale} onChange={setEssenziale}>Essenziale: resta anche nei giorni pesanti</Interruttore>
         <Interruttore valore={soloACasa} onChange={setSoloACasa}>Si fa solo a casa (sparisce quando sei fuori)</Interruttore>
       </div>
-
-      {!adatta && (
-        <label className="block text-sm text-muted">
-          Promemoria (orari, es. 10:00, 18:00)
-          <input value={promemoria} onChange={(e) => setPromemoria(e.target.value)} placeholder="10:00, 18:00" className={campo} />
-          <span className="mt-1 block text-xs">Si ripetono fino a quando non la fai.</span>
-        </label>
-      )}
 
       <button data-suono="via" onClick={tipo === "auto" && !iniziale ? apriPianifica : salva} disabled={!valido} className="w-full rounded-2xl bg-accent py-3.5 text-lg font-bold text-black disabled:opacity-40">
         {tipo === "auto" && !iniziale ? "Pianifica" : "Salva"}
