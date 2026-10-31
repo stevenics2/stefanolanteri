@@ -81,7 +81,7 @@ export async function disattivaPush() {
 
 export type EsitoProva = { ok: boolean; stato: number; dettaglio?: string };
 
-export async function inviaProva(variante?: "vuoto" | "invisibile"): Promise<EsitoProva> {
+export async function inviaProva(variante?: "vuoto" | "esempi"): Promise<EsitoProva> {
   return chiama("/api/push/test", "POST", { deviceId: deviceId(), variante });
 }
 

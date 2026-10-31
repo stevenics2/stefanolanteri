@@ -222,3 +222,5 @@
 - Notifiche su iPhone: iOS mostra il titolo in grassetto, poi una riga «from Keepway» aggiunta dal sistema (non eliminabile), poi il testo. La notifica di prova ora ha titolo «Notifica» (prima «Keepway», che si ripeteva). Da decidere: titoli per categoria («Da fare», «Sonno», «Turni»…) per tutte le notifiche.
 
 - Prove sul titolo delle notifiche (Impostazioni → Notifiche, quando sono attive): «Titolo vuoto» (titolo "") e «Titolo invisibile» (carattere braille vuoto U+2800). Il service worker non sostituisce più un titolo vuoto con «Keepway» e, se iOS lo rifiuta, riprova con il carattere invisibile. Esito da vedere sul telefono: la riga «from Keepway» di iOS resta in ogni caso.
+
+- Prova notifiche: con il titolo vuoto iOS riempie con il nome dell'app; con il titolo invisibile (U+2800) viene bene. Il pulsante in Impostazioni → Notifiche ora manda due notifiche di esempio a caso (stanza, meditazione, lettura, bucato, sonno, appuntamento, conflitto turni, allenamento) con titolo invisibile e testo su due righe, per decidere come scrivere quelle vere.

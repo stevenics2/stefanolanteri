@@ -157,10 +157,27 @@ async function prova(env, request) {
   const sub = await env.DB.prepare('SELECT * FROM subs WHERE device_id = ?').bind(device).first();
   if (!sub) return err('Questo telefono non è iscritto alle notifiche', 404);
   const vapid = await chiavi(env, new URL(request.url).origin);
-  // Prove sul titolo: normale («Notifica»), vuoto («») o con un carattere invisibile (braille vuoto U+2800)
-  const titolo = d.variante === 'vuoto' ? '' : d.variante === 'invisibile' ? '\u2800' : 'Notifica';
-  const testo = d.variante === 'vuoto' ? 'Prova: titolo vuoto' : d.variante === 'invisibile' ? 'Prova: titolo invisibile' : 'Le notifiche funzionano. Si parte.';
-  const { stato, dettaglio } = await spedisci(env, vapid, sub, { titolo, testo, tag: 'prova', urgente: true });
+  // Prova «testi veri»: titolo invisibile (braille vuoto U+2800) e due esempi a caso di notifiche reali, per vedere come escono.
+  if (d.variante === 'esempi') {
+    const ESEMPI = [
+      ['Sistema il soggiorno', '15 min · ti va di farlo adesso?', 'es-stanza'],
+      ['Meditazione', '10 minuti · ti va di farlo adesso?', 'es-medit'],
+      ['Lettura', '20 minuti · ultima chiamata per oggi.', 'es-lettura'],
+      ['Stendi il bucato', 'Ricordati di stendere il bucato', 'es-bucato'],
+      ['A letto entro le 00:30', 'Sveglia alle 09:30, circa 9 ore di sonno.', 'es-sonno'],
+      ['Psicologa domani alle 16:30', 'Via Roma 12 · parti alle 16:00', 'es-app'],
+      ['Attenzione: Conflitto turni', 'Solo 6 ore di riposo prima del turno 1 del 13/09', 'es-turni'],
+      ['Allenamento: Palestra', 'Momento libero 10:30–11:30 · ti va di farlo adesso?', 'es-palestra'],
+    ];
+    const scelti = [...ESEMPI].sort(() => Math.random() - 0.5).slice(0, 2);
+    let ultimo = { stato: 0, dettaglio: '' };
+    for (const [primo, secondo, tag] of scelti) {
+      // il «titolo» invisibile + il testo su due righe: prima riga = cosa, seconda = dettaglio
+      ultimo = await spedisci(env, vapid, sub, { titolo: '\u2800', testo: `${primo}\n${secondo}`, tag, urgente: true });
+    }
+    return json({ ok: ultimo.stato >= 200 && ultimo.stato < 300, stato: ultimo.stato, dettaglio: ultimo.dettaglio, inviate: scelti.map((x) => x[0]) });
+  }
+  const { stato, dettaglio } = await spedisci(env, vapid, sub, { titolo: d.variante === 'vuoto' ? '' : 'Notifica', testo: d.variante === 'vuoto' ? 'Prova: titolo vuoto' : 'Le notifiche funzionano. Si parte.', tag: 'prova', urgente: true });
   return json({ ok: stato >= 200 && stato < 300, stato, dettaglio });
 }
 

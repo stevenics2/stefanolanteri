@@ -94,22 +94,17 @@ export default function NotificheImpostazioni() {
               <BellOff size={16} /> Disattiva
             </button>
           </div>
-          <div className="text-xs text-muted">Prove sul titolo (su iPhone, la riga «from Keepway» resta in ogni caso):</div>
-          <div className="grid grid-cols-2 gap-2">
-            {([["vuoto", "Titolo vuoto"], ["invisibile", "Titolo invisibile"]] as const).map(([v, nome]) => (
-              <button
-                key={v}
-                disabled={occupato}
-                onClick={() => esegui(async () => {
-                  const r = await inviaProva(v);
-                  return r.ok ? "Inviata: guarda com'è comparsa." : `Non inviata. Risposta: ${r.stato || "nessuna"}${r.dettaglio ? ` — ${r.dettaglio}` : ""}`;
-                })}
-                className="rounded-xl bg-ov/10 py-2.5 text-sm disabled:opacity-50"
-              >
-                {nome}
-              </button>
-            ))}
-          </div>
+          <div className="text-xs text-muted">Prova con il titolo invisibile e due testi a caso di notifiche vere (compiti, sonno, appuntamenti, turni):</div>
+          <button
+            disabled={occupato}
+            onClick={() => esegui(async () => {
+              const r = await inviaProva("esempi");
+              return r.ok ? "Inviate due notifiche di esempio: guarda come sono comparse." : `Non inviata. Risposta: ${r.stato || "nessuna"}${r.dettaglio ? ` — ${r.dettaglio}` : ""}`;
+            })}
+            className="w-full rounded-xl bg-ov/10 py-2.5 text-sm disabled:opacity-50"
+          >
+            Prova con testi veri (titolo invisibile)
+          </button>
         </div>
       )}
 
