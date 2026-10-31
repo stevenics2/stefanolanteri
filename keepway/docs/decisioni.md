@@ -149,3 +149,5 @@
   - Modifiche a mano (voci "fissato"/"escluso" nel piano): in «Modifica allenamento» ogni giorno si accende (lo fissi) o si spegne (l'app non lo propone più); «Rifai la proposta da zero» le dimentica. «Salta oggi» conta come giorno escluso. Il momento proposto si può cambiare a mano nella task, come per le altre.
   - Un giorno in piano compare in Oggi anche se è una giornata «pesante» (il piano ha già deciso). Le task già salvate con giorni fissi restano com'erano; si può passare ad automatica modificandole.
 - Ancora da fare: scheda lavatrice con «Stendi il bucato» dopo 4 ore; «proponi automaticamente» per gli appuntamenti; vista settimanale.
+
+- Ogni domenica dalle 18, se c'è almeno un allenamento automatico, in «Must before sleep» compare «Programmazione Allenamenti Settimanali»: toccandola si va in Task, alla sezione Allenamento (/task/#allenamento), e per quella domenica sparisce (si ricorda in localStorage). La pagina Task ora scorre alla sezione indicata dall'indirizzo con #.

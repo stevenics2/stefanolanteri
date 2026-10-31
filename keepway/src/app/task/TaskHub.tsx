@@ -2,7 +2,7 @@
 
 import { BellRing, CalendarPlus, Dumbbell, ListPlus } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { GIORNI_LUNGHI } from "@/lib/date";
 import { giorniTra } from "@/lib/eventi";
 import { useStore } from "@/lib/store";
@@ -38,6 +38,12 @@ const RIQUADRI = [
 export default function TaskHub() {
   const { pronto, stato, oggi, salvaTask } = useStore();
   const [modo, setModo] = useState<Modo | null>(null);
+  // Un indirizzo con # (es. /task/#allenamento) porta alla sezione, anche se i dati arrivano dopo
+  useEffect(() => {
+    if (!pronto || !window.location.hash) return;
+    const id = window.location.hash.slice(1);
+    requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ block: "start" }));
+  }, [pronto]);
   if (!pronto) return null;
 
   const apri = (id: (typeof RIQUADRI)[number]["id"]) =>
@@ -84,7 +90,7 @@ export default function TaskHub() {
       {stato.aree.map((a) => {
         const lista = stato.task.filter((t) => t.areaId === a.id);
         return (
-          <div key={a.id} className="space-y-2">
+          <div key={a.id} id={a.id} className="scroll-mt-4 space-y-2">
             <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide" style={{ color: a.colore }}>
               <AreaIcona nome={a.icona} colore={a.colore} size={15} badge={false} /> {a.nome}
             </h2>
