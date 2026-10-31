@@ -187,12 +187,13 @@ html {
 /* Il commento all'apertura: entra con un piccolo rimbalzo ed esce svanendo */
 @keyframes feedback {
   0% { transform: translateY(-24px) scale(0.9); opacity: 0; }
-  12% { transform: translateY(0) scale(1.04); opacity: 1; }
-  20% { transform: scale(1); }
-  88% { opacity: 1; }
-  100% { transform: translateY(-8px) scale(0.96); opacity: 0; filter: blur(4px); }
+  9% { transform: translateY(0) scale(1.04); opacity: 1; }
+  15% { transform: scale(1); }
+  /* resta ben leggibile fino a quasi la fine; solo l'ultimo istante svanisce (con una curva che parte piano) */
+  93% { transform: none; opacity: 1; filter: blur(0); animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.6); }
+  100% { transform: translateY(-6px) scale(0.98); opacity: 0; filter: blur(2px); }
 }
-.feedback { animation: feedback 2.9s ease-out forwards; }
+.feedback { animation: feedback 4.4s ease-out forwards; }
 
 /* L'anello che avanza trema e sprizza scintille */
 @keyframes trema {
@@ -246,15 +247,15 @@ html {
   0% { transform: scale(0.8); opacity: 0; }
   10% { transform: scale(1.05); opacity: 1; }
   16% { transform: scale(1); }
-  72% { opacity: 1; transform: scale(1); filter: blur(0); }
-  100% { opacity: 0; transform: scale(0.95); filter: blur(5px); }
+  85% { opacity: 1; transform: scale(1); filter: blur(0); animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.6); }
+  100% { opacity: 0; transform: scale(0.97); filter: blur(2px); }
 }
 @keyframes risultatoCombo {
   0% { transform: scale(0.8); opacity: 0; }
   10% { transform: scale(1.05); opacity: 1; }
   16% { transform: scale(1); }
-  90% { opacity: 1; transform: scale(1); filter: blur(0); }
-  100% { opacity: 0; transform: scale(0.95); filter: blur(5px); }
+  92% { opacity: 1; transform: scale(1); filter: blur(0); animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.6); }
+  100% { opacity: 0; transform: scale(0.97); filter: blur(2px); }
 }
 .risultato-combo { animation: risultatoCombo 2.4s ease-out both; }
 @media (prefers-reduced-motion: reduce) { .risultato-combo { animation: none; } }

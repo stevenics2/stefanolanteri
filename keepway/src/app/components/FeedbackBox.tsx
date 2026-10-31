@@ -7,7 +7,7 @@ import { nuovoId } from "@/lib/seed";
 import { useStore } from "@/lib/store";
 
 const RITARDO_MS = 1600; // dopo il ricalcolo degli anelli
-const DURATA_MS = 2900;
+const DURATA_MS = 4400; // abbastanza per leggerlo con calma
 
 const STILE = {
   bene: { Icona: Flame, bordo: "rgba(251,191,36,0.6)", colore: "#fcd34d", ombra: "rgba(251,191,36,0.45)" },
