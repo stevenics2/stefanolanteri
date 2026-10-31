@@ -8,7 +8,7 @@ import { hhmm } from "@/lib/sonno";
 import { titoloTask } from "@/lib/stanze";
 import { useStore } from "@/lib/store";
 import AreaIcona, { iconaTask } from "./AreaIcona";
-import GiornataInBreve from "./GiornataInBreve";
+import BloccoTurno from "./BloccoTurno";
 
 // Un giorno che non è oggi: il riassunto e cosa è previsto. Solo da guardare (le task si spuntano il giorno stesso).
 export default function GiornoSeguente({ data, onApri }: { data: string; onApri?: (e: import("@/lib/tipi").Evento) => void }) {
@@ -26,7 +26,7 @@ export default function GiornoSeguente({ data, onApri }: { data: string; onApri?
 
   return (
     <div className="space-y-3">
-      <GiornataInBreve data={data} nTask={task.length} nImpegni={eventi.length} />
+      <BloccoTurno data={data} />
       <div className="space-y-2">
         {righe.length === 0 && <p className="text-sm text-muted">Niente di previsto per questo giorno.</p>}
         {righe.map((r) => (

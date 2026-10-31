@@ -15,7 +15,7 @@ const ora = (ms: number) => new Date(ms).toLocaleTimeString("it-IT", { hour: "2-
 
 // Una task nella schermata Oggi: avvia il timer, segna come fatta, fa la versione minima,
 // la rimanda a più tardi oppure la salta per oggi.
-export default function TaskCard({ task, soloMinima }: { task: Task; soloMinima: boolean }) {
+export default function TaskCard({ task, soloMinima, senzaOrario = false }: { task: Task; soloMinima: boolean; senzaOrario?: boolean }) {
   const { stato, oggi, completa, annulla, apriTimer, ignoraOggi, rimanda, annullaRinvio, impostaMomento } = useStore();
   const [piuTardi, setPiuTardi] = useState(false);
   const [modMomento, setModMomento] = useState(false);
@@ -57,7 +57,7 @@ export default function TaskCard({ task, soloMinima }: { task: Task; soloMinima:
         <span className="min-w-0 flex-1">
           <span className={`block font-semibold leading-tight ${fatto ? "line-through" : ""}`}>{titoloTask(task, stato, oggi)}</span>
           <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted">
-            {finestra ? (
+            {finestra && !senzaOrario ? (
               <span className="inline-flex items-center gap-1 whitespace-nowrap font-semibold text-emerald-300">
                 <Clock size={11} /> {hhmm(finestra.da)}–{hhmm(finestra.a)}
               </span>
