@@ -264,6 +264,14 @@ export function impegniGiorno(data: string): ImpegnoGiorno[] {
   return out.sort((x, y) => x.da - y.da);
 }
 
+// Fino a che ora, la sera, si può fare una cosa tranquilla (lettura, meditazione): fino a quando vai a letto, anche dopo la mezzanotte
+// (minuti dalla mezzanotte di `data`, può superare 1440). Se non c'è un sonno previsto in serata, le 23:30.
+export function limiteSerale(data: string): number {
+  const base = mezzanotte(data);
+  const s = elencoSonni().find((x) => x.aLetto >= base + 18 * 60 && x.aLetto <= base + 26 * 60);
+  return s ? s.aLetto - base : 23 * 60 + 30;
+}
+
 // Dove finisce la giornata utile: la fine dell'ultimo momento libero (tra turni e sonno, entro le 22:30). Minuti dalla mezzanotte.
 export function fineGiornataMin(data: string): number | null {
   const f = finestreLibere(data, 8 * 60, 22 * 60 + 30, 15);

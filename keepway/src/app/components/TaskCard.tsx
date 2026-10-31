@@ -33,6 +33,7 @@ export default function TaskCard({ task, soloMinima, senzaOrario = false }: { ta
   const momento = !fatto ? momentoAttuale(task, oggi, { oggi, adessoMin, eventi: stato.eventi, scelto }) : null;
   const finestra = momento?.finestra ?? null;
   const spostato = !!momento?.spostato;
+  const seraTarda = !!momento?.primaDiDormire;
   const esaurito = !!momento?.esaurito;
   const senzaTempo = task.adattaATurni && !fatto && !finestra;
   const stanza = task.tipo === "stanza" ? stanzaDelGiorno(stato.stanze, stato.completamenti, task.id, oggi) : null;
@@ -65,7 +66,7 @@ export default function TaskCard({ task, soloMinima, senzaOrario = false }: { ta
             {finestra && !senzaOrario ? (
               <span className="inline-flex items-center gap-1 whitespace-nowrap font-semibold text-emerald-300">
                 <Clock size={11} /> {hhmm(finestra.da)}–{hhmm(finestra.a)}
-                {spostato && <span className="font-medium text-amber-300">· spostato</span>}
+                {spostato && <span className="font-medium text-amber-300">· {seraTarda ? "prima di dormire" : "spostato"}</span>}
               </span>
             ) : esaurito && !senzaOrario ? (
               <span className="whitespace-nowrap text-amber-300">nessun momento libero oggi</span>
@@ -137,7 +138,7 @@ export default function TaskCard({ task, soloMinima, senzaOrario = false }: { ta
       {(finestra) && <div className="mt-2">
           {finestra && !modMomento && (
             <button data-suono="via" onClick={() => setModMomento(true)} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-300">
-              <Clock size={12} /> {spostato ? "Nuovo momento" : "Momento giusto"}: {hhmm(finestra.da)}–{hhmm(finestra.a)} <Pencil size={11} />
+              <Clock size={12} /> {seraTarda ? "Prima di dormire" : spostato ? "Nuovo momento" : "Momento giusto"}: {hhmm(finestra.da)}–{hhmm(finestra.a)} <Pencil size={11} />
             </button>
           )}
           {finestra && modMomento && (
