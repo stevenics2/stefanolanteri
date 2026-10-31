@@ -49,7 +49,8 @@ function sonnoRegolare(q: Blocco, fineP: number | null): Sonno {
   const vincolo = fineP === null ? -Infinity : fineP + DOPO_TURNO_MIN;
   const dalle = q.inizio - base;
   const prima3 = dalle === 13 * 60 || dalle === 19 * 60; // turni che iniziano alle 13:00 (3) o alle 19:00 (4)
-  const ideale = prima3 ? SONNO_PRIMA_DEL_TERZO_MIN : SONNO_IDEALE_MIN;
+  const turno2 = dalle === 7 * 60; // turno che inizia alle 7:00: sveglia alle 6:00, a letto alle 23:00 (7 ore: 22:00 è troppo presto per riuscirci)
+  const ideale = prima3 ? SONNO_PRIMA_DEL_TERZO_MIN : turno2 ? SONNO_MINIMO_MIN : SONNO_IDEALE_MIN;
   const aLetto = Math.max(svegliaAbituale - ideale, vincolo);
   // Se si va a letto tardi, la sveglia slitta (fino al limite) per arrivare almeno a 7 ore.
   const sveglia = Math.min(limite, Math.max(svegliaAbituale, aLetto + SONNO_MINIMO_MIN));
