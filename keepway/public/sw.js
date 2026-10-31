@@ -5,14 +5,17 @@ self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
 self.addEventListener('push', (e) => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch { d = { body: e.data ? e.data.text() : '' }; }
-  e.waitUntil(self.registration.showNotification(d.title || 'Keepway', {
+  // Un titolo vuoto («») è ammesso (serve per le prove); se il telefono lo rifiuta si riprova con un carattere invisibile.
+  const titolo = typeof d.title === 'string' ? d.title : 'Keepway';
+  const opzioni = {
     body: d.body || '',
     icon: '/icons/192.png',
     badge: '/icons/192.png',
     tag: d.tag || 'keepway',        // una notifica nuova con lo stesso tag sostituisce la precedente
     renotify: true,                 // ...ma suona di nuovo
     data: { url: d.url || '/oggi/' },
-  }));
+  };
+  e.waitUntil(self.registration.showNotification(titolo, opzioni).catch(() => self.registration.showNotification('\u2800', opzioni)));
 });
 
 self.addEventListener('notificationclick', (e) => {

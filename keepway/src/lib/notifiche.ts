@@ -81,8 +81,8 @@ export async function disattivaPush() {
 
 export type EsitoProva = { ok: boolean; stato: number; dettaglio?: string };
 
-export async function inviaProva(): Promise<EsitoProva> {
-  return chiama("/api/push/test", "POST", { deviceId: deviceId() });
+export async function inviaProva(variante?: "vuoto" | "invisibile"): Promise<EsitoProva> {
+  return chiama("/api/push/test", "POST", { deviceId: deviceId(), variante });
 }
 
 // Rimanda l'iscrizione al server (a volte il server la perde, o cambia): si fa una volta al giorno.
