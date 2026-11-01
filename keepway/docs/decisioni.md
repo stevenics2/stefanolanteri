@@ -258,3 +258,6 @@
 - Provare un'altra palestra (Rafforzamento muscolare funzionale) e controllare che la task si segni da sola toccando la notifica.
 - Sonno reale → giornata più leggera dopo notte corta, debito di sonno, orari di letto personalizzati.
 - Idee in sospeso: aprire dalla notifica la task giusta (`/oggi/?apri=…`), numero sull'icona, «proponi automaticamente» per gli appuntamenti, vista settimana, Kit SOS e routine serale, uniformare i form Allenamento/Lavatrice.
+
+## Orari fissi di sincronizzazione
+- Le automazioni «Ora del giorno» sono 07:00, 11:00, 15:00 e 19:00 (una per orario), così il sonno arriva presto e si aggiorna. La notifica/popup delle 22:30 resta come rete di sicurezza: scatta solo se in tutta la giornata non è arrivato nulla.

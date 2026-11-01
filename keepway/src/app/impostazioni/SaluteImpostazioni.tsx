@@ -105,11 +105,11 @@ export default function SaluteImpostazioni() {
         <ol className="mt-2 list-decimal space-y-2 pl-5">
           <li><b>Fine allenamento</b> (Apple Watch: «Allenamento» → «Termina»): subito dopo una corsa o la palestra la task si segna da sola.</li>
           <li><b>Sveglia</b> (Sveglia → «Quando mi sveglio»): porta a Keepway l&apos;orario vero del risveglio e quanto hai dormito.</li>
-          <li><b>Ora del giorno</b>, per esempio <b>12:00</b>, <b>18:00</b> e <b>22:30</b>: sono la rete di sicurezza, nel caso le prime due non partano.</li>
+          <li><b>Ora del giorno</b>, una automazione per ognuno di questi orari: <b>07:00</b>, <b>11:00</b>, <b>15:00</b> e <b>19:00</b>. Portano il sonno e i passi a Keepway durante la giornata, e sono la rete di sicurezza se le altre non partono.</li>
         </ol>
         <p className="mt-3 text-xs text-muted">
           Attenzione: con l&apos;iPhone bloccato l&apos;app Salute è protetta e il comando può non leggere niente. Per questo conviene lasciare qualche orario fisso, e usare il popup di Keepway («Sincronizza») quando serve.
-          Alle <b>22:30</b>, se oggi non è arrivato nulla, Keepway ti manda una notifica (solo se in passato hai già sincronizzato) e un popup con il pulsante «Sincronizza».
+          Alle <b>22:30</b>, se oggi non è arrivato nulla (cioè se nessuna delle automazioni è partita), Keepway ti manda una notifica (solo se in passato hai già sincronizzato) e un popup con il pulsante «Sincronizza».
           I nomi delle azioni possono cambiare un po&apos; con la versione di iOS: se non hai tutti i dati va bene lo stesso, puoi mandare anche solo una parte. Il sonno può arrivare in ore, minuti o secondi: Keepway lo riconosce.
         </p>
       </details>
