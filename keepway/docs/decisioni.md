@@ -261,3 +261,9 @@
 
 ## Orari fissi di sincronizzazione
 - Le automazioni «Ora del giorno» sono 07:00, 11:00, 15:00 e 19:00 (una per orario), così il sonno arriva presto e si aggiorna. La notifica/popup delle 22:30 resta come rete di sicurezza: scatta solo se in tutta la giornata non è arrivato nulla.
+
+## Sonno: il comando manda i dati grezzi, i conti li fa il server
+- Il calcolo delle date dentro il Comando Rapido era fragile (finestre di 24 ore che si sovrappongono, filtri vuoti) e troppo complicato da rifare. Ora il comando manda solo l'elenco grezzo dei «pezzi» di sonno degli ultimi 3 giorni (`&campioni=` con righe `valore;inizio;fine`).
+- `worker/sonno.js`: legge le date scritte da Comandi rapidi (`02/11/26, 04:12`, `2 nov 2026 alle 04:12`, ISO), scarta «Awake» e «In bed», fonde i pezzi sovrapposti, unisce i pezzi separati da meno di 90 minuti nella stessa notte, assegna la notte al giorno in cui finisce, tiene gli ultimi 2 giorni e **sovrascrive** sonno, letto e sveglia di quei giorni. Si può rimandare più volte: il risultato è sempre lo stesso.
+- Così letto e sveglia arrivano insieme al sonno e sparisce la parte più difficile del comando. Il vecchio `&sonno=` funziona ancora ma non serve più.
+- Provato con dati inventati (due notti, un risveglio, una notte fuori finestra) e con il database finto; da provare sull'iPhone.

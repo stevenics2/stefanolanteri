@@ -5,6 +5,7 @@
 //  - Ogni minuto `scheduled` prende le notifiche scadute e le spedisce.
 //  - Il database (D1) è il binding `DB`. Se manca, le API rispondono 503 e il resto del sito funziona lo stesso.
 import { generateVapid, sendWebPushDetailed, b64u } from './webpush.js';
+import { analizzaCampioni } from './sonno.js';
 
 const SCHEMA = [
   'CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)',
@@ -291,9 +292,19 @@ async function inviaSalute(env, url, request) {
   const tipo = tipoAllenamento(dati.allenamento);
   const minuti = numero(dati.minuti);
   const km = numero(dati.km);
-  if (passi === null && sonno === null && !letto && !sveglia && !tipo) return err('Nessun dato da salvare');
+  const analisi = dati.campioni ? analizzaCampioni(dati.campioni, 2) : null; // il sonno grezzo: i conti li facciamo noi
+  const haCampioni = !!analisi && analisi.righe > 0;
+  if (passi === null && sonno === null && !letto && !sveglia && !tipo && !haCampioni) return err('Nessun dato da salvare');
   const cod = await impronta(t);
   await env.DB.prepare('INSERT INTO ultimo (codice, quando) VALUES (?, ?) ON CONFLICT(codice) DO UPDATE SET quando = excluded.quando').bind(cod, Date.now()).run();
+  for (const n of analisi?.notti ?? []) {
+    // la notte calcolata dai pezzi sostituisce quella di prima (è il dato più preciso)
+    await env.DB.prepare(
+      `INSERT INTO salute (codice, giorno, sonno_min, letto, sveglia, aggiornato) VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT(codice, giorno) DO UPDATE SET sonno_min = excluded.sonno_min, letto = excluded.letto, sveglia = excluded.sveglia, aggiornato = excluded.aggiornato`,
+    ).bind(cod, n.giorno, n.minuti, n.letto, n.sveglia, Date.now()).run();
+  }
+  if (haCampioni && passi === null && sonno === null && !letto && !sveglia && !tipo) return json({ ok: true, righe: analisi.righe, notti: analisi.notti });
   if (tipo) {
     const inizio = ora(dati.inizio) ?? '00:00';
     const nuovo = !(await env.DB.prepare('SELECT 1 AS x FROM allenamenti WHERE codice = ? AND giorno = ? AND tipo = ? AND inizio = ?').bind(cod, giorno, tipo, inizio).first());

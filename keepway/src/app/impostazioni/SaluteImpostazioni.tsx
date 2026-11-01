@@ -85,13 +85,13 @@ export default function SaluteImpostazioni() {
             <b>Passi.</b> Aggiungi <b>Trova campioni di Salute</b>: tipo <b>Passi</b>, data di inizio <b>è oggi</b>. Poi <b>Calcola statistica</b> (<b>Somma</b>) e <b>Imposta variabile</b> con nome <b>Passi</b>.
           </li>
           <li>
-            <b>Sonno.</b> <b>Trova campioni di Salute</b>: tipo <b>Analisi del sonno</b>, data di fine <b>è oggi</b>, valori <b>Core, Profondo, REM</b>. Poi <b>Ottieni dettagli</b> → <b>Durata</b>, <b>Calcola statistica</b> → <b>Somma</b>, variabile <b>Sonno</b>.
-          </li>
-          <li>
-            <b>A letto e sveglia.</b> Un altro <b>Trova campioni di Salute</b> sul sonno di oggi, ordinato per <b>Data di inizio</b> dal più vecchio, limite <b>1</b> → <b>Ottieni dettagli</b>: <b>Data di inizio</b> → <b>Formatta data</b> con formato personalizzato <b>HH:mm</b>, variabile <b>Letto</b>. Lo stesso ordinando per <b>Data di fine</b> dal più recente, per <b>Sveglia</b>.
-          </li>
-          <li>
-            Aggiungi <b>Ottieni contenuti dell&apos;URL</b> con questo indirizzo e le variabili: <span className="break-all font-mono text-[11px]">{indirizzo || "…"}&amp;passi=<i>Passi</i>&amp;sonno=<i>Sonno</i>&amp;letto=<i>Letto</i>&amp;sveglia=<i>Sveglia</i></span>
+            <b>Sonno</b> (quattro azioni, senza calcoli: i conti li fa Keepway).
+            <ol className="mt-1 list-[lower-alpha] space-y-1 pl-5">
+              <li><b>Trova campioni di dati sanitari</b>: <b>Tipo è Sleep</b> e <b>Data di inizio è negli ultimi 3 giorni</b>. Nessun altro filtro.</li>
+              <li><b>Ripeti con ciascun elemento</b> (sul risultato). Dentro metti un&apos;azione <b>Testo</b> con tre pezzi separati da <b>;</b> (punto e virgola): <i>Valore</i> ; <i>Data di inizio</i> ; <i>Data di fine</i>. Si inseriscono toccando <b>Elemento ripetuto</b> e scegliendo la proprietà.</li>
+              <li>Dopo <b>Fine ripetizione</b>, aggiungi <b>Combina testo</b> sul <b>Risultato della ripetizione</b>, con separatore <b>Nuova riga</b>.</li>
+              <li><b>Ottieni contenuti dell&apos;URL</b> con l&apos;indirizzo e, di seguito, <span className="break-all font-mono text-[11px]">&amp;campioni=<i>Testo combinato</i></span></li>
+            </ol>
           </li>
           <li>
             <b>Allenamenti.</b> Aggiungi <b>Trova campioni di Salute</b>: tipo <b>Allenamenti</b>, data di inizio <b>è oggi</b>. Poi <b>Ripeti con ciascun elemento</b> e, dentro, un altro <b>Ottieni contenuti dell&apos;URL</b> con: <span className="break-all font-mono text-[11px]">{indirizzo || "…"}&amp;allenamento=<i>Tipo</i>&amp;minuti=<i>Durata</i>&amp;km=<i>Distanza</i>&amp;inizio=<i>Ora di inizio</i></span> (<i>Ora di inizio</i> = <b>Data di inizio</b> con <b>Formatta data</b> <b>HH:mm</b>; la distanza va in <b>km</b>, e per la palestra non serve).
