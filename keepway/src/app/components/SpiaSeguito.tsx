@@ -59,7 +59,6 @@ export default function SpiaSeguito() {
               </div>
               <div className="shrink-0 text-right">
                 <div className="text-xl font-black tabular-nums leading-none" style={{ color: colore }}>{tempo(trascorso)}</div>
-                <div className="mt-0.5 text-[10px] text-muted">in lavatrice, bagnato</div>
               </div>
             </div>
             <button data-suono="ok" onClick={() => completa(t.id, { minima: false })} className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold text-black" style={{ background: colore }}>
