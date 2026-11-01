@@ -326,3 +326,6 @@
 - Il sonno di ogni ciclo è la somma delle sessioni (o della parte che cade nel ciclo). I cicli senza dati (nessun sonno) non contano, il ciclo in corso può solo ridurre il debito.
 - Il server salva le **sessioni di sonno** (`sonni`: inizio, fine, minuti di sonno vero; le notti vicine si fondono se separate da meno di 90 minuti di veglia) e le restituisce; ogni invio sostituisce le sessioni del periodo. Finché non sono arrivate (serve il deploy e una sincronizzazione), si usa il vecchio calcolo giorno per giorno.
 - Nella riga del debito: «Ultimo ciclo tra turni: X dormiti su Y necessari». Provato in browser con 14 notti inventate.
+
+## Il debito di sonno scade dopo 14 giorni
+- Il debito guarda solo gli ultimi 14 giorni (`GIORNI_DEBITO`), sia con il calcolo giorno per giorno sia con i cicli: una notte corta di tre settimane fa non pesa più. Provato: due notti molto corte a inizio mese non cambiano il debito di oggi (59 minuti con e senza).

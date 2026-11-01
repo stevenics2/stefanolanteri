@@ -1,3 +1,4 @@
+import { dataPiù } from "./date";
 // Il sonno visto nel tempo: le notti, il debito di sonno e quanto sei regolare. I dati arrivano dall'iPhone (una riga per giorno).
 import { cicliDiSonno, debitoDaCicli, type Ciclo } from "./cicliSonno";
 import type { GiornoSalute, SessioneSonno } from "./salute";
@@ -16,10 +17,14 @@ export const notti = (giorni: GiornoSalute[]): Notte[] =>
 // (il sonno perso non si recupera tutto in una notte). Mai sotto zero.
 // Oggi, finché la giornata non è finita, può solo ridurre il debito, mai aumentarlo: il resto del sonno (un riposino, la notte) deve ancora arrivare.
 // Così aggiungere sonno non fa mai salire il debito.
+export const GIORNI_DEBITO = 14; // il debito guarda solo le ultime due settimane: un debito vecchio scade
+
 export function debitoDiSonno(n: Notte[], obiettivoMin: number, oggi?: string): { debito: number; storia: { giorno: string; debito: number }[] } {
   let debito = 0;
   const storia: { giorno: string; debito: number }[] = [];
+  const dal = oggi ? dataPiù(oggi, -(GIORNI_DEBITO - 1)) : "";
   for (const x of n) {
+    if (x.giorno < dal) continue;
     const manca = obiettivoMin - x.minuti;
     if (manca > 0 && x.giorno === oggi) {
       storia.push({ giorno: x.giorno, debito: Math.round(debito) }); // oggi è ancora in corso: il deficit lo conto domani
@@ -53,7 +58,7 @@ export const oreEMinuti = (min: number) => `${Math.floor(min / 60)} h ${String(M
 // Il debito di sonno nel modo migliore disponibile: sui cicli tra un turno e l'altro se ci sono le sessioni, altrimenti giorno per giorno.
 export function debitoComplessivo(giorni: GiornoSalute[], sonni: SessioneSonno[] | undefined, obiettivoMin: number, oggi: string, adesso: number) {
   if (sonni && sonni.length >= 2 && adesso > 0) {
-    const cicli = cicliDiSonno(sonni, adesso, obiettivoMin);
+    const cicli = cicliDiSonno(sonni, adesso, obiettivoMin, GIORNI_DEBITO);
     const d = debitoDaCicli(cicli);
     return { debito: d.debito, ultimoCiclo: d.ultimo, cicli, perCicli: true };
   }

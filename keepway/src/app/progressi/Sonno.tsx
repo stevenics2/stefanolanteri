@@ -89,7 +89,7 @@ export default function Sonno() {
           ) : (
             <p>Per ora confronto giorno per giorno. Appena arrivano le sessioni di sonno dall&apos;iPhone (alla prossima sincronizzazione) passo al confronto tra un turno e l&apos;altro.</p>
           )}
-          <p>Sotto il necessario il debito sale; sopra scende, ma solo della metà: il sonno perso non si recupera tutto in una notte. Il ciclo ancora in corso può solo ridurlo. I cicli senza dati non contano.</p>
+          <p>Sotto il necessario il debito sale; sopra scende, ma solo della metà: il sonno perso non si recupera tutto in una notte. Il ciclo ancora in corso può solo ridurlo. I cicli senza dati non contano. Il debito guarda solo le ultime 2 settimane: quello più vecchio scade.</p>
         </Approfondisci>
       </div>
 
