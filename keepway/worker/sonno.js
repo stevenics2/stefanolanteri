@@ -37,7 +37,7 @@ const hhmmRoma = (ms) => new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Ro
 const giornoRoma = (ms) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome' }).format(new Date(ms));
 
 // Da un elenco «valore;inizio;fine» (una riga per pezzo) alle notti: [{ giorno, minuti, letto, sveglia }].
-export function analizzaCampioni(testo, giorniDaTenere = 2, adesso = Date.now()) {
+export function analizzaCampioni(testo) {
   const pezzi = [];
   let righe = 0;
   for (const riga of String(testo ?? '').split(/\r?\n/)) {
@@ -67,12 +67,13 @@ export function analizzaCampioni(testo, giorniDaTenere = 2, adesso = Date.now())
       n.fine = p[1];
     } else notti.push({ inizio: p[0], fine: p[1], minuti: (p[1] - p[0]) / 60000 });
   }
-  // ogni notte appartiene al giorno in cui finisce; si tengono solo gli ultimi giorni (quelli più vecchi potrebbero essere tagliati)
-  const limite = giornoRoma(adesso - (giorniDaTenere - 1) * 86_400_000);
+  // ogni notte appartiene al giorno in cui finisce. Il primo giorno del periodo inviato può essere tagliato (la notte potrebbe iniziare prima
+  // dei dati ricevuti): si salta, e si tengono tutte le altre. Così un invio di 30 giorni recupera lo storico, e uno di 3 aggiorna gli ultimi giorni.
+  const limite = pezzi.length ? giornoRoma(pezzi[0][0]) : '';
   const perGiorno = new Map();
   for (const n of notti) {
     const giorno = giornoRoma(n.fine);
-    if (giorno < limite) continue;
+    if (giorno <= limite) continue;
     const g = perGiorno.get(giorno) ?? { giorno, minuti: 0, inizio: n.inizio, fine: n.fine };
     g.minuti += n.minuti;
     g.inizio = Math.min(g.inizio, n.inizio);

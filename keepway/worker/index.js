@@ -292,7 +292,7 @@ async function inviaSalute(env, url, request) {
   const tipo = tipoAllenamento(dati.allenamento);
   const minuti = numero(dati.minuti);
   const km = numero(dati.km);
-  const analisi = dati.campioni ? analizzaCampioni(dati.campioni, 2) : null; // il sonno grezzo: i conti li facciamo noi
+  const analisi = dati.campioni ? analizzaCampioni(dati.campioni) : null; // il sonno grezzo: i conti li facciamo noi
   const haCampioni = !!analisi && analisi.righe > 0;
   if (dati.campioni && !haCampioni) return err(`Sonno non leggibile: ricevuti ${String(dati.campioni).length} caratteri e nessuna riga valida (versione sonno-1)`);
   if (passi === null && sonno === null && !letto && !sveglia && !tipo && !haCampioni) return err('Nessun dato da salvare');

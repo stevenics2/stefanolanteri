@@ -91,6 +91,7 @@ export default function SaluteImpostazioni() {
               <li><b>Ripeti per ciascun elemento</b> (sul risultato). Dentro metti un&apos;azione <b>Testo</b> con tre pezzi separati da <b>;</b> (punto e virgola): <i>Valore</i> ; <i>Data di inizio</i> ; <i>Data di fine</i>. Si inseriscono toccando <b>Elemento ripetizione</b> e scegliendo la proprietà. Il primo pezzetto può restare scritto «Elemento ripetizione» anche con <b>Valore</b> scelto, e va bene: la lista deve mostrare «Core», «Awake», «REM»… Se mostra «Campione di dati sanitari», usa invece la proprietà <b>Valore</b>.</li>
               <li>Dopo <b>Fine ripetizione</b>, aggiungi <b>Combina testo</b> sul <b>Risultato della ripetizione</b>, con separatore <b>Nuova riga</b>.</li>
               <li><b>Ottieni contenuti dell&apos;URL</b> con l&apos;indirizzo (senza altro dopo il codice), <b>Metodo POST</b>, <b>Corpo della richiesta: JSON</b>, e un campo di tipo <b>Testo</b> con chiave <span className="font-mono text-[11px]">campioni</span> e valore <i>Testo combinato</i>. Nell&apos;indirizzo il testo lungo si perde; nel corpo no.</li>
+              <li><b>Storico:</b> la prima volta puoi cambiare «negli ultimi 3 giorni» in <b>30 giorni</b>, lanciare il comando una volta e poi rimetterlo a 3. Così i grafici del sonno partono già pieni. Il giorno più vecchio dell'elenco viene saltato (potrebbe essere tagliato a metà).</li>
             </ol>
           </li>
           <li>
