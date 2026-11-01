@@ -283,3 +283,7 @@
 - Gli allenamenti sono corsa, palestra e le task dell'area Allenamento, tranne la programmazione settimanale.
 - Il livello sbloccato di ogni traguardo si salva (`Stato.traguardi`): non si perde annullando una task e il popup di festa (medaglia) compare una volta sola. La prima volta si registra in silenzio ciò che c'è già.
 - Provato in browser con 40 giorni di storico inventato; da vedere sull'iPhone. Sonno e Allenamenti (sezioni complete, debito di sonno, power nap) sono nei blocchi 2 e 3.
+
+## Progressi, secondo blocco: Allenamenti
+- Sezione «Allenamenti» sotto il calendario: anello **0/3** della settimana (oro e luminoso quando raggiungi o superi 3), i sette giorni con l'allenamento segnato, messaggio su quanti ne servono entro domenica (o «Lunedì si riparte» se non si arriva a 3), barre delle ultime 8 settimane con la riga dell'obiettivo (verde sopra 3), serie di settimane di fila, corse / palestra / minuti in tutto.
+- Si contano le task di allenamento completate (corsa, palestra, area Allenamento), sia segnate a mano sia arrivate dall'iPhone, una per task al giorno. Nessun chilometro.

@@ -396,10 +396,14 @@ button:not(:disabled):active, a[href]:active {
 @keyframes barraCresce { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 .barra-cresce { animation: barraCresce 0.9s var(--posa) both; transform-origin: left center; }
 
+/* Una barra che sale dal basso (i grafici a colonne) */
+@keyframes barraSale { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+.barra-sale { animation: barraSale 0.8s var(--posa) both; transform-origin: bottom center; }
+
 /* Chip e riquadri: quando si accendono fanno un piccolo salto */
 @keyframes chipPop { 0% { transform: scale(0.92); } 55% { transform: scale(1.07); } 100% { transform: scale(1); } }
 .chip-on { animation: chipPop 0.4s var(--molla); }
-@media (prefers-reduced-motion: reduce) { .chip-on, .barra-cresce { animation-duration: 0.01ms; } }
+@media (prefers-reduced-motion: reduce) { .chip-on, .barra-cresce, .barra-sale { animation-duration: 0.01ms; } }
 
 /* Popup «Pianifico…»: anelli che girano, barra che si riempie in 1,5 s, righe che luccicano; poi un lampo */
 @keyframes gira { to { transform: rotate(360deg); } }

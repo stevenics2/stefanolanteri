@@ -6,6 +6,7 @@ import { serie } from "@/lib/regole";
 import { useStore } from "@/lib/store";
 import SaluteCard from "../components/SaluteCard";
 import Abitudine from "./Abitudine";
+import Allenamenti from "./Allenamenti";
 import CalendarioProgressi from "./CalendarioProgressi";
 import Medaglie from "./Medaglie";
 import Record from "./Record";
@@ -37,6 +38,8 @@ export default function ProgressiVista() {
       <Riepilogo />
 
       <CalendarioProgressi />
+
+      <Allenamenti />
 
       <Record />
 
