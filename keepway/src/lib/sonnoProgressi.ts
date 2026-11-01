@@ -1,5 +1,6 @@
 // Il sonno visto nel tempo: le notti, il debito di sonno e quanto sei regolare. I dati arrivano dall'iPhone (una riga per giorno).
-import type { GiornoSalute } from "./salute";
+import { cicliDiSonno, debitoDaCicli, type Ciclo } from "./cicliSonno";
+import type { GiornoSalute, SessioneSonno } from "./salute";
 
 export const OBIETTIVO_SONNO_PREDEFINITO = 420; // 7 ore
 export type Notte = { giorno: string; minuti: number; letto: string | null; sveglia: string | null };
@@ -48,3 +49,13 @@ export function regolarita(n: Notte[]): { letto: number | null; sveglia: number 
 export const giudizioRegolarita = (sd: number | null) => (sd === null ? null : sd <= 30 ? "ottima" : sd <= 60 ? "buona" : sd <= 100 ? "variabile" : "irregolare");
 
 export const oreEMinuti = (min: number) => `${Math.floor(min / 60)} h ${String(Math.round(min % 60)).padStart(2, "0")}`;
+
+// Il debito di sonno nel modo migliore disponibile: sui cicli tra un turno e l'altro se ci sono le sessioni, altrimenti giorno per giorno.
+export function debitoComplessivo(giorni: GiornoSalute[], sonni: SessioneSonno[] | undefined, obiettivoMin: number, oggi: string, adesso: number) {
+  if (sonni && sonni.length >= 2 && adesso > 0) {
+    const cicli = cicliDiSonno(sonni, adesso, obiettivoMin);
+    const d = debitoDaCicli(cicli);
+    return { debito: d.debito, ultimoCiclo: d.ultimo, cicli, perCicli: true };
+  }
+  return { debito: debitoDiSonno(notti(giorni), obiettivoMin, oggi).debito, ultimoCiclo: null, cicli: [] as Ciclo[], perCicli: false };
+}

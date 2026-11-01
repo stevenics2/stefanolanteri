@@ -4,8 +4,8 @@ import { BedDouble, Minus, Moon, Plus, TrendingDown, TrendingUp } from "lucide-r
 import Link from "next/link";
 import { dataPiù } from "@/lib/date";
 import { useStore } from "@/lib/store";
-import { useSalute } from "@/lib/useSalute";
-import { debitoDiSonno, giudizioRegolarita, notti, oreEMinuti, regolarita } from "@/lib/sonnoProgressi";
+import { useDatiSalute } from "@/lib/useSalute";
+import { debitoComplessivo, giudizioRegolarita, notti, oreEMinuti, regolarita } from "@/lib/sonnoProgressi";
 import { useContaSu } from "@/lib/useContaSu";
 import Approfondisci from "./Approfondisci";
 import GraficoLinea, { TessereKpi } from "./GraficoLinea";
@@ -14,12 +14,13 @@ const NOTTI = 14;
 
 // Il sonno degli ultimi 14 giorni: le notti a barre, il debito di sonno, la regolarità. Si basa sui dati dell'iPhone (vedi Impostazioni → Salute).
 export default function Sonno() {
-  const { stato, oggi, impostazioni } = useStore();
-  const dati = useSalute(NOTTI + 14);
+  const { stato, oggi, adesso, impostazioni } = useStore();
+  const tuttiDati = useDatiSalute(NOTTI + 14);
+  const dati = tuttiDati ? tuttiDati.giorni : null;
   const obiettivo = stato.impostazioni.obiettivoSonnoMin;
   const anim = stato.impostazioni.animazioni;
   const tutte = notti(dati ?? []);
-  const debito = debitoDiSonno(tutte, obiettivo, oggi);
+  const debito = debitoComplessivo(dati ?? [], tuttiDati?.sonni, obiettivo, oggi, adesso);
   const debitoMostrato = useContaSu(debito.debito, anim, 900);
 
   if (dati === null) return null;
@@ -80,9 +81,15 @@ export default function Sonno() {
             </div>
           </div>
         </div>
+        {debito.ultimoCiclo && <div className="mt-1.5 text-[10px] text-muted">Ultimo ciclo tra turni: <b className="text-foreground">{oreEMinuti(debito.ultimoCiclo.sonnoMin)} min</b> dormiti su {oreEMinuti(debito.ultimoCiclo.necessariMin)} min necessari</div>}
         <Approfondisci>
           <p>{stato_}</p>
-          <p>Ogni notte sotto l&apos;obiettivo aumenta il debito. Ogni notte sopra lo riduce, ma solo della metà: il sonno perso non si recupera tutto in una notte. Le notti senza dato non contano.</p>
+          {debito.perCicli ? (
+            <p>Con i turni il sonno si spezza (un riposino prima della notte, il sonno dopo), quindi non lo confronto giorno per giorno ma <b>tra un turno e l&apos;altro</b>: ogni ciclo va dalla fine di un turno alla fine del successivo (24 ore nei giorni senza turni), e il sonno necessario è proporzionale alla sua durata (obiettivo × ore ÷ 24).</p>
+          ) : (
+            <p>Per ora confronto giorno per giorno. Appena arrivano le sessioni di sonno dall&apos;iPhone (alla prossima sincronizzazione) passo al confronto tra un turno e l&apos;altro.</p>
+          )}
+          <p>Sotto il necessario il debito sale; sopra scende, ma solo della metà: il sonno perso non si recupera tutto in una notte. Il ciclo ancora in corso può solo ridurlo. I cicli senza dati non contano.</p>
         </Approfondisci>
       </div>
 

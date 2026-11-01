@@ -4,7 +4,8 @@
 export type GiornoSalute = { giorno: string; passi: number | null; sonnoMin: number | null; letto: string | null; sveglia: string | null; aggiornato: number };
 
 export type AllenamentoSalute = { giorno: string; tipo: "corsa" | "palestra" | "altro"; inizio: string; minuti: number | null; km: number | null; aggiornato?: number };
-export type DatiSalute = { ultimo: number | null; allenamenti: AllenamentoSalute[]; giorni: GiornoSalute[] };
+export type SessioneSonno = { inizio: number; fine: number; minuti: number }; // una sessione di sonno: istanti (ms) e minuti di sonno vero
+export type DatiSalute = { ultimo: number | null; allenamenti: AllenamentoSalute[]; giorni: GiornoSalute[]; sonni?: SessioneSonno[] };
 
 const CHIAVE_CODICE = "keepway.salute";
 const CHIAVE_CACHE = "keepway.salute.dati";

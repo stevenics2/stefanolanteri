@@ -3,7 +3,8 @@
 // Ogni voce è «quanto hai fatto di quello che dovevi» negli ultimi 14 giorni (28 per l'allenamento).
 import { dataPiù } from "./date";
 import { èIgnorata, èPrevista } from "./regole";
-import type { GiornoSalute } from "./salute";
+import { cicliDiSonno, punteggioSonnoCicli } from "./cicliSonno";
+import type { GiornoSalute, SessioneSonno } from "./salute";
 import { notti } from "./sonnoProgressi";
 import { èAllenamento, ALLENAMENTI_A_SETTIMANA } from "./traguardi";
 import type { Stato } from "./tipi";
@@ -29,11 +30,16 @@ function tassoFatte(s: Stato, da: string, a: string, filtro: (t: Stato["task"][n
   return previste ? { tasso: fatte / previste, fatte, previste } : null;
 }
 
-function calcola(s: Stato, salute: GiornoSalute[], finoA: string): Omit<VoceDisciplina, "peso">[] {
+function calcola(s: Stato, salute: GiornoSalute[], finoA: string, sonni: SessioneSonno[] = []): Omit<VoceDisciplina, "peso">[] {
   const da = dataPiù(finoA, -(GIORNI - 1));
   const nottiPeriodo = notti(salute).filter((n) => n.giorno >= da && n.giorno <= finoA);
   const obiettivo = s.impostazioni.obiettivoSonnoMin;
-  const sonno = nottiPeriodo.length >= 3 ? Math.round((nottiPeriodo.reduce((t, n) => t + Math.min(1, n.minuti / obiettivo), 0) / nottiPeriodo.length) * 100) : null;
+  const fineMs = new Date(Number(finoA.slice(0, 4)), Number(finoA.slice(5, 7)) - 1, Number(finoA.slice(8, 10)) + 1).getTime(); // fine del giorno finoA
+  const daMs = fineMs - GIORNI * 86_400_000;
+  // Preferisco il confronto tra un turno e l'altro (se ci sono le sessioni), altrimenti giorno per giorno.
+  const cicli = sonni.length >= 2 ? cicliDiSonno(sonni, fineMs, obiettivo, 60) : [];
+  const dalCiclo = cicli.length ? punteggioSonnoCicli(cicli, daMs, fineMs) : null;
+  const sonno = dalCiclo ?? (nottiPeriodo.length >= 3 ? Math.round((nottiPeriodo.reduce((t, n) => t + Math.min(1, n.minuti / obiettivo), 0) / nottiPeriodo.length) * 100) : null);
 
   // Allenamento: media di allenamenti a settimana nelle ultime 4 settimane, rispetto a 3.
   const daAll = dataPiù(finoA, -27);
@@ -45,7 +51,7 @@ function calcola(s: Stato, salute: GiornoSalute[], finoA: string): Omit<VoceDisc
   const let_ = tassoFatte(s, da, finoA, (t) => t.id === "lettura");
   const med = tassoFatte(s, da, finoA, (t) => t.id === "meditazione");
   return [
-    { id: "sonno", nome: "Sonno", punteggio: sonno, dettaglio: sonno === null ? "servono almeno 3 notti con dati" : `${nottiPeriodo.length} notti, media ${Math.round(nottiPeriodo.reduce((t, n) => t + n.minuti, 0) / nottiPeriodo.length / 6) / 10} h` },
+    { id: "sonno", nome: "Sonno", punteggio: sonno, dettaglio: sonno === null ? "servono almeno 3 notti con dati" : dalCiclo !== null ? "confronto tra un turno e l'altro" : `${nottiPeriodo.length} notti, media ${Math.round(nottiPeriodo.reduce((t, n) => t + n.minuti, 0) / nottiPeriodo.length / 6) / 10} h` },
     { id: "allenamento", nome: "Allenamento", punteggio: allenamento, dettaglio: allenamento === null ? "nessuna task di allenamento" : `${nAll} in 4 settimane (obiettivo ${ALLENAMENTI_A_SETTIMANA * 4})` },
     { id: "ordine", nome: "Ordine", punteggio: ord ? Math.round(ord.tasso * 100) : null, dettaglio: ord ? `${ord.fatte} su ${ord.previste} task della casa` : "nessuna task della casa prevista" },
     { id: "lettura", nome: "Lettura", punteggio: let_ ? Math.round(let_.tasso * 100) : null, dettaglio: let_ ? `${let_.fatte} su ${let_.previste} giorni` : "nessuna lettura prevista" },
@@ -63,10 +69,10 @@ const media = (v: Omit<VoceDisciplina, "peso">[]): number | null => {
 export const livelloDisciplina = (p: number) => (p < 40 ? "Da costruire" : p < 60 ? "In crescita" : p < 75 ? "Solida" : p < 90 ? "Forte" : "Di ferro");
 
 // Oggi non conta (è ancora in corso): si guarda fino a ieri. Il confronto è con i 14 giorni prima.
-export function calcolaDisciplina(s: Stato, salute: GiornoSalute[], oggi: string): Disciplina {
+export function calcolaDisciplina(s: Stato, salute: GiornoSalute[], oggi: string, sonni: SessioneSonno[] = []): Disciplina {
   const ieri = dataPiù(oggi, -1);
-  const adesso = calcola(s, salute, ieri);
-  const prima = media(calcola(s, salute, dataPiù(ieri, -GIORNI)));
+  const adesso = calcola(s, salute, ieri, sonni);
+  const prima = media(calcola(s, salute, dataPiù(ieri, -GIORNI), sonni));
   const punteggio = media(adesso);
   const pesoTotale = adesso.filter((x) => x.punteggio !== null).reduce((t, x) => t + PESI[x.id], 0);
   const voci = adesso.map((x) => ({ ...x, peso: PESI[x.id], quota: x.punteggio === null || !pesoTotale ? 0 : Math.round((PESI[x.id] / pesoTotale) * 100) }));

@@ -6,7 +6,7 @@ import { dataPiù, MESI_BREVI } from "@/lib/date";
 import { calcolaDisciplina, fraseDisciplina } from "@/lib/disciplina";
 import { useStore } from "@/lib/store";
 import { useContaSu } from "@/lib/useContaSu";
-import { useSalute } from "@/lib/useSalute";
+import { useDatiSalute } from "@/lib/useSalute";
 import Approfondisci from "./Approfondisci";
 import GraficoLinea from "./GraficoLinea";
 
@@ -36,12 +36,14 @@ function Arco({ valore, mostrato, colore, anim, montato }: { valore: number; mos
 // La Disciplina, compatta: a sinistra le cinque voci con la barra, a destra il punteggio medio; sotto, l'andamento e una frase del giorno.
 export default function DisciplinaCard() {
   const { stato, oggi } = useStore();
-  const salute = useSalute(60);
+  const tutti = useDatiSalute(60);
+  const salute = tutti ? tutti.giorni : null;
+  const sonni = tutti?.sonni ?? [];
   const anim = stato.impostazioni.animazioni;
-  const d = calcolaDisciplina(stato, salute ?? [], oggi);
+  const d = calcolaDisciplina(stato, salute ?? [], oggi, sonni);
   const andamento = Array.from({ length: 8 }, (_, i) => {
     const fine = dataPiù(oggi, -7 * (7 - i));
-    return { etichetta: `${Number(fine.slice(8))} ${MESI_BREVI[Number(fine.slice(5, 7)) - 1]}`, v: calcolaDisciplina(stato, salute ?? [], fine).punteggio };
+    return { etichetta: `${Number(fine.slice(8))} ${MESI_BREVI[Number(fine.slice(5, 7)) - 1]}`, v: calcolaDisciplina(stato, salute ?? [], fine, sonni).punteggio };
   });
   const [montato, setMontato] = useState(false);
   useEffect(() => {

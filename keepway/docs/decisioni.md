@@ -320,3 +320,9 @@
 ## Correzione: il debito di sonno non sale più aggiungendo sonno
 - Oggi (giornata ancora in corso) può solo ridurre il debito, mai aumentarlo: un dato parziale (per esempio 3 ore del mattino, prima del riposino) non genera deficit finché la giornata non è chiusa. Il deficit di una giornata si conta dal giorno dopo. Vale anche per la proposta di power nap (`PowerNap`).
 - Prova numerica: debito 59 min senza dato di oggi; con oggi 3 h → 59; 5 h → 59; 8 h → 29.
+
+## Sonno tra un turno e l'altro (cicli)
+- Con i turni il sonno si spezza e non sta in un giorno solo: il debito e la voce Sonno della Disciplina ora si calcolano sui **cicli** (`lib/cicliSonno.ts`). Un ciclo va dalla fine di un turno alla fine del successivo (e ogni 24 ore nei giorni senza turni, con i cicli tagliati a 36 ore al massimo). Il sonno necessario è proporzionale alla durata: obiettivo × ore del ciclo ÷ 24 (ciclo di 18 ore → 5 h 15 per un obiettivo di 7 ore).
+- Il sonno di ogni ciclo è la somma delle sessioni (o della parte che cade nel ciclo). I cicli senza dati (nessun sonno) non contano, il ciclo in corso può solo ridurre il debito.
+- Il server salva le **sessioni di sonno** (`sonni`: inizio, fine, minuti di sonno vero; le notti vicine si fondono se separate da meno di 90 minuti di veglia) e le restituisce; ogni invio sostituisce le sessioni del periodo. Finché non sono arrivate (serve il deploy e una sincronizzazione), si usa il vecchio calcolo giorno per giorno.
+- Nella riga del debito: «Ultimo ciclo tra turni: X dormiti su Y necessari». Provato in browser con 14 notti inventate.

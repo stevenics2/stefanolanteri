@@ -4,10 +4,10 @@ import { BedDouble } from "lucide-react";
 import { useState } from "react";
 import { DURATE_NAP, momentoNap, serveNap } from "@/lib/nap";
 import { oreMinuti } from "@/lib/salute";
-import { debitoDiSonno, notti } from "@/lib/sonnoProgressi";
+import { debitoComplessivo, notti } from "@/lib/sonnoProgressi";
 import { hhmm } from "@/lib/sonno";
 import { useStore } from "@/lib/store";
-import { useSalute } from "@/lib/useSalute";
+import { useDatiSalute } from "@/lib/useSalute";
 import type { Task } from "@/lib/tipi";
 
 const chiave = (oggi: string) => `keepway.nap.${oggi}`;
@@ -22,7 +22,8 @@ const letto = (oggi: string) => {
 // Dopo una notte corta propone un power nap nel primo pomeriggio: se accetti diventa una task di oggi, con la sua notifica.
 export default function PowerNap() {
   const { pronto, stato, oggi, adesso, salvaTask, impostaMomento } = useStore();
-  const salute = useSalute(30);
+  const tutti = useDatiSalute(30);
+  const salute = tutti ? tutti.giorni : null;
   const [durata, setDurata] = useState<number>(30);
   const [giaScelto, setGiaScelto] = useState(false);
 
@@ -31,7 +32,7 @@ export default function PowerNap() {
   if (chiusa) return null;
   const n = notti(salute);
   const stanotte = n.find((x) => x.giorno === oggi) ?? null;
-  const { debito } = debitoDiSonno(n, stato.impostazioni.obiettivoSonnoMin, oggi);
+  const { debito } = debitoComplessivo(salute, tutti?.sonni, stato.impostazioni.obiettivoSonnoMin, oggi, adesso);
   if (!serveNap(stanotte?.minuti ?? null, debito, stato.impostazioni.obiettivoSonnoMin)) return null;
   const d = new Date(adesso);
   const slot = momentoNap(oggi, d.getHours() * 60 + d.getMinutes(), durata);

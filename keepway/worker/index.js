@@ -21,6 +21,8 @@ const SCHEMA = [
   // l'ultima volta che da quel codice è arrivato qualcosa (serve alla notifica «nessuna attività ricevuta oggi»)
   'CREATE TABLE IF NOT EXISTS ultimo (codice TEXT PRIMARY KEY, quando INTEGER NOT NULL)',
   // quale telefono (device_id) usa quel codice: serve per avvisarlo quando arriva un allenamento. Lo manda l'app insieme al piano.
+  // le sessioni di sonno (inizio, fine, minuti di sonno vero): servono a confrontare il sonno tra un turno e l'altro
+  'CREATE TABLE IF NOT EXISTS sonni (codice TEXT NOT NULL, inizio INTEGER NOT NULL, fine INTEGER NOT NULL, minuti INTEGER NOT NULL, PRIMARY KEY (codice, inizio))',
   'CREATE TABLE IF NOT EXISTS collega (codice TEXT NOT NULL, device_id TEXT NOT NULL, PRIMARY KEY (codice, device_id))',
 ];
 
@@ -305,6 +307,14 @@ async function inviaSalute(env, url, request) {
        ON CONFLICT(codice, giorno) DO UPDATE SET sonno_min = excluded.sonno_min, letto = excluded.letto, sveglia = excluded.sveglia, aggiornato = excluded.aggiornato`,
     ).bind(cod, n.giorno, n.minuti, n.letto, n.sveglia, Date.now()).run();
   }
+  if (analisi?.sessioni?.length) {
+    // le sessioni del periodo inviato sostituiscono quelle di prima (una sessione può crescere o fondersi con un'altra)
+    const primo = Math.min(...analisi.sessioni.map((x) => x.inizio));
+    await env.DB.batch([
+      env.DB.prepare('DELETE FROM sonni WHERE codice = ? AND inizio >= ?').bind(cod, primo),
+      ...analisi.sessioni.map((x) => env.DB.prepare('INSERT OR REPLACE INTO sonni (codice, inizio, fine, minuti) VALUES (?, ?, ?, ?)').bind(cod, x.inizio, x.fine, x.minuti)),
+    ]);
+  }
   if (haCampioni && passi === null && sonno === null && !letto && !sveglia && !tipo) return json({ ok: true, righe: analisi.righe, notti: analisi.notti });
   if (tipo) {
     const inizio = ora(dati.inizio) ?? '00:00';
@@ -334,14 +344,15 @@ async function leggiSalute(env, url) {
   const cod = await impronta(t);
   const { results: al } = await env.DB.prepare('SELECT giorno, tipo, inizio, minuti, km, aggiornato FROM allenamenti WHERE codice = ? ORDER BY giorno DESC, inizio DESC LIMIT 60').bind(cod).all();
   const u = await env.DB.prepare('SELECT quando FROM ultimo WHERE codice = ?').bind(cod).first();
-  return json({ ultimo: u?.quando ?? null, allenamenti: al, giorni: results.map((r) => ({ giorno: r.giorno, passi: r.passi, sonnoMin: r.sonno_min, letto: r.letto, sveglia: r.sveglia, aggiornato: r.aggiornato })) });
+  const { results: sn } = await env.DB.prepare('SELECT inizio, fine, minuti FROM sonni WHERE codice = ? ORDER BY inizio DESC LIMIT 120').bind(cod).all();
+  return json({ ultimo: u?.quando ?? null, sonni: sn.reverse(), allenamenti: al, giorni: results.map((r) => ({ giorno: r.giorno, passi: r.passi, sonnoMin: r.sonno_min, letto: r.letto, sveglia: r.sveglia, aggiornato: r.aggiornato })) });
 }
 
 async function cancellaSalute(env, url) {
   const t = String(url.searchParams.get('t') ?? '');
   if (!CODICE.test(t)) return err('Codice non valido', 401);
   const c = await impronta(t);
-  await env.DB.batch(['salute', 'allenamenti', 'ultimo', 'collega'].map((tab) => env.DB.prepare(`DELETE FROM ${tab} WHERE codice = ?`).bind(c)));
+  await env.DB.batch(['salute', 'allenamenti', 'ultimo', 'collega', 'sonni'].map((tab) => env.DB.prepare(`DELETE FROM ${tab} WHERE codice = ?`).bind(c)));
   return json({ ok: true });
 }
 

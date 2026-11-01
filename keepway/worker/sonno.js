@@ -71,9 +71,11 @@ export function analizzaCampioni(testo) {
   // dei dati ricevuti): si salta, e si tengono tutte le altre. Così un invio di 30 giorni recupera lo storico, e uno di 3 aggiorna gli ultimi giorni.
   const limite = pezzi.length ? giornoRoma(pezzi[0][0]) : '';
   const perGiorno = new Map();
+  const sessioni = [];
   for (const n of notti) {
     const giorno = giornoRoma(n.fine);
     if (giorno <= limite) continue;
+    sessioni.push({ inizio: n.inizio, fine: n.fine, minuti: Math.round(n.minuti) });
     const g = perGiorno.get(giorno) ?? { giorno, minuti: 0, inizio: n.inizio, fine: n.fine };
     g.minuti += n.minuti;
     g.inizio = Math.min(g.inizio, n.inizio);
@@ -82,6 +84,7 @@ export function analizzaCampioni(testo) {
   }
   return {
     righe,
+    sessioni,
     notti: [...perGiorno.values()].map((g) => ({ giorno: g.giorno, minuti: Math.round(g.minuti), letto: hhmmRoma(g.inizio), sveglia: hhmmRoma(g.fine) })),
   };
 }
