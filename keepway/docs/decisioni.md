@@ -338,3 +338,7 @@
 ## Momento consigliato che scorre con l'ora
 - Le task che si adattano ai turni hanno come momento consigliato l'intera finestra libera più lunga del giorno (es. «10:30–18:30»). Prima l'orario restava quello di inizio finché la finestra non finiva (alle 19 si leggeva ancora «14:00»). Ora, se la finestra è ampia e già iniziata, l'inizio si porta all'ora attuale (arrotondata al quarto d'ora) e la fine a due ore dopo (o fino alla fine della finestra). Un orario scelto a mano non cambia.
 - Provato con l'orologio simulato: 10:00 → 10:30–18:30; 13:20 → 13:30–15:30; 17:10 → 17:15–18:30; 18:50 → «nessun momento libero oggi».
+
+## L'orario scelto a mano scade
+- Un momento che hai scelto tu (la matita sulla scheda) resta com'è finché c'è ancora il tempo di fare la task; quando passa e la task non è fatta, l'app propone il prossimo momento libero della giornata («Nuovo momento», con «spostato»), come per gli orari automatici. L'orario scelto resta salvato (il pulsante «auto» lo toglie).
+- Provato con l'orologio simulato: scelto 14:00–14:30 → alle 10:00 e alle 13:50 resta così; alle 14:20 → 14:30–15:00 «spostato»; alle 17:10 → 17:15–17:45; alle 18:50 → «nessun momento libero oggi».

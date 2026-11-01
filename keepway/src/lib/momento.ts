@@ -36,10 +36,13 @@ export type MomentoAttuale = {
 export function momentoAttuale(
   task: Task, data: string, opz: { oggi: string; adessoMin: number; eventi: Evento[]; scelto?: Finestra },
 ): MomentoAttuale {
-  const base = momentoGiusto(task, data, opz.scelto);
-  if (!base || opz.scelto || data !== opz.oggi || opz.adessoMin <= 0) return { finestra: base, spostato: false, primaDiDormire: false, esaurito: false };
   const bisogno = serve(task);
-  if (opz.adessoMin <= base.a - bisogno) {
+  // L'orario scelto a mano vale finché c'è ancora il tempo di farla; quando passa (e la task non è fatta) si torna a cercare il prossimo momento libero.
+  const sceltoScaduto = !!opz.scelto && data === opz.oggi && opz.adessoMin > 0 && opz.adessoMin > opz.scelto.a - bisogno;
+  const scelto = sceltoScaduto ? undefined : opz.scelto;
+  const base = momentoGiusto(task, data, scelto);
+  if (!base || scelto || data !== opz.oggi || opz.adessoMin <= 0) return { finestra: base, spostato: false, primaDiDormire: false, esaurito: false };
+  if (!sceltoScaduto && opz.adessoMin <= base.a - bisogno) {
     // Una finestra ampia (es. «dalle 10:30 alle 18:30») resta valida finché c'è tempo, ma l'inizio non può stare nel passato:
     // si accorcia da adesso (al massimo due ore avanti), così il momento consigliato scorre con la giornata.
     const ora = prossimoQuarto(opz.adessoMin);
