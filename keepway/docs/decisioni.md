@@ -294,3 +294,9 @@
 - **Disciplina** (`lib/disciplina.ts`, in cima ai Progressi): punteggio 0–100, media pesata di Sonno (5), Allenamento (4), Ordine in casa (3), Lettura (2), Meditazione (1) — l'ordine scelto da Stefano. Sonno: notti degli ultimi 14 giorni rispetto all'obiettivo (servono almeno 3 notti). Allenamento: media degli ultimi 28 giorni rispetto a 3 a settimana. Ordine/Lettura/Meditazione: task fatte su quelle previste negli ultimi 14 giorni. Le voci senza dati escono dal calcolo e i pesi si ridistribuiscono. Mostra il confronto con le due settimane prima e la voce che farebbe salire di più il punteggio. Livelli: Da costruire (<40), In crescita, Solida (60), Forte (75), Di ferro (90).
 - Il server tiene tutte le notti dell'invio tranne il primo giorno (potrebbe essere tagliato): un invio di 30 giorni recupera lo storico.
 - Ordine delle sezioni: Disciplina, riepilogo, Sonno, Allenamenti, Calma e mente (lettura, meditazione), calendario (da rendere più piccolo), record, passi, traguardi.
+
+## Power nap
+- Sulla pagina Oggi compare «Notte corta» se stanotte hai dormito meno di 6 ore, oppure se il debito di sonno supera 4 ore e la notte è sotto l'obiettivo. Non compare dopo le 15:30, né nei giorni con la notte di lavoro (il sonno del giorno è già nel piano), né se non c'è un momento libero adatto.
+- Durata 20 / 30 / 45 minuti (30 consigliato: oltre 45 si rischia di svegliarsi intontiti). Il momento: prima scelta alle 14:00, poi dalle 13:30 alle 15:00, dentro una finestra libera tra turni, appuntamenti e sonno, e comunque almeno 6 ore prima di andare a letto.
+- «Pianifica» crea una task di oggi «Power nap» (area Self care, 15 punti, icona luna) con il suo momento e il promemoria. «Non oggi» la nasconde per il resto della giornata.
+- Provato in browser con l'orologio simulato (notte corta, notte normale, pomeriggio tardi).

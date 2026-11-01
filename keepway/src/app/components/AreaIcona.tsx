@@ -1,5 +1,5 @@
 import {
-  Activity, Bike, BellRing, BookOpen, Brain, Briefcase, CalendarDays, Car, CookingPot, Dumbbell, Flower2, Footprints, GlassWater, House,
+  Activity, Bike, BellRing, BookOpen, Brain, Briefcase, CalendarDays, Car, CookingPot, Dumbbell, Flower2, Footprints, GlassWater, House, Moon,
   PenLine, PersonStanding, Shirt, ShowerHead, ShoppingBasket, Sunrise, Repeat, ShoppingCart, Smile, Snowflake, Sparkles, Stethoscope, Target, UtensilsCrossed, Waves, WashingMachine, Wind,
   type LucideIcon,
 } from "lucide-react";
@@ -28,6 +28,7 @@ export const MAPPA: Record<string, LucideIcon> = {
   pulizia: Sparkles,
   acqua: GlassWater,
   respiro: Wind,
+  luna: Moon,
   diario: PenLine,
   cucina: CookingPot,
   spesa: ShoppingCart,

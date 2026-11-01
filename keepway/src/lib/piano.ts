@@ -29,7 +29,7 @@ const corta = (t: string, max = RIGA_MAX) => (t.length > max ? `${t.slice(0, max
 const EMOJI_ICONA: Record<string, string> = {
   libro: "📖", loto: "🧘", piatti: "🍽️", pulizia: "🧹", lavatrice: "🧺", bucato: "👕", doccia: "🚿", borsa: "🛍️", acqua: "💧", respiro: "🌬️",
   diario: "✍️", corsa: "🏃", camminata: "🚶", palestra: "💪", freddo: "🧊", stretching: "🤸", yoga: "🧘", bici: "🚴", nuoto: "🏊", cucina: "🍳", spesa: "🛒",
-  dottore: "🩺", dentista: "🦷", psicologa: "🧠", lavoro: "💼", auto: "🚗", calendario: "📅", promemoria: "🔔",
+  luna: "😴", dottore: "🩺", dentista: "🦷", psicologa: "🧠", lavoro: "💼", auto: "🚗", calendario: "📅", promemoria: "🔔",
 };
 const emojiDi = (chiave: string) => EMOJI_ICONA[chiave] ?? "💡"; // senza un'icona precisa: la lampadina
 // Lettere «in grassetto» (Unicode, Mathematical Sans-Serif Bold): il testo di una notifica non ha stili, ma questi caratteri sembrano grassetto.
