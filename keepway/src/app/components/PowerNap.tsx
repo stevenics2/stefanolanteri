@@ -31,7 +31,7 @@ export default function PowerNap() {
   if (chiusa) return null;
   const n = notti(salute);
   const stanotte = n.find((x) => x.giorno === oggi) ?? null;
-  const { debito } = debitoDiSonno(n, stato.impostazioni.obiettivoSonnoMin);
+  const { debito } = debitoDiSonno(n, stato.impostazioni.obiettivoSonnoMin, oggi);
   if (!serveNap(stanotte?.minuti ?? null, debito, stato.impostazioni.obiettivoSonnoMin)) return null;
   const d = new Date(adesso);
   const slot = momentoNap(oggi, d.getHours() * 60 + d.getMinutes(), durata);

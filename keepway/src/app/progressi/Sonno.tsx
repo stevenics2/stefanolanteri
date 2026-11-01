@@ -19,7 +19,7 @@ export default function Sonno() {
   const obiettivo = stato.impostazioni.obiettivoSonnoMin;
   const anim = stato.impostazioni.animazioni;
   const tutte = notti(dati ?? []);
-  const debito = debitoDiSonno(tutte, obiettivo);
+  const debito = debitoDiSonno(tutte, obiettivo, oggi);
   const debitoMostrato = useContaSu(debito.debito, anim, 900);
 
   if (dati === null) return null;

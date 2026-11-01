@@ -316,3 +316,7 @@
 ## Sonno: minuti scritti e debito come promemoria
 - Tutti i valori del sonno hanno i minuti scritti («6 h 19 min»): grafico, tessere, debito, riga dell'obiettivo.
 - Il debito di sonno è un promemoria piccolo (una riga con barra sottile e l'obiettivo regolabile), subito sotto il grafico e prima delle tessere. La spiegazione è nell'«Approfondisci».
+
+## Correzione: il debito di sonno non sale più aggiungendo sonno
+- Oggi (giornata ancora in corso) può solo ridurre il debito, mai aumentarlo: un dato parziale (per esempio 3 ore del mattino, prima del riposino) non genera deficit finché la giornata non è chiusa. Il deficit di una giornata si conta dal giorno dopo. Vale anche per la proposta di power nap (`PowerNap`).
+- Prova numerica: debito 59 min senza dato di oggi; con oggi 3 h → 59; 5 h → 59; 8 h → 29.

@@ -13,11 +13,17 @@ export const notti = (giorni: GiornoSalute[]): Notte[] =>
 
 // Il debito di sonno: ogni notte sotto l'obiettivo lo fa salire dei minuti che mancano; ogni notte sopra lo fa scendere, ma solo della metà
 // (il sonno perso non si recupera tutto in una notte). Mai sotto zero.
-export function debitoDiSonno(n: Notte[], obiettivoMin: number): { debito: number; storia: { giorno: string; debito: number }[] } {
+// Oggi, finché la giornata non è finita, può solo ridurre il debito, mai aumentarlo: il resto del sonno (un riposino, la notte) deve ancora arrivare.
+// Così aggiungere sonno non fa mai salire il debito.
+export function debitoDiSonno(n: Notte[], obiettivoMin: number, oggi?: string): { debito: number; storia: { giorno: string; debito: number }[] } {
   let debito = 0;
   const storia: { giorno: string; debito: number }[] = [];
   for (const x of n) {
     const manca = obiettivoMin - x.minuti;
+    if (manca > 0 && x.giorno === oggi) {
+      storia.push({ giorno: x.giorno, debito: Math.round(debito) }); // oggi è ancora in corso: il deficit lo conto domani
+      continue;
+    }
     debito = Math.max(0, debito + (manca > 0 ? manca : manca * 0.5));
     storia.push({ giorno: x.giorno, debito: Math.round(debito) });
   }
