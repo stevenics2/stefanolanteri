@@ -443,3 +443,13 @@ button:not(:disabled):active, a[href]:active {
 @media (prefers-reduced-motion: reduce) { .tendina { transition-duration: 0.01ms; } }
 @keyframes respira { 0%, 100% { box-shadow: 0 0 0 0 rgba(245, 165, 36, 0.0); } 50% { box-shadow: 0 0 14px 2px rgba(245, 165, 36, 0.55); } }
 .respira { animation: respira 2s ease-in-out infinite; }
+
+/* La spia del bucato: lampeggia piano da verde, più in fretta quando diventa rossa */
+@keyframes spiaLampeggia { 0%, 100% { opacity: 1; box-shadow: 0 0 22px 3px var(--spia); } 50% { opacity: 0.55; box-shadow: 0 0 5px 0 var(--spia); } }
+.spia-scheda { animation: spiaLampeggia 1.6s ease-in-out infinite; }
+.spia-scheda[data-fase="gialla"] { animation-duration: 1.2s; }
+.spia-scheda[data-fase="rossa"] { animation-duration: 0.7s; }
+@keyframes spiaPunto { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.7); opacity: 0.35; } }
+.spia-punto { animation: spiaPunto 1.2s ease-in-out infinite; }
+.spia-scheda[data-fase="rossa"] .spia-punto { animation-duration: 0.6s; }
+@media (prefers-reduced-motion: reduce) { .spia-scheda, .spia-punto { animation-duration: 0.01ms !important; } }

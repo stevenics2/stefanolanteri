@@ -49,6 +49,7 @@ const RIGA_GRASSETTO_MAX = 34;
 // Schema: «→ cosa» (in grassetto) sulla prima riga; sulla seconda il dettaglio e, in fondo, l'emoji.
 export const comeArriva = (n: Notifica): Notifica => ({ ...n, titolo: "\u2800", testo: `→ ${inGrassetto(corta(n.titolo, RIGA_GRASSETTO_MAX))}\n${corta(n.testo, n.emoji ? RIGA_MAX - 3 : RIGA_MAX)}${n.emoji ? ` ${n.emoji}` : ""}`, emoji: undefined });
 
+const RIPETIZIONI_SEGUITO = 24; // un promemoria ogni 30 minuti per 12 ore, al massimo
 const GIORNI_AVANTI = 2; // oggi + i prossimi 2 giorni
 const MAX_NOTIFICHE = 150;
 const ORIZZONTE_EVENTI_GIORNI = 30; // gli avvisi degli appuntamenti si preparano con largo anticipo
@@ -157,10 +158,17 @@ export function pianoNotifiche(stato: Stato, ora: number, oggi: string, haSincro
   for (const t of stato.task) {
     if (!t.attiva || !t.visibileDa || !t.notificaTesto) continue;
     if (stato.completamenti.some((c) => c.taskId === t.id)) continue;
-    let q = t.visibileDa;
-    if (q <= ora) continue;
-    for (let i = 0; i < 96 && èADormire(q); i++) q += 15 * 60_000;
-    out.push({ id: `seguito-${t.id}`, quando: q, emoji: emojiDi(iconaTask(t, "")), titolo: t.titolo, testo: t.notificaTesto, url: "/oggi/", tag: `seguito-${t.id}`, urgente: true });
+    // La notifica arriva a fine ciclo e poi ogni 30 minuti finché non la segni come fatta (il piano si rimanda a ogni cambiamento: segnata → spariscono).
+    // Mentre dormi non ti sveglio: la prima slitta al risveglio, quelle in mezzo si saltano.
+    for (let k = 0; k < RIPETIZIONI_SEGUITO; k++) {
+      let q = t.visibileDa + k * 30 * 60_000;
+      if (k === 0) for (let i = 0; i < 96 && q > ora && èADormire(q); i++) q += 15 * 60_000;
+      else if (èADormire(q)) continue;
+      if (q <= ora) continue;
+      const trascorsi = k * 30;
+      const da = trascorsi >= 60 ? `${Math.floor(trascorsi / 60)} h${trascorsi % 60 ? ` ${trascorsi % 60} min` : ""}` : `${trascorsi} min`;
+      out.push({ id: `seguito-${t.id}-${k}`, quando: q, emoji: k >= 3 ? "🚨" : emojiDi(iconaTask(t, "")), titolo: t.titolo, testo: k === 0 ? (t.notificaTesto ?? "Il ciclo è finito.") : `Bagnato da ${da}: stendi!`, url: "/oggi/", tag: `seguito-${t.id}`, urgente: true });
+    }
   }
 
   out.push(...notificheSonno(ora));

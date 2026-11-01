@@ -16,6 +16,7 @@ import RiepilogoOggi from "../components/RiepilogoOggi";
 import SonnoCard from "../components/SonnoCard";
 import TurniDaSistemare from "../components/TurniDaSistemare";
 import PowerNap from "../components/PowerNap";
+import SpiaSeguito from "../components/SpiaSeguito";
 import TaskCard from "../components/TaskCard";
 import BloccoTurno from "../components/BloccoTurno";
 import ListaFlip from "../components/ListaFlip";
@@ -56,8 +57,9 @@ export default function OggiVista() {
   // "Prima di dormire": le task della sera (piatti) e, dalle 18 in poi, tutto quello che non è ancora fatto.
   const èSera = REGOLA_SERA_ATTIVA && adesso > 0 && new Date(adesso).getHours() >= ORA_SERA;
   const primaDiDormire = (t: Task) => t.fascia === "sera" || (èSera && !èFatta(t));
-  const cosaOggi = daFare.filter((t) => !primaDiDormire(t)).sort(ordina);
-  const mustPrimaDiDormire = daFare.filter(primaDiDormire).sort(ordina);
+  const inSpia = (t: Task) => !!t.seguitoDi && !èFatta(t); // «Stendi il bucato» in attesa: sta nella spia, non nell'elenco
+  const cosaOggi = daFare.filter((t) => !primaDiDormire(t) && !inSpia(t)).sort(ordina);
+  const mustPrimaDiDormire = daFare.filter((t) => primaDiDormire(t) && !inSpia(t)).sort(ordina);
 
   const soloMinima = carico === "essenziale" && !mostraTutte;
   const v = stato.impostazioni.vistaOggi as string; // "timeline" è il nome vecchio di "estesa"; "lista" e il vecchio "compatta" sono la vista compatta
@@ -150,6 +152,8 @@ export default function OggiVista() {
         <BloccoTurno data={oggi} />
       </div>
 
+      {vista === "compatta" && <SpiaSeguito />}
+
       {vista === "compatta" && <AgendaOggi onModifica={setDaModificare} />}
 
       {vista === "estesa" && (
@@ -157,6 +161,7 @@ export default function OggiVista() {
           <h2 className="flex items-center gap-2 text-lg font-bold">
             <CalendarClock size={20} className="text-accent" /> La tua giornata
           </h2>
+          <SpiaSeguito />
           <Timeline task={cosaOggi} soloMinima={soloMinima} onModificaEvento={setDaModificare} />
         </div>
       )}

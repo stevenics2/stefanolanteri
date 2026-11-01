@@ -342,3 +342,9 @@
 ## L'orario scelto a mano scade
 - Un momento che hai scelto tu (la matita sulla scheda) resta com'è finché c'è ancora il tempo di fare la task; quando passa e la task non è fatta, l'app propone il prossimo momento libero della giornata («Nuovo momento», con «spostato»), come per gli orari automatici. L'orario scelto resta salvato (il pulsante «auto» lo toglie).
 - Provato con l'orologio simulato: scelto 14:00–14:30 → alle 10:00 e alle 13:50 resta così; alle 14:20 → 14:30–15:00 «spostato»; alle 17:10 → 17:15–17:45; alle 18:50 → «nessun momento libero oggi».
+
+## Orario modificabile con durata e spia del bucato
+- **Modifica del momento**: spostando l'orario di inizio, quello di fine lo segue mantenendo la durata (13:00–13:15, inizio a 16:00 → 16:00–16:15). Se cambi la fine a mano, la nuova durata è quella e vale per i prossimi spostamenti dell'inizio.
+- **Spia del bucato** (`SpiaSeguito`): le task che arrivano dopo un'altra («Stendi il bucato» dopo la lavatrice) compaiono in Oggi sotto il blocco del turno (nella vista estesa, sotto «La tua giornata»), non più nell'elenco. Scheda che lampeggia come una spia: **verde** nella prima ora, **gialla** dopo un'ora, **rossa** dopo un'ora e mezza con l'icona di priorità e lampeggio più veloce. Il timer parte da quando il ciclo è finito (la task si apre) e mostra da quanto il bucato è bagnato in lavatrice (mm:ss, poi h:mm:ss). Pulsante «Steso!» per segnarla fatta.
+- **Notifiche del bucato**: una a fine ciclo e poi una ogni 30 minuti (fino a 12 ore) finché non la segni fatta; dal terzo promemoria in poi l'emoji è 🚨 e il testo dice da quanto è bagnato. Mentre dormi non ti sveglia (la prima slitta al risveglio, le altre si saltano). Il piano si rimanda a ogni cambiamento: segnata come fatta, le notifiche si spengono.
+- Provato in browser con l'orologio simulato: spia verde a 40 min, gialla a 70, rossa a 100; l'elenco non la duplica; «Steso!» la completa; notifiche ogni 30 minuti e 0 dopo il «fatto».

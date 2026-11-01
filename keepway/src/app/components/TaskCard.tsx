@@ -2,7 +2,7 @@
 
 import { AlarmClock, CalendarClock, Check, ChevronDown, Clock, Pencil, Flame, Play, SkipForward, Undo2 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { puntiMinima, serie } from "@/lib/regole";
 import { durataMin } from "@/lib/durata";
 import { momentoAttuale } from "@/lib/momento";
@@ -29,6 +29,7 @@ export default function TaskCard({ task, soloMinima, senzaOrario = false }: { ta
   const minima = task.minimaMin;
   // Task che si adatta ai turni: il momento libero più lungo di oggi (né in turno, né a dormire)
   const scelto = stato.momenti.find((m) => m.taskId === task.id && m.data === oggi);
+  const durataMom = useRef(0); // durata del momento che stai modificando: se sposti l'inizio, la fine lo segue
   const adessoMin = adesso > 0 ? new Date(adesso).getHours() * 60 + new Date(adesso).getMinutes() : 0;
   const momento = !fatto ? momentoAttuale(task, oggi, { oggi, adessoMin, eventi: stato.eventi, scelto }) : null;
   const finestra = momento?.finestra ?? null;
@@ -137,16 +138,30 @@ export default function TaskCard({ task, soloMinima, senzaOrario = false }: { ta
       {esaurito && !finestra && <div className="mt-2 text-xs text-amber-300">Per oggi i momenti liberi sono finiti: se riesci la versione minima, altrimenti domani.</div>}
       {(finestra) && <div className="mt-2">
           {finestra && !modMomento && (
-            <button data-suono="via" onClick={() => setModMomento(true)} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-300">
+            <button data-suono="via" onClick={() => { durataMom.current = finestra.a - finestra.da; setModMomento(true); }} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-300">
               <Clock size={12} /> {seraTarda ? "Prima di dormire" : spostato ? "Nuovo momento" : "Momento giusto"}: {hhmm(finestra.da)}–{hhmm(finestra.a)} <Pencil size={11} />
             </button>
           )}
           {finestra && modMomento && (
             <div className="flex flex-nowrap items-center gap-1.5 whitespace-nowrap text-xs text-emerald-300">
               <Clock size={12} />
-              <input id={`da-${task.id}`} type="time" defaultValue={hhmm(finestra.da)} className="w-[5.2rem] rounded-lg bg-ov/10 px-1.5 py-1 text-foreground" />
+              <input id={`da-${task.id}`} type="time" defaultValue={hhmm(finestra.da)} className="w-[5.2rem] rounded-lg bg-ov/10 px-1.5 py-1 text-foreground"
+                onChange={(e) => {
+                  // sposti l'inizio: anche la fine si sposta, con la stessa durata (es. 13:00–13:15 → 16:00 diventa 16:00–16:15)
+                  const [h, m] = (e.target.value || "").split(":").map(Number);
+                  if (Number.isNaN(h) || Number.isNaN(m)) return;
+                  const fine = Math.min(23 * 60 + 59, h * 60 + m + (durataMom.current || 15));
+                  (document.getElementById(`a-${task.id}`) as HTMLInputElement).value = hhmm(fine);
+                }} />
               –
-              <input id={`a-${task.id}`} type="time" defaultValue={hhmm(finestra.a)} className="w-[5.2rem] rounded-lg bg-ov/10 px-1.5 py-1 text-foreground" />
+              <input id={`a-${task.id}`} type="time" defaultValue={hhmm(finestra.a)} className="w-[5.2rem] rounded-lg bg-ov/10 px-1.5 py-1 text-foreground"
+                onChange={(e) => {
+                  // se cambi tu la fine, la durata nuova è quella (poi, se sposti l'inizio, la mantiene)
+                  const [h, m] = (e.target.value || "").split(":").map(Number);
+                  const [dh, dm] = ((document.getElementById(`da-${task.id}`) as HTMLInputElement).value || "0:0").split(":").map(Number);
+                  const d = h * 60 + m - (dh * 60 + dm);
+                  if (d > 0) durataMom.current = d;
+                }} />
               <button
                 data-suono="ok"
                 className="rounded-full bg-emerald-500/25 px-2.5 py-1 font-bold"
