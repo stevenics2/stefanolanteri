@@ -79,6 +79,10 @@ export default function ImpostazioniVista() {
           <span>Animazioni e coriandoli</span>
           <Interr valore={stato.impostazioni.animazioni} onChange={(v) => impostazioni({ animazioni: v })} />
         </label>
+        <label className={riga}>
+          <span>Avvisi dei semafori del terminal<span className="block text-xs text-muted">Notifica a ogni cambio, da 3 ore prima del turno a mezz&apos;ora dopo</span></span>
+          <Interr valore={stato.impostazioni.avvisiTerminal} onChange={(v) => impostazioni({ avvisiTerminal: v })} />
+        </label>
       </div>
 
       <NotificheImpostazioni />

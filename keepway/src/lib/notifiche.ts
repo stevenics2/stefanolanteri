@@ -92,6 +92,6 @@ export async function riallineaIscrizione() {
   if (sub) await chiama("/api/push/subscribe", "POST", { deviceId: deviceId(), subscription: sub.toJSON() });
 }
 
-export async function inviaPiano(items: Notifica[], codice?: string) {
-  await chiama("/api/piano", "PUT", { deviceId: deviceId(), items, codice });
+export async function inviaPiano(items: Notifica[], codice?: string, finestreTerminal?: { da: number; a: number }[]) {
+  await chiama("/api/piano", "PUT", { deviceId: deviceId(), items, codice, finestreTerminal });
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { inviaPiano, registraSW, riallineaIscrizione, statoPush } from "@/lib/notifiche";
 import { pianoNotifiche } from "@/lib/piano";
+import { finestreTerminal } from "@/lib/terminal";
 import { codiceSalute, ultimoDatoRicevuto } from "@/lib/salute";
 import { useStore } from "@/lib/store";
 
@@ -35,7 +36,7 @@ export default function SincronizzaNotifiche() {
           await riallineaIscrizione();
           localStorage.setItem(CHIAVE_ALLINEA, String(Date.now()));
         }
-        await inviaPiano(pianoNotifiche(stato, Date.now(), oggi, ultimoDatoRicevuto() !== null), codiceSalute());
+        await inviaPiano(pianoNotifiche(stato, Date.now(), oggi, ultimoDatoRicevuto() !== null), codiceSalute(), stato.impostazioni.avvisiTerminal === false ? [] : finestreTerminal(Date.now()));
       } catch {
         // offline o server non raggiungibile: si riprova al prossimo cambiamento
       }

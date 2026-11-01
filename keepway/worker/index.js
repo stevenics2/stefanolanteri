@@ -23,6 +23,9 @@ const SCHEMA = [
   // quale telefono (device_id) usa quel codice: serve per avvisarlo quando arriva un allenamento. Lo manda l'app insieme al piano.
   // le sessioni di sonno (inizio, fine, minuti di sonno vero): servono a confrontare il sonno tra un turno e l'altro
   'CREATE TABLE IF NOT EXISTS sonni (codice TEXT NOT NULL, inizio INTEGER NOT NULL, fine INTEGER NOT NULL, minuti INTEGER NOT NULL, PRIMARY KEY (codice, inizio))',
+  // le finestre in cui avvisare dei semafori del terminal: da 3 ore prima di un turno a mezz'ora dopo la fine (le manda l'app, che conosce i turni)
+  'CREATE TABLE IF NOT EXISTS terminal_finestre (device_id TEXT NOT NULL, da INTEGER NOT NULL, a INTEGER NOT NULL)',
+  'CREATE INDEX IF NOT EXISTS terminal_finestre_dev ON terminal_finestre (device_id)',
   'CREATE TABLE IF NOT EXISTS collega (codice TEXT NOT NULL, device_id TEXT NOT NULL, PRIMARY KEY (codice, device_id))',
 ];
 
@@ -114,6 +117,7 @@ async function disiscrivi(env, request) {
   await env.DB.batch([
     env.DB.prepare('DELETE FROM subs WHERE device_id = ?').bind(device),
     env.DB.prepare('DELETE FROM piano WHERE device_id = ?').bind(device),
+    env.DB.prepare('DELETE FROM terminal_finestre WHERE device_id = ?').bind(device),
   ]);
   return json({ ok: true });
 }
@@ -137,7 +141,13 @@ async function salvaPiano(env, request) {
     );
   }
   const collega = salvo ? [env.DB.prepare('INSERT OR IGNORE INTO collega (codice, device_id) VALUES (?, ?)').bind(salvo, device)] : [];
-  await env.DB.batch([env.DB.prepare('DELETE FROM piano WHERE device_id = ?').bind(device), ...righe, ...collega]);
+  // finestre dei semafori del terminal (se l'app le manda; se non le manda restano quelle di prima)
+  const finestre = Array.isArray(d.finestreTerminal)
+    ? [env.DB.prepare('DELETE FROM terminal_finestre WHERE device_id = ?').bind(device),
+      ...d.finestreTerminal.slice(0, 30).filter((f) => Number.isFinite(Number(f?.da)) && Number.isFinite(Number(f?.a)) && Number(f.a) > Number(f.da))
+        .map((f) => env.DB.prepare('INSERT INTO terminal_finestre (device_id, da, a) VALUES (?, ?, ?)').bind(device, Math.round(Number(f.da)), Math.round(Number(f.a))))]
+    : [];
+  await env.DB.batch([env.DB.prepare('DELETE FROM piano WHERE device_id = ?').bind(device), ...righe, ...collega, ...finestre]);
   return json({ ok: true, programmate: righe.length });
 }
 
@@ -206,11 +216,79 @@ async function prova(env, request) {
   return json({ ok: stato >= 200 && stato < 300, stato, dettaglio });
 }
 
+// --- Semafori del Trieste Marine Terminal («Empty cntr yard» e «Full cntr yard»): verde = operativo, rosso = operazioni sospese ---
+// Il sito li legge da un indirizzo pubblico (/arrivals.php, campo `semaphores`: prima lettera Empty yard, seconda Full yard; G = verde).
+// Lo controlliamo ogni 5 minuti (e, se serve, quando l'app lo chiede e il dato è vecchio di più di 4 minuti). Se cambia, avvisiamo
+// i telefoni che in quel momento sono dentro una loro finestra (da 3 ore prima di un turno a mezz'ora dopo).
+const TMT_URL = 'https://www.trieste-marine-terminal.com/arrivals.php';
+const TMT_FRESCO_MS = 4 * 60_000;
+
+async function scaricaTerminal() {
+  const ac = new AbortController();
+  const t = setTimeout(() => ac.abort(), 8000);
+  try {
+    const r = await fetch(`${TMT_URL}?dt=${Date.now()}`, { signal: ac.signal, headers: { 'User-Agent': 'Keepway/1.0 (uso personale, un controllo ogni 5 minuti)', Accept: 'application/json' }, cf: { cacheTtl: 0 } });
+    if (!r.ok) return null;
+    const s = String((await r.json())?.semaphores ?? '').toLowerCase();
+    return /^[a-z]{2}/.test(s) ? { empty: s[0], full: s[1] } : null;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+const aperto = (c) => c === 'g';
+function testoTerminal(s) {
+  if (aperto(s.empty) && aperto(s.full)) return { titolo: 'Terminal operativo', dettaglio: 'Empty e Full yard aperti', emoji: '🟢' };
+  if (!aperto(s.empty) && !aperto(s.full)) return { titolo: 'Operazioni sospese', dettaglio: 'Empty e Full yard chiusi', emoji: '🔴' };
+  return { titolo: 'Operativo in parte', dettaglio: `Empty ${aperto(s.empty) ? 'aperto' : 'chiuso'} · Full ${aperto(s.full) ? 'aperto' : 'chiuso'}`, emoji: '🟡' };
+}
+
+async function avvisaTerminal(env, stato) {
+  const ora = Date.now();
+  const { results } = await env.DB.prepare('SELECT DISTINCT s.* FROM subs s JOIN terminal_finestre f ON f.device_id = s.device_id WHERE f.da <= ? AND f.a >= ?').bind(ora, ora).all();
+  if (!results.length) return 0;
+  const vapid = await chiavi(env, null);
+  const t = testoTerminal(stato);
+  for (const sub of results) {
+    await spedisci(env, vapid, sub, { titolo: '\u2800', testo: `→ ${grassetto(t.titolo)}\n${t.dettaglio} ${t.emoji}`, url: '/oggi/', tag: 'terminal', urgente: true });
+  }
+  return results.length;
+}
+
+async function aggiornaTerminal(env, { forza = false } = {}) {
+  const riga = await env.DB.prepare("SELECT value FROM meta WHERE key = 'terminal'").first();
+  const prec = riga ? JSON.parse(riga.value) : null;
+  const ora = Date.now();
+  if (prec && !forza && ora - prec.controllato < TMT_FRESCO_MS) return prec;
+  let nuovo = null;
+  try {
+    nuovo = await scaricaTerminal();
+  } catch (e) {
+    console.log('terminal non raggiungibile', String(e));
+  }
+  if (!nuovo) return prec ? { ...prec, fallito: ora } : null; // il sito non risponde: si tiene lo stato di prima e si segnala il problema
+  const cambiato = !prec || prec.empty !== nuovo.empty || prec.full !== nuovo.full;
+  const stato = { empty: nuovo.empty, full: nuovo.full, controllato: ora, cambio: cambiato ? ora : prec.cambio, fallito: null };
+  let vinto = true;
+  if (riga) {
+    // un solo «vincitore» salva il cambiamento e manda le notifiche, anche se due richieste arrivano insieme
+    const r = await env.DB.prepare("UPDATE meta SET value = ? WHERE key = 'terminal' AND value = ?").bind(JSON.stringify(stato), riga.value).run();
+    vinto = r?.meta?.changes === undefined ? true : r.meta.changes > 0;
+  } else {
+    const r = await env.DB.prepare("INSERT OR IGNORE INTO meta (key, value) VALUES ('terminal', ?)").bind(JSON.stringify(stato)).run();
+    vinto = r?.meta?.changes === undefined ? true : r.meta.changes > 0;
+  }
+  if (vinto && cambiato && prec) await avvisaTerminal(env, stato).catch((e) => console.log('avviso terminal', String(e)));
+  return stato;
+}
+
 // Ogni minuto: prende le notifiche scadute (le "reclama" cancellandole, così due esecuzioni non le mandano due volte) e le spedisce.
 async function tick(env) {
   await schema(env);
   const ora = Date.now();
   await env.DB.prepare('DELETE FROM piano WHERE quando < ?').bind(ora - TROPPO_TARDI_MS).run(); // troppo vecchie: via
+  if (new Date(ora).getUTCMinutes() % 5 === 0) await aggiornaTerminal(env, { forza: true }).catch((e) => console.log('terminal', String(e))); // i semafori del terminal, ogni 5 minuti
+  await env.DB.prepare('DELETE FROM terminal_finestre WHERE a < ?').bind(ora - 86_400_000).run();
   const { results: dovute } = await env.DB.prepare(
     `DELETE FROM piano WHERE rowid IN (SELECT rowid FROM piano WHERE quando <= ? ORDER BY quando LIMIT 40) RETURNING *`,
   ).bind(ora).all();
@@ -375,6 +453,10 @@ const gestore = {
       if (p === '/api/push/unsubscribe' && m === 'POST') return await disiscrivi(env, request);
       if (p === '/api/push/test' && m === 'POST') return await prova(env, request);
       if (p === '/api/piano' && m === 'PUT') return await salvaPiano(env, request);
+      if (p === '/api/terminal' && m === 'GET') {
+        const s = await aggiornaTerminal(env);
+        return json(s ? { empty: s.empty, full: s.full, controllato: s.controllato, cambio: s.cambio, fallito: s.fallito ?? null } : { vuoto: true });
+      }
       if (p === '/api/salute/invia' && (m === 'GET' || m === 'POST')) return await inviaSalute(env, url, request); // anche GET: più facile da fare nei Comandi Rapidi
       if (p === '/api/salute' && m === 'GET') return await leggiSalute(env, url);
       if (p === '/api/salute/cancella' && (m === 'POST' || m === 'DELETE')) return await cancellaSalute(env, url);

@@ -16,6 +16,7 @@ import RiepilogoOggi from "../components/RiepilogoOggi";
 import SonnoCard from "../components/SonnoCard";
 import TurniDaSistemare from "../components/TurniDaSistemare";
 import PowerNap from "../components/PowerNap";
+import SemaforiTerminal from "../components/SemaforiTerminal";
 import SpiaSeguito from "../components/SpiaSeguito";
 import TaskCard from "../components/TaskCard";
 import BloccoTurno from "../components/BloccoTurno";
@@ -148,8 +149,9 @@ export default function OggiVista() {
         </button>
       )}
 
-      <div className="entra" style={{ animationDelay: "130ms" }}>
-        <BloccoTurno data={oggi} />
+      <div className="entra flex items-stretch gap-2" style={{ animationDelay: "130ms" }}>
+        <div className="min-w-0 flex-1"><BloccoTurno data={oggi} /></div>
+        <SemaforiTerminal />
       </div>
 
       {vista === "compatta" && <SpiaSeguito />}

@@ -86,3 +86,11 @@ REGOLE
 ALLA FINE
 Dammi un riepilogo: il numero totale di giorni, quanti giorni per ogni codice, il primo e l'ultimo giorno, e l'elenco delle celle che hai dovuto ipotizzare. Se non riesci a creare un .xlsx, dammi un CSV UTF-8 con le stesse colonne, uno per foglio.
 ```
+
+## 7. Aggiunta: semafori del Trieste Marine Terminal (da portare anche nell'app dei turni)
+
+Già fatta in Keepway (vedi `docs/decisioni.md`, sezione «Semafori del Trieste Marine Terminal»). Se l'app dei turni diventa la versione «solo turni» di Keepway, c'è già tutto; se invece è separata, serve questo:
+- **Dato**: `GET https://www.trieste-marine-terminal.com/arrivals.php?dt=<ms>` → JSON con `semaphores` (es. `"RRRR"`; la prima lettera è «Empty cntr yard», la seconda «Full cntr yard»; `G` = verde/operativo, altro = rosso/operazioni sospese). Contiene anche l'elenco delle navi (ETB, ETD, Vessel, Viaggio, Agent, Begin Rcv, Begin Dlv). Da un browser non si può leggere direttamente (sito di un altro dominio): serve un piccolo server che lo legge e lo rilancia (nel nostro caso il Worker Cloudflare, `/api/terminal`).
+- **Notifiche**: ai cambi di stato, solo nella finestra «3 ore prima del turno → mezz'ora dopo la fine». Le finestre si calcolano dai turni e si mandano al server; il server controlla il sito ogni 5 minuti.
+- **Interfaccia**: due luci (Empty, Full) che pulsano piano a destra della scheda del turno, con sotto «Terminal operativo» / «Operazioni sospese» / «Operativo in parte», e l'ora dell'ultimo controllo se il dato è vecchio.
+- **Cautele**: l'indirizzo non è documentato come API pubblica e può cambiare; un controllo ogni 5 minuti è più che sufficiente; se il sito non risponde si mantiene l'ultimo stato e lo si dichiara.

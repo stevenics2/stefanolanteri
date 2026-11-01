@@ -463,3 +463,11 @@ button:not(:disabled):active, a[href]:active {
 .compila-testo { animation: compila 0.4s steps(12) backwards; }
 .compila-spunta { animation: spuntaPop 0.35s var(--molla) backwards; margin-left: 0.25rem; }
 @media (prefers-reduced-motion: reduce) { .compila-riga, .compila-testo, .compila-spunta { animation-duration: 0.01ms; } }
+
+/* I semafori del terminal: respirano piano (scala e alone che cambiano in modo morbido) */
+@keyframes terminalRespira {
+  0%, 100% { transform: scale(0.9); opacity: 0.8; box-shadow: 0 0 5px 0 color-mix(in srgb, var(--luce) 45%, transparent); }
+  50% { transform: scale(1.08); opacity: 1; box-shadow: 0 0 14px 3px color-mix(in srgb, var(--luce) 70%, transparent); }
+}
+.terminal-luce { animation: terminalRespira 3.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .terminal-luce { animation-duration: 0.01ms; } }

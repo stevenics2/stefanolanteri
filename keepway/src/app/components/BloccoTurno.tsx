@@ -27,10 +27,12 @@ export default function BloccoTurno({ data }: { data: string }) {
   }
   return (
     <Link href="/turni/" data-suono="via" className="flex items-center gap-2 rounded-2xl bg-card px-4 py-3" style={{ borderLeft: `4px solid ${colore}` }}>
-      <Briefcase size={17} className="opacity-70" />
-      <span className="text-base font-bold">{r.etichetta}</span>
-      {r.orario && <span className="text-sm font-semibold text-muted">{r.orario}</span>}
-      <ChevronRight size={18} className="ml-auto text-muted" />
+      <Briefcase size={17} className="shrink-0 opacity-70" />
+      <span className="min-w-0">
+        <span className="block text-base font-bold leading-tight">{r.etichetta}</span>
+        {r.orario && <span className="block whitespace-nowrap text-sm font-semibold leading-tight text-muted">{r.orario}</span>}
+      </span>
+      <ChevronRight size={18} className="ml-auto shrink-0 text-muted" />
     </Link>
   );
 }
