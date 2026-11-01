@@ -102,6 +102,23 @@ function notificheSalute(ora: number, oggi: string, haSincronizzato: boolean): N
   return out;
 }
 
+// «Prepara la settimana»: la domenica alle 18:30 (e il lunedì alle 10:00, se non l'hai ancora fatto). Slitta se sei in turno o a dormire.
+function notificheRito(stato: Stato, ora: number, oggi: string): Notifica[] {
+  const out: Notifica[] = [];
+  for (let i = 0; i <= GIORNI_AVANTI; i++) {
+    const d = dataPiù(oggi, i);
+    const g = giornoSettimana(d);
+    if (g !== 0 && g !== 1) continue;
+    const lunedi = g === 0 ? dataPiù(d, 1) : d;
+    if (stato.settimana?.programmata === lunedi) continue;
+    let quando = istante(d, g === 0 ? "18:30" : "10:00");
+    for (let n = 0; n < 12 && èInSilenzio(quando); n++) quando += 15 * 60_000;
+    if (quando <= ora) continue;
+    out.push({ id: `rito-${d}`, quando, emoji: "🗓️", titolo: "Prepara la settimana", testo: g === 0 ? "Cinque minuti per partire alla grande." : "Non l'hai ancora preparata: ci vuole poco.", url: "/oggi/", tag: "rito" });
+  }
+  return out;
+}
+
 export function pianoNotifiche(stato: Stato, ora: number, oggi: string, haSincronizzato = false): Notifica[] {
   const out: Notifica[] = [];
 
@@ -178,6 +195,7 @@ export function pianoNotifiche(stato: Stato, ora: number, oggi: string, haSincro
 
   out.push(...notificheSonno(ora));
   out.push(...notificheSalute(ora, oggi, haSincronizzato));
+  out.push(...notificheRito(stato, ora, oggi));
   out.push(...notificheEventi(stato, ora, oggi));
   out.push(...notificheTurniDaSistemare(ora, oggi));
 

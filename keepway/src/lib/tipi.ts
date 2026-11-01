@@ -120,6 +120,11 @@ export type TimerAttivo = {
   pausaTotale: number; // ms
 };
 
+// Gli obiettivi della settimana (si scelgono nel rito della domenica): quanti allenamenti, quante notti sopra l'obiettivo di sonno, quante giornate piene
+// e, se vuoi, uno tuo scritto a parole (si spunta a mano).
+export type ObiettivoSett = { id: "allenamenti" | "notti" | "piene" | "libero"; attivo: boolean; target: number; testo?: string };
+export type Settimana = { programmata: string | null; obiettivi: ObiettivoSett[]; liberoFatto: string | null }; // programmata = il lunedì della settimana già preparata; liberoFatto = il lunedì della settimana in cui hai spuntato l'obiettivo libero
+
 export type Stato = {
   versione: 1;
   aree: Area[];
@@ -136,5 +141,6 @@ export type Stato = {
   eventi: Evento[];
   modifiche: Modifica[];
   bonus: Bonus[];
+  settimana?: Settimana;
   traguardi?: Record<string, number>; // il livello (0-3) già sbloccato di ogni traguardo: serve a festeggiare solo i nuovi
 };

@@ -471,3 +471,12 @@ button:not(:disabled):active, a[href]:active {
 }
 .terminal-luce { animation: terminalRespira 3.4s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .terminal-luce { animation-duration: 0.01ms; } }
+
+/* Dalla vista di oggi alla settimana: il box ricompensa sfuma e si chiude, e i giorni salgono in alto */
+.collassa { display: grid; grid-template-rows: 1fr; margin-bottom: 0; transition: grid-template-rows 0.65s var(--posa), margin-bottom 0.65s var(--posa); }
+.collassa[data-chiuso="true"] { grid-template-rows: 0fr; margin-bottom: -0.75rem; }
+.collassa > div { overflow: hidden; min-height: 0; }
+.sfuma { transition: opacity 0.45s ease, filter 0.45s ease, transform 0.65s var(--posa); }
+.sfuma-via { opacity: 0; filter: blur(10px); transform: translateY(-14px) scale(0.96); }
+.striscia-alta { position: sticky; top: 0; z-index: 30; margin-inline: -1rem; padding: env(safe-area-inset-top) 1rem 0.5rem; background: color-mix(in srgb, var(--background) 88%, transparent); backdrop-filter: blur(14px); }
+@media (prefers-reduced-motion: reduce) { .collassa, .sfuma { transition-duration: 0.01ms; } }

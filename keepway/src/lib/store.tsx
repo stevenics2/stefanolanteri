@@ -8,7 +8,7 @@ import { dataPiù, inizioSettimana, oggiLocale } from "./date";
 import { bossSettimana, giornata, livello, puntiMinima, xpTotali } from "./regole";
 import { nuovoId, statoIniziale, statoVuoto, taskStanza } from "./seed";
 import { stanzaDelGiorno } from "./stanze";
-import type { Bonus, Completamento, Evento, Impostazioni, Modifica, Momento, SpecSeguito, Stato, Task, Vacanza } from "./tipi";
+import type { Bonus, Completamento, Evento, Impostazioni, Modifica, Momento, Settimana, SpecSeguito, Stato, Task, Vacanza } from "./tipi";
 
 const CHIAVE = "keepway.v1";
 const CHIAVE_VECCHIA = "binario.v1"; // il nome precedente: se ci sono dati salvati lì li si recupera
@@ -81,6 +81,7 @@ type Contesto = {
   festa: Festa[];
   chiudiFesta: () => void;
   sbloccaTraguardi: (livelli: Record<string, number>, feste: Festa[]) => void; // salva i livelli raggiunti e festeggia i nuovi
+  impostaSettimana: (p: Partial<Settimana>) => void; // obiettivi e rito della domenica
   annullaAvviso: () => void;
   chiudiAvviso: () => void;
   azzera: () => void;
@@ -175,21 +176,11 @@ function creaSeguito(t: Task, spec: SpecSeguito, completamentoId: string, ts: nu
   };
 }
 
-// La task «Programmazione Allenamenti Settimanali» (domenica sera) esiste finché c'è almeno un allenamento automatico.
-// I seguiti vecchi (di ieri e prima) si ripuliscono.
+// I seguiti vecchi (di ieri e prima) si ripuliscono; la vecchia task della programmazione degli allenamenti sparisce.
 function sistemaTaskAutomatiche(s: Stato, oggi: string): Stato {
   let task = s.task;
-  const haAuto = task.some((t) => t.attiva && èPianificata(t) && !t.seguito && t.areaId === "allenamento"); // solo gli allenamenti
-  const programmazione = task.find((t) => t.id === PROGRAMMAZIONE_ID);
-  if (haAuto && !programmazione) {
-    task = [...task, {
-      id: PROGRAMMAZIONE_ID, titolo: "Programmazione Allenamenti Settimanali", areaId: "allenamento", icona: "calendario", durataMin: null, minimaMin: null,
-      ricorrenza: { tipo: "settimana", giorni: [0] }, fascia: "sera", solo: "sempre", punti: 20, essenziale: false, soloACasa: false, promemoria: [],
-      apre: "/task/#allenamento", attiva: true, creatoIl: oggi,
-    }];
-  } else if (!haAuto && programmazione) {
-    task = task.filter((t) => t.id !== PROGRAMMAZIONE_ID);
-  }
+  // La vecchia task «Programmazione Allenamenti Settimanali» non serve più: c'è il rito della domenica («Prepara la settimana»).
+  if (task.some((t) => t.id === PROGRAMMAZIONE_ID)) task = task.filter((t) => t.id !== PROGRAMMAZIONE_ID);
   // I seguiti: quelli fatti si ripuliscono dopo un giorno; quelli ancora da fare restano e si riportano a oggi (non devono sparire se non li fai subito).
   const limite = dataPiù(oggi, -1);
   const fatta = (id: string) => s.completamenti.some((c) => c.taskId === id);
@@ -466,6 +457,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       chiudiAvviso: () => setAvviso(null),
       festa,
       chiudiFesta: () => setFesta((f) => f.slice(1)),
+      impostaSettimana: (p) => aggiorna((x) => ({ ...x, settimana: { programmata: null, obiettivi: [], liberoFatto: null, ...x.settimana, ...p } })),
       sbloccaTraguardi: (livelli, feste) => {
         aggiorna((x) => ({ ...x, traguardi: livelli }));
         if (feste.length) setFesta((f) => [...f, ...feste]);

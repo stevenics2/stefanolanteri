@@ -1,11 +1,14 @@
 "use client";
 
 import Segmentato from "../components/Segmentato";
+import ObiettiviSettimana from "../components/ObiettiviSettimana";
+import RitoSettimana from "../components/RitoSettimana";
+import VistaInsieme from "../components/VistaInsieme";
 import { CalendarClock, ListChecks, Moon, Plane, Undo2 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { caricoGiorno } from "@/lib/carico";
-import { dataLunga } from "@/lib/date";
+import { dataLunga, dataPiù, inizioSettimana } from "@/lib/date";
 import { momentoAttuale } from "@/lib/momento";
 import { èIgnorata, èPrevista, inVacanza } from "@/lib/regole";
 import { titoloTask } from "@/lib/stanze";
@@ -37,6 +40,12 @@ export default function OggiVista() {
   const [mostraTutte, setMostraTutte] = useState(false);
   const [daModificare, setDaModificare] = useState<Evento | null>(null);
   const [scelto, setScelto] = useState<string | null>(null); // il giorno guardato (null = oggi)
+  const [settimana, setSettimana] = useState(false); // la modalità settimanale: il box ricompensa sparisce e i giorni salgono in alto
+  const [vistaSett, setVistaSett] = useState<"giorno" | "insieme">("giorno");
+  const [lunediVista, setLunediVista] = useState<string | null>(null); // la settimana della vista d'insieme (null = quella in corso)
+  const [toccato, setToccato] = useState<string | null>(null); // il giorno toccato mentre la transizione è in corso
+  const timerSett = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (timerSett.current) clearTimeout(timerSett.current); }, []);
   if (!pronto) return null;
 
   const carico = caricoGiorno(oggi);
@@ -66,6 +75,30 @@ export default function OggiVista() {
   const v = stato.impostazioni.vistaOggi as string; // "timeline" è il nome vecchio di "estesa"; "lista" e il vecchio "compatta" sono la vista compatta
   const vista: "compatta" | "estesa" = v === "estesa" || v === "timeline" ? "estesa" : "compatta";
   const giorno = scelto ?? oggi;
+
+  // Tocchi un giorno: se è la prima volta si passa alla modalità settimanale con una transizione (il box sfuma, i giorni salgono in alto),
+  // e alla fine si apre il giorno toccato. Poi i giorni si cambiano subito.
+  function sceglieGiorno(d: string) {
+    if (settimana) {
+      setVistaSett("giorno");
+      setScelto(d === oggi ? null : d);
+      return;
+    }
+    setToccato(d);
+    setSettimana(true);
+    setVistaSett("giorno");
+    timerSett.current = setTimeout(() => {
+      setScelto(d === oggi ? null : d);
+      setToccato(null);
+    }, stato.impostazioni.animazioni ? 650 : 0);
+  }
+  function esciDallaSettimana() {
+    setSettimana(false);
+    setScelto(null);
+    setToccato(null);
+    setVistaSett("giorno");
+    setLunediVista(null);
+  }
 
   return (
     <section className="space-y-5">
@@ -102,15 +135,45 @@ export default function OggiVista() {
         </div>
       </div>
 
-      <div className="entra">
-        <RiepilogoOggi fatte={fatte} totale={daFare.length} />
+      <div className="collassa" data-chiuso={settimana}>
+        <div>
+          <div className={`entra sfuma ${settimana ? "sfuma-via" : ""}`}>
+            <RiepilogoOggi fatte={fatte} totale={daFare.length} />
+          </div>
+        </div>
       </div>
 
-      <div className="entra" style={{ animationDelay: "70ms" }}>
-        <StrisciaGiorni oggi={oggi} selezionato={giorno} onScegli={(d) => setScelto(d === oggi ? null : d)} />
+      <div className={settimana ? "striscia-alta" : ""}>
+        <div className="entra" style={{ animationDelay: "70ms" }}>
+          <StrisciaGiorni quanti={settimana ? 14 : 7} oggi={oggi} selezionato={toccato ?? giorno} onScegli={sceglieGiorno} />
+        </div>
+        {settimana && (
+          <div className="entra mt-2 flex items-center gap-2">
+            <div className="min-w-0 flex-1">
+              <Segmentato
+                voci={[{ id: "giorno", etichetta: "Giorno" }, { id: "insieme", etichetta: "Vista d'insieme" }]}
+                valore={vistaSett}
+                onCambia={(v) => setVistaSett(v)}
+                contenitore="rounded-full bg-ov/10 text-xs"
+                pillola="rounded-full bg-foreground"
+                testoAttivo="text-background"
+                bottone="py-1.5 text-xs font-semibold"
+                margine={2}
+                aria="Vista"
+              />
+            </div>
+            <button data-suono="indietro" onClick={esciDallaSettimana} className="shrink-0 rounded-full bg-ov/10 px-3 py-1.5 text-xs font-semibold">Esci</button>
+          </div>
+        )}
       </div>
 
-      {giorno !== oggi ? (
+      {settimana ? <ObiettiviSettimana /> : <RitoSettimana />}
+
+      {settimana && vistaSett === "insieme" ? (
+        <div className="dissolve">
+          <VistaInsieme lunedi={lunediVista ?? inizioSettimana(oggi)} onApriGiorno={(d) => { setVistaSett("giorno"); setScelto(d === oggi ? null : d); }} onModificaEvento={setDaModificare} onSposta={(delta) => setLunediVista(dataPiù(lunediVista ?? inizioSettimana(oggi), delta * 7))} />
+        </div>
+      ) : giorno !== oggi ? (
         <div key={giorno} className="entra">
           <GiornoSeguente data={giorno} onApri={setDaModificare} />
         </div>
