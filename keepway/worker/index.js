@@ -19,6 +19,8 @@ const SCHEMA = [
   'CREATE TABLE IF NOT EXISTS allenamenti (codice TEXT NOT NULL, giorno TEXT NOT NULL, tipo TEXT NOT NULL, inizio TEXT NOT NULL, minuti INTEGER, km REAL, aggiornato INTEGER NOT NULL, PRIMARY KEY (codice, giorno, tipo, inizio))',
   // l'ultima volta che da quel codice è arrivato qualcosa (serve alla notifica «nessuna attività ricevuta oggi»)
   'CREATE TABLE IF NOT EXISTS ultimo (codice TEXT PRIMARY KEY, quando INTEGER NOT NULL)',
+  // quale telefono (device_id) usa quel codice: serve per avvisarlo quando arriva un allenamento. Lo manda l'app insieme al piano.
+  'CREATE TABLE IF NOT EXISTS collega (codice TEXT NOT NULL, device_id TEXT NOT NULL, PRIMARY KEY (codice, device_id))',
 ];
 
 const PUSH_HOSTS = /^(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9.-]+\.push\.apple\.com|[a-z0-9.-]+\.notify\.windows\.com)$/i;
@@ -131,7 +133,8 @@ async function salvaPiano(env, request) {
         .bind(device, id, Math.round(quando), clip(it.titolo, 100) || 'Keepway', clip(it.testo, 240), clip(it.url, 100) || '/oggi/', clip(it.tag, 40), it.urgente ? 1 : 0, it.senzaDati ? salvo : null),
     );
   }
-  await env.DB.batch([env.DB.prepare('DELETE FROM piano WHERE device_id = ?').bind(device), ...righe]);
+  const collega = salvo ? [env.DB.prepare('INSERT OR IGNORE INTO collega (codice, device_id) VALUES (?, ?)').bind(salvo, device)] : [];
+  await env.DB.batch([env.DB.prepare('DELETE FROM piano WHERE device_id = ?').bind(device), ...righe, ...collega]);
   return json({ ok: true, programmate: righe.length });
 }
 
@@ -260,6 +263,22 @@ function tipoAllenamento(v) {
   return 'altro';
 }
 
+// «Corsa ricevuta»: una notifica sul telefono (o sui telefoni) che usano quel codice. Toccandola si apre Keepway, che segna la task.
+async function avvisaAllenamento(env, cod, tipo, minuti, km, origine) {
+  const { results: dispositivi } = await env.DB.prepare('SELECT s.* FROM collega c JOIN subs s ON s.device_id = c.device_id WHERE c.codice = ?').bind(cod).all();
+  if (!dispositivi.length) return;
+  const vapid = await chiavi(env, origine);
+  const nome = tipo === 'corsa' ? 'Corsa' : 'Palestra';
+  const dettaglio = [km ? `${String(Math.round(km * 10) / 10).replace('.', ',')} km` : '', minuti ? `${Math.round(minuti)} min` : ''].filter(Boolean).join(' · ');
+  for (const sub of dispositivi) {
+    await spedisci(env, vapid, sub, {
+      titolo: '\u2800',
+      testo: `→ ${grassetto(`${nome} ricevuta`)}\n${dettaglio || 'Tocca per segnarla'} ${tipo === 'corsa' ? '🏃' : '💪'}`,
+      url: '/oggi/', tag: `allenamento-${tipo}`, urgente: true,
+    });
+  }
+}
+
 async function inviaSalute(env, url, request) {
   const dati = request.method === 'POST' ? (await leggiJson(request)) ?? {} : Object.fromEntries(url.searchParams);
   const t = String(dati.t ?? url.searchParams.get('t') ?? '');
@@ -277,11 +296,13 @@ async function inviaSalute(env, url, request) {
   await env.DB.prepare('INSERT INTO ultimo (codice, quando) VALUES (?, ?) ON CONFLICT(codice) DO UPDATE SET quando = excluded.quando').bind(cod, Date.now()).run();
   if (tipo) {
     const inizio = ora(dati.inizio) ?? '00:00';
+    const nuovo = !(await env.DB.prepare('SELECT 1 AS x FROM allenamenti WHERE codice = ? AND giorno = ? AND tipo = ? AND inizio = ?').bind(cod, giorno, tipo, inizio).first());
     await env.DB.prepare(
       `INSERT INTO allenamenti (codice, giorno, tipo, inizio, minuti, km, aggiornato) VALUES (?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(codice, giorno, tipo, inizio) DO UPDATE SET minuti = COALESCE(excluded.minuti, minuti), km = COALESCE(excluded.km, km), aggiornato = excluded.aggiornato`,
     ).bind(cod, giorno, tipo, inizio, minuti === null ? null : Math.round(minuti), km, Date.now()).run();
-    if (passi === null && sonno === null && !letto && !sveglia) return json({ ok: true, giorno, allenamento: tipo, minuti, km });
+    if (nuovo && tipo !== 'altro' && giorno === oggiRoma()) await avvisaAllenamento(env, cod, tipo, minuti, km, new URL(request.url).origin).catch((e) => console.log('avviso allenamento', String(e)));
+    if (passi === null && sonno === null && !letto && !sveglia) return json({ ok: true, giorno, allenamento: tipo, minuti, km, nuovo });
   }
   await env.DB.prepare(
     `INSERT INTO salute (codice, giorno, passi, sonno_min, letto, sveglia, aggiornato) VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -308,7 +329,7 @@ async function cancellaSalute(env, url) {
   const t = String(url.searchParams.get('t') ?? '');
   if (!CODICE.test(t)) return err('Codice non valido', 401);
   const c = await impronta(t);
-  await env.DB.batch(['salute', 'allenamenti', 'ultimo'].map((tab) => env.DB.prepare(`DELETE FROM ${tab} WHERE codice = ?`).bind(c)));
+  await env.DB.batch(['salute', 'allenamenti', 'ultimo', 'collega'].map((tab) => env.DB.prepare(`DELETE FROM ${tab} WHERE codice = ?`).bind(c)));
   return json({ ok: true });
 }
 

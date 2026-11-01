@@ -240,3 +240,9 @@
 - Impostazioni: «Ultima sincronizzazione» + ultimo allenamento + guida riscritta con tre automazioni (fine allenamento, sveglia, orari fissi).
 - Non verificabile qui: i nomi esatti delle azioni dei Comandi Rapidi, l'automazione «fine allenamento», l'apertura del Comando dal popup. Il server si aggiorna solo con il deploy Cloudflare.
 - Rimandato: sonno reale → giornata più leggera dopo notte corta, debito di sonno, orari di letto personalizzati.
+
+## Notifica «Corsa ricevuta»
+- Quando il server riceve un allenamento nuovo di oggi (corsa o palestra), manda una notifica al telefono collegato a quel codice: «→ Corsa ricevuta / km · min» (o «Tocca per segnarla»). Toccandola si apre Keepway, che completa la task.
+- Il collegamento codice → telefono (tabella `collega`) lo scrive il piano notifiche che l'app manda già con il codice: serve aver aperto l'app almeno una volta dopo il deploy.
+- Un secondo invio dello stesso allenamento non rimanda la notifica.
+- Il comando rapido può mandare solo `&allenamento=corsa` (o `palestra`) dall'automazione «Allenamento Apple Watch → Termina»: niente minuti/km, ma la task si segna.
