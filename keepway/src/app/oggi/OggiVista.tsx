@@ -47,6 +47,16 @@ export default function OggiVista() {
   const [toccato, setToccato] = useState<string | null>(null); // il giorno toccato mentre la transizione è in corso
   const timerSett = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timerSett.current) clearTimeout(timerSett.current); }, []);
+  // La striscia dei giorni, quando è davvero salita in cima allo schermo, lascia lo spazio della barra di stato dell'iPhone (prima no: restava un vuoto sopra).
+  const sentinella = useRef<HTMLDivElement>(null);
+  const [ferma, setFerma] = useState(false);
+  useEffect(() => {
+    const el = sentinella.current;
+    if (!settimana || !el) return;
+    const io = new IntersectionObserver(([e]) => setFerma(!e.isIntersecting), { threshold: 0 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [settimana]);
   if (!pronto) return null;
 
   const carico = caricoGiorno(oggi);
@@ -91,7 +101,7 @@ export default function OggiVista() {
     timerSett.current = setTimeout(() => {
       setScelto(d === oggi ? null : d);
       setToccato(null);
-    }, stato.impostazioni.animazioni ? 650 : 0);
+    }, stato.impostazioni.animazioni ? 900 : 0);
   }
   function esciDallaSettimana() {
     setSettimana(false);
@@ -144,7 +154,8 @@ export default function OggiVista() {
         </div>
       </div>
 
-      <div className={settimana ? "striscia-alta" : ""}>
+      {settimana && <div ref={sentinella} aria-hidden className="h-px" />}
+      <div className={settimana ? "striscia-alta" : ""} data-ferma={settimana && ferma}>
         <div className="entra" style={{ animationDelay: "70ms" }}>
           <StrisciaGiorni quanti={settimana ? 14 : 7} oggi={oggi} selezionato={toccato ?? giorno} onScegli={sceglieGiorno} />
         </div>
@@ -170,7 +181,7 @@ export default function OggiVista() {
 
       <CambiPiano />
 
-      {settimana ? <ObiettiviSettimana /> : <RitoSettimana />}
+      {!settimana && <RitoSettimana />}
 
       {settimana && vistaSett === "insieme" ? (
         <div className="dissolve">
@@ -292,6 +303,9 @@ export default function OggiVista() {
 
       </div>
       )}
+
+      {/* Gli obiettivi della settimana stanno per ultimi, sotto le task */}
+      {settimana && <ObiettiviSettimana />}
 
       <Presenza dato={daModificare} ms={340}>
         {(e) => <FormEvento key={e.id} tipo={e.tipo} iniziale={e} onClose={() => setDaModificare(null)} />}

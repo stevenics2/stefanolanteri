@@ -397,3 +397,8 @@
 
 ## Correzione degli spazi in Oggi
 - Il box ricompensa era attaccato alla striscia dei giorni: la regola della transizione azzerava per errore il margine sotto. Ora lo spazio è quello normale della pagina (20 px, misurato nel browser), anche dopo «Esci»; in modalità settimanale resta un po' d'aria sopra la striscia.
+
+## Modalità settimanale: vuoto sopra i giorni, sfumatura, obiettivi in fondo
+- **Vuoto sopra la striscia dei giorni (iPhone)**: la striscia riservava sempre lo spazio della barra di stato (`env(safe-area-inset-top)`), che sull'iPhone è alto e restava vuoto finché non scorrevi. Ora quello spazio compare solo quando la striscia è davvero in cima allo schermo (un sensore sulla pagina, `data-ferma`). Nel browser da computer quello spazio è zero, per questo non si vedeva nelle prove.
+- **Sfumatura del box ricompensa**: ora sfuma per prima, lentamente (opacità da 1 a 0 in circa 0,7 s, con sfocatura e un piccolo spostamento verso l'alto), e la chiusura dello spazio parte 0,2 s dopo, mentre i giorni salgono; il giorno toccato si apre alla fine (0,9 s). Misurato: opacità 1 → 0,67 → 0,32 → 0,02 → 0 mentre la striscia sale da 352 a 147 px.
+- **Obiettivi della settimana**: in modalità settimanale stanno **per ultimi**, sotto le task.
