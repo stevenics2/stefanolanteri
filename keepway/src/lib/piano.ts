@@ -158,16 +158,21 @@ export function pianoNotifiche(stato: Stato, ora: number, oggi: string, haSincro
   for (const t of stato.task) {
     if (!t.attiva || !t.visibileDa || !t.notificaTesto) continue;
     if (stato.completamenti.some((c) => c.taskId === t.id)) continue;
-    // La notifica arriva a fine ciclo e poi ogni 30 minuti finché non la segni come fatta (il piano si rimanda a ogni cambiamento: segnata → spariscono).
-    // Mentre dormi non ti sveglio: la prima slitta al risveglio, quelle in mezzo si saltano.
-    for (let k = 0; k < RIPETIZIONI_SEGUITO; k++) {
-      let q = t.visibileDa + k * 30 * 60_000;
-      if (k === 0) for (let i = 0; i < 96 && q > ora && èADormire(q); i++) q += 15 * 60_000;
+    // La notifica arriva a fine ciclo e poi si ripete (ogni 30 minuti per il bucato, ogni 12 ore per lo stendino) finché non la segni come fatta
+    // (il piano si rimanda a ogni cambiamento: segnata → spariscono). Mentre dormi non ti sveglio: le notifiche lente slittano al risveglio,
+    // quelle ogni 30 minuti che cadono nel sonno si saltano.
+    const ogni = t.ripetiMin ?? 30;
+    const lenta = ogni >= 60;
+    const volte = lenta ? 8 : RIPETIZIONI_SEGUITO;
+    for (let k = 0; k < volte; k++) {
+      let q = t.visibileDa + k * ogni * 60_000;
+      if (lenta || k === 0) for (let i = 0; i < 96 && q > ora && èADormire(q); i++) q += 15 * 60_000;
       else if (èADormire(q)) continue;
       if (q <= ora) continue;
-      const trascorsi = k * 30;
+      const trascorsi = k * ogni;
       const da = trascorsi >= 60 ? `${Math.floor(trascorsi / 60)} h${trascorsi % 60 ? ` ${trascorsi % 60} min` : ""}` : `${trascorsi} min`;
-      out.push({ id: `seguito-${t.id}-${k}`, quando: q, emoji: k >= 3 ? "🚨" : emojiDi(iconaTask(t, "")), titolo: t.titolo, testo: k === 0 ? (t.notificaTesto ?? "Il ciclo è finito.") : `Bagnato da ${da}: stendi!`, url: "/oggi/", tag: `seguito-${t.id}`, urgente: true });
+      const testo = k === 0 ? (t.notificaTesto ?? "Il ciclo è finito.") : lenta ? "Ancora da fare: non dimenticarlo." : `Bagnato da ${da}: stendi!`;
+      out.push({ id: `seguito-${t.id}-${k}`, quando: q, emoji: !lenta && k >= 3 ? "🚨" : emojiDi(iconaTask(t, "")), titolo: t.titolo, testo, url: "/oggi/", tag: `seguito-${t.id}`, urgente: true });
     }
   }
 

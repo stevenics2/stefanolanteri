@@ -12,6 +12,10 @@ export type Ricorrenza =
 
 export type Fascia = "mattina" | "pomeriggio" | "sera" | "qualsiasi";
 
+// Cosa si apre dopo il «Fatto» di una task: un'altra task dopo `dopoMin` minuti, con la notifica `testo`. `ripetiMin` = ogni quanti minuti la notifica si ripete
+// finché non è fatta (predefinito 30; da 60 in su non è una «spia»). `poi` = cosa si apre dopo il «Fatto» di quella.
+export type SpecSeguito = { dopoMin: number; titolo: string; testo: string; punti: number; ripetiMin?: number; poi?: SpecSeguito };
+
 export type Task = {
   id: string;
   titolo: string;
@@ -29,7 +33,8 @@ export type Task = {
   icona?: string; // icona della task (se manca, quella dell'area)
   km?: number; // corsa: distanza; la durata si ricava (6 minuti al km) e non c'è il timer
   spostamentoMin?: number; // minuti per andare (e altrettanti per tornare) se la task si fa fuori casa
-  seguito?: { dopoMin: number; titolo: string; testo: string; punti: number }; // dopo «Fatto» si apre un'altra task dopo `dopoMin` minuti, con notifica `testo` (es. stendere il bucato)
+  seguito?: SpecSeguito; // dopo «Fatto» si apre un'altra task dopo `dopoMin` minuti, con notifica `testo` (es. stendere il bucato)
+  ripetiMin?: number; // (solo i seguiti) ogni quanti minuti la notifica si ripete finché non è fatta
   seguitoDi?: string; // questa è il seguito di un'altra task (id della task madre)
   seguitoDa?: string; // ... aperto da questo completamento
   apre?: string; // un indirizzo dell'app da aprire dalla scheda (es. la programmazione degli allenamenti)

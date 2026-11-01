@@ -57,7 +57,7 @@ export default function OggiVista() {
   // "Prima di dormire": le task della sera (piatti) e, dalle 18 in poi, tutto quello che non è ancora fatto.
   const èSera = REGOLA_SERA_ATTIVA && adesso > 0 && new Date(adesso).getHours() >= ORA_SERA;
   const primaDiDormire = (t: Task) => t.fascia === "sera" || (èSera && !èFatta(t));
-  const inSpia = (t: Task) => !!t.seguitoDi && !èFatta(t); // «Stendi il bucato» in attesa: sta nella spia, non nell'elenco
+  const inSpia = (t: Task) => !!t.seguitoDi && (t.ripetiMin ?? 30) < 60 && !èFatta(t); // «Stendi il bucato» in attesa: sta nella spia, non nell'elenco
   const cosaOggi = daFare.filter((t) => !primaDiDormire(t) && !inSpia(t)).sort(ordina);
   const mustPrimaDiDormire = daFare.filter((t) => primaDiDormire(t) && !inSpia(t)).sort(ordina);
 

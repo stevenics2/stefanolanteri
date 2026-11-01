@@ -36,7 +36,7 @@ export default function SpiaSeguito() {
   const adessoVero = Math.max(ora, adesso);
   if (adesso === 0) return null;
 
-  const attive = stato.task.filter((t) => t.attiva && t.seguitoDi && t.visibileDa && t.visibileDa <= adessoVero && !stato.completamenti.some((c) => c.taskId === t.id));
+  const attive = stato.task.filter((t) => t.attiva && t.seguitoDi && (t.ripetiMin ?? 30) < 60 && t.visibileDa && t.visibileDa <= adessoVero && !stato.completamenti.some((c) => c.taskId === t.id));
   if (attive.length === 0) return null;
 
   return (

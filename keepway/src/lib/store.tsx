@@ -8,7 +8,7 @@ import { dataPiù, inizioSettimana, oggiLocale } from "./date";
 import { bossSettimana, giornata, livello, puntiMinima, xpTotali } from "./regole";
 import { nuovoId, statoIniziale, statoVuoto, taskStanza } from "./seed";
 import { stanzaDelGiorno } from "./stanze";
-import type { Bonus, Completamento, Evento, Impostazioni, Modifica, Momento, Stato, Task, Vacanza } from "./tipi";
+import type { Bonus, Completamento, Evento, Impostazioni, Modifica, Momento, SpecSeguito, Stato, Task, Vacanza } from "./tipi";
 
 const CHIAVE = "keepway.v1";
 const CHIAVE_VECCHIA = "binario.v1"; // il nome precedente: se ci sono dati salvati lì li si recupera
@@ -153,8 +153,12 @@ function carica(): Stato {
 const PROGRAMMAZIONE_ID = "programmazione-allenamenti";
 
 // Il seguito di una task: una task di un giorno solo che compare dopo `dopoMin` minuti, con il suo momento e la sua notifica.
-function creaSeguito(t: Task, completamentoId: string, ts: number): { task: Task; momento: Momento } {
-  const dopoMin = t.seguito?.dopoMin ?? 0;
+// Dopo «Stendi il bucato» (anche quelle create prima di questa regola): il bucato asciutto va ritirato e lo stendino svuotato, dopo 30 ore, con un promemoria ogni 12.
+const STENDINO: SpecSeguito = { dopoMin: 30 * 60, titolo: "Ritira e svuota lo stendino", testo: "Il bucato è asciutto: ritira e svuota lo stendino.", punti: 15, ripetiMin: 12 * 60 };
+const specSeguito = (t: Task): SpecSeguito | undefined => t.seguito ?? (t.seguitoDi && /stend/i.test(t.titolo) ? STENDINO : undefined);
+
+function creaSeguito(t: Task, spec: SpecSeguito, completamentoId: string, ts: number): { task: Task; momento: Momento } {
+  const dopoMin = spec.dopoMin;
   const quando = ts + dopoMin * 60_000;
   const d = new Date(quando);
   const data = oggiLocale(d);
@@ -162,9 +166,10 @@ function creaSeguito(t: Task, completamentoId: string, ts: number): { task: Task
   const id = nuovoId();
   return {
     task: {
-      id, titolo: t.seguito?.titolo ?? "Seguito", areaId: t.areaId, icona: "bucato", durataMin: null, minimaMin: null,
-      ricorrenza: { tipo: "una_volta", data }, fascia: "qualsiasi", solo: "sempre", punti: t.seguito?.punti ?? 20, essenziale: true, soloACasa: false,
-      promemoria: [], attiva: true, creatoIl: oggiLocale(new Date(ts)), seguitoDi: t.id, seguitoDa: completamentoId, visibileDa: quando, notificaTesto: t.seguito?.testo,
+      id, titolo: spec.titolo, areaId: t.areaId, icona: "bucato", durataMin: null, minimaMin: null,
+      ricorrenza: { tipo: "una_volta", data }, fascia: "qualsiasi", solo: "sempre", punti: spec.punti, essenziale: true, soloACasa: false,
+      promemoria: [], attiva: true, creatoIl: oggiLocale(new Date(ts)), seguitoDi: t.id, seguitoDa: completamentoId, visibileDa: quando, notificaTesto: spec.testo,
+      ripetiMin: spec.ripetiMin, seguito: spec.poi ?? (/stend/i.test(spec.titolo) ? STENDINO : undefined),
     },
     momento: { taskId: id, data, da, a: da + 15 },
   };
@@ -185,9 +190,14 @@ function sistemaTaskAutomatiche(s: Stato, oggi: string): Stato {
   } else if (!haAuto && programmazione) {
     task = task.filter((t) => t.id !== PROGRAMMAZIONE_ID);
   }
+  // I seguiti: quelli fatti si ripuliscono dopo un giorno; quelli ancora da fare restano e si riportano a oggi (non devono sparire se non li fai subito).
   const limite = dataPiù(oggi, -1);
-  const pulite = task.filter((t) => !(t.seguitoDi && t.ricorrenza.tipo === "una_volta" && t.ricorrenza.data < limite));
+  const fatta = (id: string) => s.completamenti.some((c) => c.taskId === id);
+  const pulite = task.filter((t) => !(t.seguitoDi && t.ricorrenza.tipo === "una_volta" && t.ricorrenza.data < limite && fatta(t.id)));
   if (pulite.length !== task.length) task = pulite;
+  if (task.some((t) => t.seguitoDi && t.ricorrenza.tipo === "una_volta" && t.ricorrenza.data < oggi && !fatta(t.id))) {
+    task = task.map((t) => (t.seguitoDi && t.ricorrenza.tipo === "una_volta" && t.ricorrenza.data < oggi && !fatta(t.id) ? { ...t, ricorrenza: { tipo: "una_volta" as const, data: oggi } } : t));
+  }
   return task === s.task ? s : { ...s, task };
 }
 
@@ -315,7 +325,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const dopo = livello(xpTotali(completamenti, [...s.bonus, ...nuoviBonus]));
 
       // Il seguito (es. lavatrice -> «stendi il bucato» dopo 4 ore): si apre da solo, con la sua notifica
-      const seguito = t.seguito ? creaSeguito(t, id, ts) : null;
+      const spec = specSeguito(t);
+      const seguito = spec ? creaSeguito(t, spec, id, ts) : null;
       aggiorna((x) => ({
         ...x,
         completamenti: [...x.completamenti, nuova],
