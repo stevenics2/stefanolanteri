@@ -39,7 +39,16 @@ export function momentoAttuale(
   const base = momentoGiusto(task, data, opz.scelto);
   if (!base || opz.scelto || data !== opz.oggi || opz.adessoMin <= 0) return { finestra: base, spostato: false, primaDiDormire: false, esaurito: false };
   const bisogno = serve(task);
-  if (opz.adessoMin <= base.a - bisogno) return { finestra: base, spostato: false, primaDiDormire: false, esaurito: false };
+  if (opz.adessoMin <= base.a - bisogno) {
+    // Una finestra ampia (es. «dalle 10:30 alle 18:30») resta valida finché c'è tempo, ma l'inizio non può stare nel passato:
+    // si accorcia da adesso (al massimo due ore avanti), così il momento consigliato scorre con la giornata.
+    const ora = prossimoQuarto(opz.adessoMin);
+    if (ora > base.da && base.a - base.da > bisogno + 30) {
+      const da = Math.min(ora, base.a - bisogno);
+      return { finestra: { da, a: Math.min(base.a, da + Math.max(120, bisogno)) }, spostato: false, primaDiDormire: false, esaurito: false };
+    }
+    return { finestra: base, spostato: false, primaDiDormire: false, esaurito: false };
+  }
 
   // Il momento suggerito è passato: il prossimo
   const ora = prossimoQuarto(opz.adessoMin);

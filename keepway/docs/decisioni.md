@@ -334,3 +334,7 @@
 - Quando il debito è zero (o c'è una riserva) la riga diventa **verde** con la spunta e la scritta «Dovresti essere ben riposato!». Se c'è sonno in più, compare «Riserva +N min».
 - La **riserva** (`passoDebito` in `cicliSonno.ts`) si riempie con il sonno in più quando il debito è finito (per intero, fino a 2 ore) e si consuma per prima con le notti corte, prima che il debito risalga. Vale con entrambi i calcoli (giorno per giorno e cicli) e scade con il resto dopo 14 giorni.
 - Provato con numeri: notte corta + notte lunga → debito 0; quattro notti da 10 h → riserva 120 min; riserva 120 poi notte da 5 h → debito 0, riserva 0.
+
+## Momento consigliato che scorre con l'ora
+- Le task che si adattano ai turni hanno come momento consigliato l'intera finestra libera più lunga del giorno (es. «10:30–18:30»). Prima l'orario restava quello di inizio finché la finestra non finiva (alle 19 si leggeva ancora «14:00»). Ora, se la finestra è ampia e già iniziata, l'inizio si porta all'ora attuale (arrotondata al quarto d'ora) e la fine a due ore dopo (o fino alla fine della finestra). Un orario scelto a mano non cambia.
+- Provato con l'orologio simulato: 10:00 → 10:30–18:30; 13:20 → 13:30–15:30; 17:10 → 17:15–18:30; 18:50 → «nessun momento libero oggi».
