@@ -312,3 +312,7 @@
 - **Tessere** più piccole (valore da 20 px).
 - **Disciplina**: a sinistra le cinque voci con le barre, a destra il quadrante ad arco (270°, fasce di colore rosso/giallo/lime/verde/oro) con il punteggio e il livello, sotto il grafico dell'andamento e una frase del giorno (`fraseDisciplina`: tono diretto, scelta in base alla fascia e fissa per la giornata). I dettagli del calcolo stanno in «Approfondisci».
 - Il carattere resta quello attuale (niente Barlow).
+
+## Sonno: minuti scritti e debito come promemoria
+- Tutti i valori del sonno hanno i minuti scritti («6 h 19 min»): grafico, tessere, debito, riga dell'obiettivo.
+- Il debito di sonno è un promemoria piccolo (una riga con barra sottile e l'obiettivo regolabile), subito sotto il grafico e prima delle tessere. La spiegazione è nell'«Approfondisci».

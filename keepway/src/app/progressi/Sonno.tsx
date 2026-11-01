@@ -53,48 +53,47 @@ export default function Sonno() {
       <GraficoLinea
         titolo="Ore di sonno"
         sotto={`${buone}/${conDato.length} notti sopra l'obiettivo`}
-        grande={media ? oreEMinuti(media).replace(" h ", "h") : undefined}
+        grande={media ? `${oreEMinuti(media)} min` : undefined}
         colore="#a5b4fc"
         punti={serie.map((s) => ({ etichetta: `${Number(s.giorno.slice(8))}/${Number(s.giorno.slice(5, 7))}`, v: s.n ? Math.round((s.n.minuti / 60) * 10) / 10 : null }))}
         yMin={3}
         yMax={10}
         passo={1}
         formatoY={(n) => `${n}h`}
-        riferimento={{ v: obiettivo / 60, etichetta: `obiettivo ${oreEMinuti(obiettivo).replace(" h 00", " h")}` }}
+        riferimento={{ v: obiettivo / 60, etichetta: `obiettivo ${oreEMinuti(obiettivo)} min` }}
       />
-      <TessereKpi
-        voci={[
-          { icona: <Moon size={14} />, titolo: "Media", valore: oreEMinuti(media).replace(" h ", "h"), colore: "#a5b4fc" },
-          { icona: <TrendingUp size={14} />, titolo: "Migliore", valore: migliore?.n ? oreEMinuti(migliore.n.minuti).replace(" h ", "h") : "—", colore: "#4ade80" },
-          { icona: <TrendingDown size={14} />, titolo: "Più corta", valore: peggiore?.n ? oreEMinuti(peggiore.n.minuti).replace(" h ", "h") : "—", colore: "#f87171" },
-          { icona: <BedDouble size={14} />, titolo: "Ultima notte", valore: ultima ? oreEMinuti(ultima.minuti).replace(" h ", "h") : "—", colore: "#fbbf24" },
-        ]}
-        />
-
-      <div className="rounded-2xl bg-card p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-xs text-muted">Debito di sonno</div>
-            <div className="text-4xl font-black tabular-nums" style={{ color: colDebito }}>{oreEMinuti(debitoMostrato)}</div>
+      <div className="rounded-xl bg-card px-3 py-2">
+        <div className="flex items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="whitespace-nowrap text-[10px] font-bold uppercase tracking-wide text-muted">Debito di sonno</div>
+            <div className="whitespace-nowrap text-lg font-black leading-tight tabular-nums" style={{ color: colDebito }}>{oreEMinuti(debitoMostrato)} min</div>
+            <div className="mt-1 h-1 overflow-hidden rounded-full bg-ov/10">
+              <div className="barra-cresce h-full rounded-full" style={{ width: `${Math.min(100, Math.round((debito.debito / 480) * 100))}%`, minWidth: debito.debito ? 4 : 0, background: colDebito }} />
+            </div>
           </div>
-          <div className="text-right">
-            <div className="text-xs text-muted">Obiettivo a notte</div>
-            <div className="mt-1 flex items-center justify-end gap-2">
-              <button aria-label="Meno" data-suono="nessuno" disabled={obiettivo <= 360} onClick={() => impostazioni({ obiettivoSonnoMin: obiettivo - 30 })} className="rounded-full bg-ov/10 p-1.5 disabled:opacity-30"><Minus size={14} /></button>
-              <span className="w-14 text-center text-lg font-bold">{oreEMinuti(obiettivo)}</span>
-              <button aria-label="Più" data-suono="nessuno" disabled={obiettivo >= 540} onClick={() => impostazioni({ obiettivoSonnoMin: obiettivo + 30 })} className="rounded-full bg-ov/10 p-1.5 disabled:opacity-30"><Plus size={14} /></button>
+          <div className="shrink-0 text-center text-[10px] text-muted">
+            <div>obiettivo a notte</div>
+            <div className="mt-0.5 flex items-center gap-1.5">
+            <button aria-label="Meno" data-suono="nessuno" disabled={obiettivo <= 360} onClick={() => impostazioni({ obiettivoSonnoMin: obiettivo - 30 })} className="rounded-full bg-ov/10 p-1 disabled:opacity-30"><Minus size={11} /></button>
+            <span className="min-w-12 text-center text-xs font-bold text-foreground">{oreEMinuti(obiettivo)}</span>
+            <button aria-label="Più" data-suono="nessuno" disabled={obiettivo >= 540} onClick={() => impostazioni({ obiettivoSonnoMin: obiettivo + 30 })} className="rounded-full bg-ov/10 p-1 disabled:opacity-30"><Plus size={11} /></button>
             </div>
           </div>
         </div>
-        <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-ov/10">
-          <div className="barra-cresce h-full rounded-full" style={{ width: `${Math.min(100, Math.round((debito.debito / 480) * 100))}%`, minWidth: debito.debito ? 6 : 0, background: colDebito }} />
-        </div>
-        <p className="mt-2 text-sm text-muted">{stato_}</p>
         <Approfondisci>
-          <p>Ogni notte sotto l&apos;obiettivo aumenta il debito. Ogni notte sopra lo riduce, ma solo della metà: il sonno perso non si recupera tutto in una notte.</p>
-          <p>Le notti senza dato non contano: non ti penalizzo se non hai sincronizzato.</p>
+          <p>{stato_}</p>
+          <p>Ogni notte sotto l&apos;obiettivo aumenta il debito. Ogni notte sopra lo riduce, ma solo della metà: il sonno perso non si recupera tutto in una notte. Le notti senza dato non contano.</p>
         </Approfondisci>
       </div>
+
+      <TessereKpi
+        voci={[
+          { icona: <Moon size={14} />, titolo: "Media", valore: oreEMinuti(media), unita: "min", colore: "#a5b4fc" },
+          { icona: <TrendingUp size={14} />, titolo: "Migliore", valore: migliore?.n ? oreEMinuti(migliore.n.minuti) : "—", unita: migliore?.n ? "min" : "", colore: "#4ade80" },
+          { icona: <TrendingDown size={14} />, titolo: "Più corta", valore: peggiore?.n ? oreEMinuti(peggiore.n.minuti) : "—", unita: peggiore?.n ? "min" : "", colore: "#f87171" },
+          { icona: <BedDouble size={14} />, titolo: "Ultima notte", valore: ultima ? oreEMinuti(ultima.minuti) : "—", unita: ultima ? "min" : "", colore: "#fbbf24" },
+        ]}
+        />
 
       <div className="rounded-2xl bg-card p-4">
         <div className="text-sm text-muted">Regolarità (ultime 7 notti)</div>
