@@ -111,10 +111,10 @@ export default function FormTask({ iniziale, onClose }: { iniziale: Task | null;
       <div>
         <Etichetta>Quando</Etichetta>
         <div className="grid grid-cols-2 gap-2">
+          <Riquadro attivo={tipo === "auto"} nome="Pianificazione automatica" onClick={() => setTipo("auto")} icona={<CalendarClock size={22} />} />
           <Riquadro attivo={tipo === "giornaliera"} nome="Ogni giorno" onClick={() => setTipo("giornaliera")} icona={<Repeat size={22} />} />
           <Riquadro attivo={tipo === "settimana"} nome="Giorni fissi" onClick={() => setTipo("settimana")} icona={<CalendarDays size={22} />} />
           <Riquadro attivo={tipo === "una_volta"} nome="Una volta" onClick={() => setTipo("una_volta")} icona={<CalendarCheck size={22} />} />
-          <Riquadro attivo={tipo === "auto"} nome="Pianificazione automatica" onClick={() => setTipo("auto")} icona={<CalendarClock size={22} />} />
         </div>
         {tipo === "auto" && (
           <div className="mt-3 space-y-3">

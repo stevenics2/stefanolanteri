@@ -5,6 +5,7 @@ import { durataMin, durataTotaleMin } from "./durata";
 import { attesaPerTask, finestreLibere, inizioUtile, limiteSerale, oreSonnoPrima, type Finestra } from "./sonno";
 import type { Evento, PianoVoce, Stato, Task } from "./tipi";
 import { èPianificata } from "./pianoAuto";
+import { adessoMs } from "./seed";
 
 // --- Quando ha senso allenarsi, in base ai turni del giorno ---
 // dopo/prima = in che fascia oraria (minuti dalla mezzanotte); qualita = quanto è un buon giorno (3 = il migliore).
@@ -115,6 +116,10 @@ const giorniTraDate = (a: string, b: string) => Math.round((Date.parse(b) - Date
 // (un turno spostato, un appuntamento nuovo, una task fatta o saltata): prima i giorni migliori, poi quelli distanziati da altri allenamenti.
 export function pianifica(stato: Stato, oggi: string): PianoVoce[] {
   const eventi = stato.eventi;
+  // Per oggi si propone solo quello che è ancora da venire: alle 23:40 niente «oggi alle 13:00» (e niente oggi, se non c'è più un momento libero).
+  const adesso = new Date(adessoMs());
+  const dopoOggi = Math.ceil((adesso.getHours() * 60 + adesso.getMinutes()) / 15) * 15;
+  const dopo = (d: string) => (d === oggi ? dopoOggi : 0);
   const limiteVecchi = dataPiù(oggi, -60);
   const lunedi = inizioSettimana(oggi);
   const out: PianoVoce[] = [];
@@ -148,7 +153,7 @@ export function pianifica(stato: Stato, oggi: string): PianoVoce[] {
       // Nei giorni impossibili (turni pesanti) si prende il più vicino a quello giusto, prima nella tolleranza e poi il primo possibile dopo.
       const { ogni, tolleranza } = ric;
       const orizzonte = dataPiù(oggi, 27);
-      const ok = (d: string) => d >= oggi && !esclusi.has(d) ? analizzaGiorno(task, d, eventi) : null;
+      const ok = (d: string) => d >= oggi && !esclusi.has(d) ? analizzaGiorno(task, d, eventi, dopo(d)) : null;
       let prec: string | null = [...fatti].filter((d) => d <= oggi).sort().pop() ?? null;
       const fissati = tenute.filter((v) => v.tipo === "fissato" && v.data >= oggi).map((v) => v.data).sort();
       for (let giro = 0; giro < 12; giro++) {
@@ -166,7 +171,7 @@ export function pianifica(stato: Stato, oggi: string): PianoVoce[] {
         const bersaglio = prec === null ? oggi : dataPiù(prec, ogni);
         let scelta: { d: string; a: AnalisiGiorno } | null = null;
         const fis = fissati.find((d) => d >= da && d <= a);
-        if (fis) scelta = { d: fis, a: analizzaGiorno(task, fis, eventi) };
+        if (fis) scelta = { d: fis, a: analizzaGiorno(task, fis, eventi, dopo(fis)) };
         else {
           let migliore: { d: string; a: AnalisiGiorno; p: number } | null = null;
           for (let d = da; d <= a; d = dataPiù(d, 1)) {
@@ -197,7 +202,7 @@ export function pianifica(stato: Stato, oggi: string): PianoVoce[] {
       let servono = volte - gia;
       const candidati = giorni
         .filter((d) => d >= oggi && !contanti.has(d) && !esclusi.has(d))
-        .map((d) => ({ d, a: analizzaGiorno(task, d, eventi) }))
+        .map((d) => ({ d, a: analizzaGiorno(task, d, eventi, dopo(d)) }))
         .filter((x) => x.a.slot !== null);
       const presi = new Set<string>(); // giorni scelti in questa settimana
       while (servono > 0 && candidati.length > 0) {
@@ -217,7 +222,7 @@ export function pianifica(stato: Stato, oggi: string): PianoVoce[] {
     // i momenti proposti si aggiornano anche per i giorni fissati e per quelli già in piano da oggi
     for (const v of tenute) {
       if (v.tipo !== "escluso" && v.data >= oggi) {
-        const slot = analizzaGiorno(task, v.data, eventi).slot;
+        const slot = analizzaGiorno(task, v.data, eventi, dopo(v.data)).slot;
         out.push({ ...v, da: slot?.da, a: slot?.a });
       } else out.push(v);
     }

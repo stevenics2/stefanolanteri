@@ -456,3 +456,10 @@ button:not(:disabled):active, a[href]:active {
 .spia-punto { animation: spiaPunto 1.2s ease-in-out infinite; }
 .spia-scheda[data-fase="rossa"] .spia-punto { animation-duration: 0.6s; }
 @media (prefers-reduced-motion: reduce) { .spia-scheda, .spia-punto { animation-duration: 0.01ms !important; } }
+
+/* La pianificazione: le righe nuove si «scrivono» una dopo l'altra, poi compare la spunta */
+@keyframes compila { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+.compila-riga { animation: entra 0.3s var(--posa) backwards; }
+.compila-testo { animation: compila 0.4s steps(12) backwards; }
+.compila-spunta { animation: spuntaPop 0.35s var(--molla) backwards; margin-left: 0.25rem; }
+@media (prefers-reduced-motion: reduce) { .compila-riga, .compila-testo, .compila-spunta { animation-duration: 0.01ms; } }

@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarClock, CalendarCog, Clock } from "lucide-react";
+import { CalendarClock, CalendarCog, Check, Clock } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { proposte, analizzaGiorno, type Proposta } from "@/lib/allenamento";
 import { GIORNI_LUNGHI, giornoSettimana } from "@/lib/date";
@@ -11,7 +11,7 @@ import type { PianoVoce, Task } from "@/lib/tipi";
 import Presenza from "./Presenza";
 
 const ELABORAZIONE_MS = 1500;
-const SALVATAGGIO_MS = 1000; // «Pianificazione…»
+const SALVATAGGIO_MS = 2000; // «Pianificazione…»: le task nuove si compilano una dopo l'altra
 const PIANIFICATO_MS = 1200; // «Pianificato» con la spunta verde, poi il popup si chiude
 
 type Esito = { indice: number; voci: PianoVoce[] };
@@ -40,7 +40,7 @@ function Contenuto({
   const suoni = stato.impostazioni.suoni;
   const animazioni = stato.impostazioni.animazioni;
   const [fase, setFase] = useState<"scelta" | "salvo" | "fatto">("scelta");
-  const [giorniScelti, setGiorniScelti] = useState(0);
+  const [vociScelte, setVociScelte] = useState<PianoVoce[]>([]);
   const timer = useRef<ReturnType<typeof setTimeout>[]>([]);
   useEffect(() => {
     const t = timer.current;
@@ -50,7 +50,7 @@ function Contenuto({
   // «Pianifica»: prima «Pianificazione…», poi «Pianificato» con la spunta verde, e solo dopo si salva e si chiude.
   const conferma = (e: Esito) => {
     if (!animazioni) return onConferma(e);
-    setGiorniScelti(e.voci.length);
+    setVociScelte(e.voci);
     setFase("salvo");
     timer.current.push(
       setTimeout(() => {
@@ -88,29 +88,46 @@ function Contenuto({
   return (
     <div className={`fixed inset-0 z-[70] flex items-center justify-center bg-black/65 px-4 backdrop-blur-sm ${uscendo ? "vela-fuori" : "vela-dentro"}`}>
       <div className={`relative w-full max-w-sm overflow-hidden rounded-3xl border border-ov/15 bg-card p-5 shadow-2xl ${uscendo ? "carta-fuori" : "carta-dentro"}`}>
-        {fase !== "scelta" ? (
+        {fase === "salvo" ? (
+          <div className="py-1" aria-live="polite">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted">
+              <span className="pianifica-anello h-3.5 w-3.5 rounded-full border-2" style={{ borderColor: "rgba(34,197,94,0.25)", borderTopColor: "#22c55e" }} />
+              {bozza.titolo}
+            </div>
+            <div className="dissolve mt-1 text-xl font-bold">Pianificazione<span className="pianifica-punti" /></div>
+            <div className="mt-3 space-y-1.5">
+              {vociScelte.map((v, i) => {
+                const passo = Math.min(0.3, 1.3 / Math.max(1, vociScelte.length));
+                const ritardo = 0.1 + i * passo;
+                return (
+                  <div key={v.data} className="compila-riga flex items-center gap-2 rounded-xl bg-ov/10 px-3 py-2" style={{ animationDelay: `${ritardo}s` }}>
+                    <span className="compila-testo text-sm font-bold capitalize" style={{ animationDelay: `${ritardo + 0.05}s` }}>{GIORNI_LUNGHI[giornoSettimana(v.data)]} {Number(v.data.slice(8))}</span>
+                    {v.da !== undefined && v.a !== undefined && (
+                      <span className="compila-testo ml-auto inline-flex items-center gap-1 whitespace-nowrap text-xs font-semibold text-emerald-300" style={{ animationDelay: `${ritardo + 0.2}s` }}>
+                        <Clock size={12} /> {hhmm(v.da)}–{hhmm(v.a)}
+                      </span>
+                    )}
+                    <span className="compila-spunta text-green-400" style={{ animationDelay: `${ritardo + 0.5}s` }}><Check size={15} strokeWidth={3} /></span>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-ov/10">
+              <div className="h-full rounded-full bg-green-500" style={{ animation: `barraElabora ${SALVATAGGIO_MS}ms linear both` }} />
+            </div>
+          </div>
+        ) : fase === "fatto" ? (
           <div className="py-8 text-center" aria-live="polite">
             <div className="relative mx-auto flex h-24 w-24 items-center justify-center">
-              {fase === "salvo" ? (
-                <>
-                  <span className="pianifica-anello absolute inset-0 rounded-full border-[4px]" style={{ borderColor: "rgba(34,197,94,0.22)", borderTopColor: "#22c55e" }} />
-                  <CalendarClock size={28} className="text-foreground" />
-                </>
-              ) : (
-                <svg key="spunta" viewBox="0 0 96 96" className="spunta-pop h-24 w-24" style={{ filter: "drop-shadow(0 0 14px rgba(34,197,94,0.55))" }}>
-                  <circle cx="48" cy="48" r="42" fill="rgba(34,197,94,0.15)" stroke="#22c55e" strokeWidth="5" />
-                  <path d="M28 49 L43 64 L69 34" pathLength={1} fill="none" stroke="#22c55e" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" className="spunta-segno" />
-                </svg>
-              )}
+              <svg key="spunta" viewBox="0 0 96 96" className="spunta-pop h-24 w-24" style={{ filter: "drop-shadow(0 0 14px rgba(34,197,94,0.55))" }}>
+                <circle cx="48" cy="48" r="42" fill="rgba(34,197,94,0.15)" stroke="#22c55e" strokeWidth="5" />
+                <path d="M28 49 L43 64 L69 34" pathLength={1} fill="none" stroke="#22c55e" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" className="spunta-segno" />
+              </svg>
             </div>
-            {fase === "salvo" ? (
-              <div className="dissolve mt-4 text-xl font-bold">Pianificazione<span className="pianifica-punti" /></div>
-            ) : (
-              <div key="fatto" className="entra mt-4">
-                <div className="text-2xl font-black text-green-400">Pianificato</div>
-                <div className="mt-1 text-sm text-muted">{giorniScelti > 0 ? `${giorniScelti} ${giorniScelti === 1 ? "giorno" : "giorni"} nel tuo piano` : ""}</div>
-              </div>
-            )}
+            <div key="fatto" className="entra mt-4">
+              <div className="text-2xl font-black text-green-400">Pianificato</div>
+              <div className="mt-1 text-sm text-muted">{vociScelte.length} {vociScelte.length === 1 ? "giorno" : "giorni"} nel tuo piano</div>
+            </div>
           </div>
         ) : !pronta ? (
           <div className="py-4 text-center">

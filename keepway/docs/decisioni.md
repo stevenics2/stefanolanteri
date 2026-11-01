@@ -361,3 +361,8 @@
 
 ## «Pianificazione… → Pianificato» nel popup della pianificazione automatica
 - Quando nel popup scegli la proposta e tocchi «Pianifica», il contenuto del popup cambia: per circa 1 secondo «Pianificazione…» con un anello verde che gira, poi «Pianificato» con una grande spunta verde che si disegna (con un piccolo rimbalzo e un bagliore) e «N giorni nel tuo piano», con il suono di salita. Dopo circa 1,2 secondi la task si salva e il popup si chiude. Con le animazioni spente nelle Impostazioni, la conferma è immediata.
+
+## Pianificazione automatica: «Quando» per primo, oggi solo da adesso in poi, animazione delle task che si compilano
+- Nella scheda «Nuova task» → «Quando», **«Pianificazione automatica» è la prima opzione**.
+- **Correzione dell'orario di oggi**: il pianificatore proponeva per oggi un orario già passato (alle 23:40 «oggi alle 13:00»). Ora per oggi si considera solo ciò che è ancora da venire (dal prossimo quarto d'ora): alle 10:00 propone oggi dalle 10:30; alle 23:40 oggi non c'è più e la proposta riparte da domani. Vale per le proposte, per i giorni fissati di oggi e per il ricalcolo del piano. Provato con l'orologio simulato.
+- **Animazione**: dopo «Pianifica», per circa 2 secondi le task nuove si compilano una dopo l'altra (titolo, poi riga per riga giorno e orario che si «scrivono», con una piccola spunta verde per ciascuna e una barra di avanzamento); poi «Pianificato» con la grande spunta verde (come prima), e il popup si chiude.
