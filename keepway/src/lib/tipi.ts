@@ -125,6 +125,10 @@ export type TimerAttivo = {
 export type ObiettivoSett = { id: "allenamenti" | "notti" | "piene" | "libero"; attivo: boolean; target: number; testo?: string };
 export type Settimana = { programmata: string | null; obiettivi: ObiettivoSett[]; liberoFatto: string | null }; // programmata = il lunedì della settimana già preparata; liberoFatto = il lunedì della settimana in cui hai spuntato l'obiettivo libero
 
+// Un cambio che il piano automatico ha fatto da solo (per esempio dopo un turno o un appuntamento nuovo): il giorno `da` non va più bene e la task passa al giorno `a`.
+// Resta in attesa finché non lo confermi o scegli di tenere il giorno di prima (se si può).
+export type CambioPiano = { id: string; taskId: string; da: string; a: string | null; motivo: string; tieniPossibile: boolean; quando: number };
+
 export type Stato = {
   versione: 1;
   aree: Area[];
@@ -142,5 +146,7 @@ export type Stato = {
   modifiche: Modifica[];
   bonus: Bonus[];
   settimana?: Settimana;
+  pianoVisto?: PianoVoce[]; // il piano automatico che hai già visto e accettato: serve a capire quando cambia da solo
+  cambiPiano?: CambioPiano[];
   traguardi?: Record<string, number>; // il livello (0-3) già sbloccato di ogni traguardo: serve a festeggiare solo i nuovi
 };

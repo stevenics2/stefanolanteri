@@ -2,6 +2,7 @@
 
 import Segmentato from "../components/Segmentato";
 import ObiettiviSettimana from "../components/ObiettiviSettimana";
+import CambiPiano from "../components/CambiPiano";
 import RitoSettimana from "../components/RitoSettimana";
 import VistaInsieme from "../components/VistaInsieme";
 import { CalendarClock, ListChecks, Moon, Plane, Undo2 } from "lucide-react";
@@ -166,6 +167,8 @@ export default function OggiVista() {
           </div>
         )}
       </div>
+
+      <CambiPiano />
 
       {settimana ? <ObiettiviSettimana /> : <RitoSettimana />}
 

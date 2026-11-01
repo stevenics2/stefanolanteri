@@ -119,6 +119,18 @@ function notificheRito(stato: Stato, ora: number, oggi: string): Notifica[] {
   return out;
 }
 
+// «Il piano è cambiato»: se ci sono cambi da confermare, una notifica 10 minuti dopo l'ultima volta che hai usato l'app (se la riapri, si sposta o sparisce).
+function notificheCambi(stato: Stato, ora: number): Notifica[] {
+  const c = stato.cambiPiano?.[0];
+  if (!c) return [];
+  const titolo = stato.task.find((t) => t.id === c.taskId)?.titolo;
+  if (!titolo) return [];
+  let quando = ora + 10 * 60_000;
+  for (let n = 0; n < 96 && èADormire(quando); n++) quando += 15 * 60_000;
+  const altri = (stato.cambiPiano?.length ?? 1) - 1;
+  return [{ id: "cambio-piano", quando, emoji: "⚠️", titolo: "Il piano è cambiato", testo: `${titolo}${altri > 0 ? ` e altre ${altri}` : ""}: apri per confermare.`, url: "/oggi/", tag: "cambio-piano", urgente: true }];
+}
+
 export function pianoNotifiche(stato: Stato, ora: number, oggi: string, haSincronizzato = false): Notifica[] {
   const out: Notifica[] = [];
 
@@ -196,6 +208,7 @@ export function pianoNotifiche(stato: Stato, ora: number, oggi: string, haSincro
   out.push(...notificheSonno(ora));
   out.push(...notificheSalute(ora, oggi, haSincronizzato));
   out.push(...notificheRito(stato, ora, oggi));
+  out.push(...notificheCambi(stato, ora));
   out.push(...notificheEventi(stato, ora, oggi));
   out.push(...notificheTurniDaSistemare(ora, oggi));
 

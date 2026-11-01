@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { pianifica } from "./allenamento";
 import { impostaModifiche } from "./calendario";
+import { confermaCambio, rilevaCambi } from "./cambiPiano";
 import { èPianificata, impostaPianoAuto } from "./pianoAuto";
 import { dataPiù, inizioSettimana, oggiLocale } from "./date";
 import { bossSettimana, giornata, livello, puntiMinima, xpTotali } from "./regole";
@@ -82,6 +83,8 @@ type Contesto = {
   chiudiFesta: () => void;
   sbloccaTraguardi: (livelli: Record<string, number>, feste: Festa[]) => void; // salva i livelli raggiunti e festeggia i nuovi
   impostaSettimana: (p: Partial<Settimana>) => void; // obiettivi e rito della domenica
+  confermaCambioPiano: (id: string) => void;
+  tieniGiornoPiano: (id: string) => void;
   annullaAvviso: () => void;
   chiudiAvviso: () => void;
   azzera: () => void;
@@ -214,11 +217,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [festa, setFesta] = useState<Festa[]>([]);
   const ref = useRef(stato); // sempre l'ultimo stato, anche dentro timer e callback
 
-  const aggiorna = useCallback((fn: (s: Stato) => Stato) => {
+  // `conferma` = è una scelta dell'utente sul piano (nuova task, giorno acceso o spento...): il piano nuovo è quello che ha visto, nessun avviso.
+  // Se invece il piano cambia da solo (turni, appuntamenti...), `rilevaCambi` prepara un cambio da confermare.
+  const aggiorna = useCallback((fn: (s: Stato) => Stato, conferma = false) => {
     const prima = ref.current;
     const dopo = fn(prima);
     if (dopo.modifiche !== prima.modifiche) impostaModifiche(dopo.modifiche); // sonno, conflitti e carico leggono il calendario aggiornato
-    ref.current = conPiano(dopo);
+    ref.current = rilevaCambi(conPiano(dopo), oggiLocale(), conferma, nuovoId, Date.now());
     setStato(ref.current);
   }, []);
 
@@ -226,7 +231,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const caricato = carica();
     impostaModifiche(caricato.modifiche);
-    ref.current = conPiano(caricato);
+    ref.current = rilevaCambi(conPiano(caricato), oggiLocale(), false, nuovoId, Date.now());
     setStato(ref.current);
     setOggi(oggiLocale());
     setAdesso(Date.now());
@@ -368,8 +373,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         aggiorna((x) => ({
           ...x,
           task: x.task.some((y) => y.id === t.id) ? x.task.map((y) => (y.id === t.id ? t : y)) : [...x.task, t],
-        })),
-      eliminaTask: (id) => aggiorna((x) => ({ ...x, task: x.task.filter((t) => t.id !== id) })),
+        }), true),
+      eliminaTask: (id) => aggiorna((x) => ({ ...x, task: x.task.filter((t) => t.id !== id) }), true),
       impostazioni: (p) => aggiorna((x) => ({ ...x, impostazioni: { ...x.impostazioni, ...p } })),
       setFrase: (areaId, frase) =>
         aggiorna((x) => ({ ...x, aree: x.aree.map((a) => (a.id === areaId ? { ...a, frase } : a)) })),
@@ -420,10 +425,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             ...x.pianoAuto.filter((v) => !(v.taskId === taskId && v.data === data && v.tipo !== "auto")),
             { taskId, data, tipo: attivo ? "fissato" : "escluso" },
           ],
-        })),
+        }), true),
       // Torna tutto automatico: si dimenticano i giorni fissati e tolti da oggi in poi
       ricalcolaPiano: (taskId) =>
-        aggiorna((x) => ({ ...x, pianoAuto: x.pianoAuto.filter((v) => !(v.taskId === taskId && v.tipo !== "auto" && v.data >= oggiLocale())) })),
+        aggiorna((x) => ({ ...x, pianoAuto: x.pianoAuto.filter((v) => !(v.taskId === taskId && v.tipo !== "auto" && v.data >= oggiLocale())) }), true),
       // La proposta scelta nel popup: quei giorni diventano «fissati» (restano come li hai scelti); il resto lo continua a decidere l'app
       fissaGiorniAuto: (taskId, date) =>
         aggiorna((x) => ({
@@ -432,7 +437,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             ...x.pianoAuto.filter((v) => !(v.taskId === taskId && v.tipo !== "auto" && v.data >= oggiLocale())),
             ...date.map((data) => ({ taskId, data, tipo: "fissato" as const })),
           ],
-        })),
+        }), true),
+      // Un cambio di piano fatto da solo: lo confermi (il piano nuovo resta) oppure tieni il giorno di prima, se si può (diventa un giorno fissato)
+      confermaCambioPiano: (id) => aggiorna((x) => confermaCambio(x, id, oggiLocale())),
+      tieniGiornoPiano: (id) => {
+        const c = ref.current.cambiPiano?.find((x) => x.id === id);
+        if (!c || !c.tieniPossibile) return;
+        const oggi0 = oggiLocale();
+        const date = [...new Set([...ref.current.pianoAuto.filter((v) => v.taskId === c.taskId && v.tipo !== "escluso" && v.data >= oggi0 && v.data !== c.a).map((v) => v.data), c.da])];
+        aggiorna((x) => ({
+          ...x,
+          pianoAuto: [...x.pianoAuto.filter((v) => !(v.taskId === c.taskId && v.tipo !== "auto" && v.data >= oggi0)), ...date.map((data) => ({ taskId: c.taskId, data, tipo: "fissato" as const }))],
+        })); // senza «conferma»: gli altri cambi ancora da confermare restano
+      },
       setStanze: (stanze) => aggiorna((x) => ({ ...x, stanze })),
       setVacanza: (vacanza) => aggiorna((x) => ({ ...x, vacanza })),
       salvaEvento: (e) =>
