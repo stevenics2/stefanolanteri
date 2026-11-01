@@ -270,3 +270,9 @@
 - Se `&campioni=` arriva ma non contiene righe leggibili, il server risponde «Sonno non leggibile: ricevuti N caratteri…» (così si distingue da «Nessun dato da salvare», che è la risposta del server vecchio).
 - Il testo del sonno va nel corpo di una richiesta POST (JSON, chiave `campioni`), non nell'indirizzo: un testo lungo a più righe in un GET viene troncato da Comandi rapidi. Va attivata anche l'opzione iOS che permette di condividere molti elementi di Salute. Nel comando, la prima parola di ogni riga è la proprietà **Valore** del campione (Core/Deep/REM/Awake), mentre «Nome» dà solo «Campione di dati sanitari».
 - Provato sull'iPhone: 101 righe → due notti calcolate correttamente (6 h 21 e 3 h 06).
+
+## Popup della mattina al posto delle automazioni
+- La prima apertura di Keepway dopo una pausa di almeno 6 ore (una notte) propone «Buongiorno! Sincronizza i dati» con «Sincronizza» e «Non ora», ma solo se gli ultimi dati dall'iPhone hanno più di 4 ore e se almeno una volta era arrivato qualcosa. «Sincronizza» apre il Comando Rapido `Keepway Salute`.
+- Come si capisce la pausa: l'app segna l'ultimo momento in cui era in uso (`keepway.presenza`, ogni minuto e quando va in secondo piano).
+- Le automazioni a orari fissi (7, 11, 15, 19) e quella di sveglia restano facoltative; la notifica/popup delle 22:30 resta come rete di sicurezza.
+- Provato in browser con l'orologio simulato: popup dopo una notte; non compare con pausa breve, dati freschi o mai sincronizzato.

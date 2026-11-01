@@ -2,7 +2,8 @@
 
 import { RefreshCw } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { PAUSA_NOTTE_MS, pausaDaUltimoUso, segnaPresenza } from "@/lib/presenza";
 import { linkSincronizza, ultimoDatoRicevuto } from "@/lib/salute";
 import { ORA_CONTROLLO_SALUTE } from "@/lib/piano";
 import { useStore } from "@/lib/store";
@@ -22,23 +23,47 @@ const lettoChiuso = () => {
   }
 };
 
-// Dopo le 22:30, se oggi dall'iPhone non è arrivato niente (e almeno una volta era arrivato), un popup ricorda di sincronizzare.
-// «Sincronizza» fa partire il Comando Rapido. Si può chiudere: per oggi non ricompare.
+const DATI_VECCHI_MS = 4 * 3_600_000;
+
+// Due momenti in cui un popup propone di sincronizzare (solo se almeno una volta era arrivato qualcosa dall'iPhone):
+//  - mattina: la prima apertura dopo una lunga pausa (6 ore o più, cioè dopo una notte) se gli ultimi dati sono vecchi;
+//  - sera: dopo le 22:30, se oggi non è arrivato niente.
+// «Sincronizza» fa partire il Comando Rapido. Si può chiudere: la sera per oggi non ricompare, la mattina fino alla prossima notte.
 export default function AvvisoSalute() {
   const { pronto, oggi, adesso } = useStore();
   const dati = useDatiSalute(3);
   const percorso = usePathname();
   const [chiusoOggi, setChiusoOggi] = useState<string | null>(lettoChiuso);
   const [daNotifica] = useState(() => typeof location !== "undefined" && location.search.includes("sincronizza"));
+  // dopo una lunga pausa? (letto all'avvio e ogni volta che si torna nell'app)
+  const [dopoNotte, setDopoNotte] = useState(() => typeof localStorage !== "undefined" && pausaDaUltimoUso() >= PAUSA_NOTTE_MS);
+
+  useEffect(() => {
+    segnaPresenza();
+    const battito = setInterval(() => document.visibilityState === "visible" && segnaPresenza(), 60_000);
+    const cambio = () => {
+      if (document.visibilityState === "hidden") return segnaPresenza();
+      if (pausaDaUltimoUso() >= PAUSA_NOTTE_MS) setDopoNotte(true);
+      segnaPresenza();
+    };
+    document.addEventListener("visibilitychange", cambio);
+    return () => {
+      clearInterval(battito);
+      document.removeEventListener("visibilitychange", cambio);
+    };
+  }, []);
 
   const [h, m] = ORA_CONTROLLO_SALUTE.split(":").map(Number);
   const d = new Date(adesso);
   const passata = d.getHours() * 60 + d.getMinutes() >= h * 60 + m;
   const ultimo = dati?.ultimo ?? ultimoDatoRicevuto();
   const mancano = !!oggi && ultimo !== null && giornoLocale(ultimo) !== oggi;
-  const mostra = pronto && mancano && (passata || daNotifica) && chiusoOggi !== oggi && percorso.startsWith("/oggi");
+  const sera = pronto && mancano && (passata || daNotifica) && chiusoOggi !== oggi && percorso.startsWith("/oggi");
+  const mattina = pronto && dopoNotte && ultimo !== null && adesso - ultimo > DATI_VECCHI_MS && percorso.startsWith("/oggi");
+  const modo: "sera" | "mattina" | null = sera ? "sera" : mattina ? "mattina" : null;
 
   const chiudi = () => {
+    setDopoNotte(false);
     try {
       localStorage.setItem(CHIAVE, oggi);
     } catch {
@@ -48,15 +73,15 @@ export default function AvvisoSalute() {
   };
 
   return (
-    <Presenza dato={mostra ? oggi : null} ms={300}>
-      {(_, uscendo) => (
+    <Presenza dato={modo} ms={300}>
+      {(m, uscendo) => (
         <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6 ${uscendo ? "dissolve" : "entra"}`} role="dialog" aria-label="Nessuna attività ricevuta oggi">
           <div className="w-full max-w-xs rounded-3xl bg-card p-5 text-center shadow-2xl ring-1 ring-ov/10">
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-accent/15 text-accent">
               <RefreshCw size={22} />
             </div>
-            <h2 className="text-lg font-bold">Nessuna attività ricevuta oggi</h2>
-            <p className="mt-1 text-sm text-muted">Sincronizza per portare qui sonno, passi e allenamenti di oggi.</p>
+            <h2 className="text-lg font-bold">{m === "mattina" ? "Buongiorno! Sincronizza i dati" : "Nessuna attività ricevuta oggi"}</h2>
+            <p className="mt-1 text-sm text-muted">{m === "mattina" ? "Porta qui il sonno della notte appena passata e i passi di ieri." : "Sincronizza per portare qui sonno, passi e allenamenti di oggi."}</p>
             <a href={linkSincronizza()} onClick={chiudi} data-suono="nessuno" className="mt-4 block rounded-2xl bg-accent px-4 py-3 text-sm font-semibold text-white">
               Sincronizza
             </a>

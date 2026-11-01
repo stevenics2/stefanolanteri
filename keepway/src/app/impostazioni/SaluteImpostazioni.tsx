@@ -100,7 +100,8 @@ export default function SaluteImpostazioni() {
           <li>Toccalo una volta a mano: l&apos;iPhone chiede i permessi per Salute e per inviare i dati. Per il sonno, in <b>Impostazioni → App → Comandi rapidi</b> bisogna consentire <b>la condivisione di grandi quantità di dati</b>. Poi guarda qui sopra: deve comparire «Ultimo dato ricevuto».</li>
         </ol>
 
-        <h3 className="mt-4 font-semibold">Farlo partire da solo: tre automazioni</h3>
+        <h3 className="mt-4 font-semibold">Farlo partire senza pensarci</h3>
+        <p className="mt-1 text-xs text-muted">Senza fare niente: la <b>prima volta che apri Keepway dopo una notte</b> compare un popup che propone «Sincronizza». Se vuoi che parta anche da solo, in più puoi creare queste automazioni (facoltative).</p>
         <p className="mt-1 text-xs text-muted">In Comandi rapidi → <b>Automazione</b> → <b>+</b>. In tutte scegli <b>Esegui subito</b> (così non chiede conferma) e come azione <b>Esegui comando rapido</b> → <b>Keepway Salute</b>.</p>
         <ol className="mt-2 list-decimal space-y-2 pl-5">
           <li><b>Fine allenamento</b> (Apple Watch: «Allenamento» → «Termina»): subito dopo una corsa o la palestra la task si segna da sola.</li>
