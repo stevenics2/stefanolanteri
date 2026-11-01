@@ -358,3 +358,6 @@
 
 ## Piano turni / account / backup (solo discussione, nessun codice)
 - Il piano completo, i fatti sul codice, le decisioni, le questioni aperte e il prompt per creare l'Excel dei turni stanno in `docs/turni-multiutente.md`. La discussione si porta avanti su un'altra scheda; qui si continua a parlare solo di Keepway.
+
+## «Pianificazione… → Pianificato» nel popup della pianificazione automatica
+- Quando nel popup scegli la proposta e tocchi «Pianifica», il contenuto del popup cambia: per circa 1 secondo «Pianificazione…» con un anello verde che gira, poi «Pianificato» con una grande spunta verde che si disegna (con un piccolo rimbalzo e un bagliore) e «N giorni nel tuo piano», con il suono di salita. Dopo circa 1,2 secondi la task si salva e il popup si chiude. Con le animazioni spente nelle Impostazioni, la conferma è immediata.

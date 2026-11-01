@@ -11,6 +11,8 @@ import type { PianoVoce, Task } from "@/lib/tipi";
 import Presenza from "./Presenza";
 
 const ELABORAZIONE_MS = 1500;
+const SALVATAGGIO_MS = 1000; // «Pianificazione…»
+const PIANIFICATO_MS = 1200; // «Pianificato» con la spunta verde, poi il popup si chiude
 
 type Esito = { indice: number; voci: PianoVoce[] };
 
@@ -36,6 +38,28 @@ function Contenuto({
   const [viste, setViste] = useState<number[]>([0]);
   const scorri = useRef<HTMLDivElement>(null);
   const suoni = stato.impostazioni.suoni;
+  const animazioni = stato.impostazioni.animazioni;
+  const [fase, setFase] = useState<"scelta" | "salvo" | "fatto">("scelta");
+  const [giorniScelti, setGiorniScelti] = useState(0);
+  const timer = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => {
+    const t = timer.current;
+    return () => t.forEach(clearTimeout);
+  }, []);
+
+  // «Pianifica»: prima «Pianificazione…», poi «Pianificato» con la spunta verde, e solo dopo si salva e si chiude.
+  const conferma = (e: Esito) => {
+    if (!animazioni) return onConferma(e);
+    setGiorniScelti(e.voci.length);
+    setFase("salvo");
+    timer.current.push(
+      setTimeout(() => {
+        setFase("fatto");
+        if (suoni) suono("slot");
+      }, SALVATAGGIO_MS),
+      setTimeout(() => onConferma(e), SALVATAGGIO_MS + PIANIFICATO_MS),
+    );
+  };
 
   // Le proposte si calcolano subito (sono rapide); la «elaborazione» è una pausa con animazione
   const elenco: Proposta[] = useMemo(() => proposte(stato, bozza, oggi, 3), [stato, bozza, oggi]);
@@ -64,7 +88,31 @@ function Contenuto({
   return (
     <div className={`fixed inset-0 z-[70] flex items-center justify-center bg-black/65 px-4 backdrop-blur-sm ${uscendo ? "vela-fuori" : "vela-dentro"}`}>
       <div className={`relative w-full max-w-sm overflow-hidden rounded-3xl border border-ov/15 bg-card p-5 shadow-2xl ${uscendo ? "carta-fuori" : "carta-dentro"}`}>
-        {!pronta ? (
+        {fase !== "scelta" ? (
+          <div className="py-8 text-center" aria-live="polite">
+            <div className="relative mx-auto flex h-24 w-24 items-center justify-center">
+              {fase === "salvo" ? (
+                <>
+                  <span className="pianifica-anello absolute inset-0 rounded-full border-[4px]" style={{ borderColor: "rgba(34,197,94,0.22)", borderTopColor: "#22c55e" }} />
+                  <CalendarClock size={28} className="text-foreground" />
+                </>
+              ) : (
+                <svg key="spunta" viewBox="0 0 96 96" className="spunta-pop h-24 w-24" style={{ filter: "drop-shadow(0 0 14px rgba(34,197,94,0.55))" }}>
+                  <circle cx="48" cy="48" r="42" fill="rgba(34,197,94,0.15)" stroke="#22c55e" strokeWidth="5" />
+                  <path d="M28 49 L43 64 L69 34" pathLength={1} fill="none" stroke="#22c55e" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" className="spunta-segno" />
+                </svg>
+              )}
+            </div>
+            {fase === "salvo" ? (
+              <div className="dissolve mt-4 text-xl font-bold">Pianificazione<span className="pianifica-punti" /></div>
+            ) : (
+              <div key="fatto" className="entra mt-4">
+                <div className="text-2xl font-black text-green-400">Pianificato</div>
+                <div className="mt-1 text-sm text-muted">{giorniScelti > 0 ? `${giorniScelti} ${giorniScelti === 1 ? "giorno" : "giorni"} nel tuo piano` : ""}</div>
+              </div>
+            )}
+          </div>
+        ) : !pronta ? (
           <div className="py-4 text-center">
             <div className="relative mx-auto flex h-20 w-20 items-center justify-center">
               <span className="pianifica-anello absolute inset-0 rounded-full border-[3px]" style={{ borderColor: "rgba(250,17,79,0.25)", borderTopColor: "#fa114f" }} />
@@ -137,7 +185,7 @@ function Contenuto({
               {elenco.length > 0 && (
                 <button
                   data-suono="ok"
-                  onClick={() => onConferma({ indice, voci: elenco[Math.min(indice, elenco.length - 1)].voci })}
+                  onClick={() => conferma({ indice, voci: elenco[Math.min(indice, elenco.length - 1)].voci })}
                   className="w-full rounded-2xl bg-accent py-3.5 text-lg font-bold text-black"
                 >
                   Pianifica
