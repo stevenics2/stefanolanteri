@@ -7,6 +7,7 @@ import { useStore } from "@/lib/store";
 import { useSalute } from "@/lib/useSalute";
 import { debitoDiSonno, giudizioRegolarita, notti, oreEMinuti, regolarita } from "@/lib/sonnoProgressi";
 import { useContaSu } from "@/lib/useContaSu";
+import Approfondisci from "./Approfondisci";
 import GraficoLinea, { TessereKpi } from "./GraficoLinea";
 
 const NOTTI = 14;
@@ -49,28 +50,6 @@ export default function Sonno() {
     <div className="space-y-2">
       <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted"><Moon size={15} /> Sonno</h2>
 
-      <div className="rounded-2xl bg-card p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-xs text-muted">Debito di sonno</div>
-            <div className="text-4xl font-black tabular-nums" style={{ color: colDebito }}>{oreEMinuti(debitoMostrato)}</div>
-          </div>
-          <div className="text-right">
-            <div className="text-xs text-muted">Obiettivo a notte</div>
-            <div className="mt-1 flex items-center justify-end gap-2">
-              <button aria-label="Meno" data-suono="nessuno" disabled={obiettivo <= 360} onClick={() => impostazioni({ obiettivoSonnoMin: obiettivo - 30 })} className="rounded-full bg-ov/10 p-1.5 disabled:opacity-30"><Minus size={14} /></button>
-              <span className="w-14 text-center text-lg font-bold">{oreEMinuti(obiettivo)}</span>
-              <button aria-label="Più" data-suono="nessuno" disabled={obiettivo >= 540} onClick={() => impostazioni({ obiettivoSonnoMin: obiettivo + 30 })} className="rounded-full bg-ov/10 p-1.5 disabled:opacity-30"><Plus size={14} /></button>
-            </div>
-          </div>
-        </div>
-        <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-ov/10">
-          <div className="barra-cresce h-full rounded-full" style={{ width: `${Math.min(100, Math.round((debito.debito / 480) * 100))}%`, minWidth: debito.debito ? 6 : 0, background: colDebito }} />
-        </div>
-        <p className="mt-2 text-sm text-muted">{stato_}</p>
-        <p className="mt-1 text-[11px] text-muted">Ogni notte sotto l&apos;obiettivo aumenta il debito. Ogni notte sopra lo riduce, ma solo della metà: il sonno perso non si recupera tutto in una notte. Le notti senza dato non contano.</p>
-      </div>
-
       <GraficoLinea
         titolo="Ore di sonno"
         sotto={`${buone}/${conDato.length} notti sopra l'obiettivo`}
@@ -93,12 +72,37 @@ export default function Sonno() {
         />
 
       <div className="rounded-2xl bg-card p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-xs text-muted">Debito di sonno</div>
+            <div className="text-4xl font-black tabular-nums" style={{ color: colDebito }}>{oreEMinuti(debitoMostrato)}</div>
+          </div>
+          <div className="text-right">
+            <div className="text-xs text-muted">Obiettivo a notte</div>
+            <div className="mt-1 flex items-center justify-end gap-2">
+              <button aria-label="Meno" data-suono="nessuno" disabled={obiettivo <= 360} onClick={() => impostazioni({ obiettivoSonnoMin: obiettivo - 30 })} className="rounded-full bg-ov/10 p-1.5 disabled:opacity-30"><Minus size={14} /></button>
+              <span className="w-14 text-center text-lg font-bold">{oreEMinuti(obiettivo)}</span>
+              <button aria-label="Più" data-suono="nessuno" disabled={obiettivo >= 540} onClick={() => impostazioni({ obiettivoSonnoMin: obiettivo + 30 })} className="rounded-full bg-ov/10 p-1.5 disabled:opacity-30"><Plus size={14} /></button>
+            </div>
+          </div>
+        </div>
+        <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-ov/10">
+          <div className="barra-cresce h-full rounded-full" style={{ width: `${Math.min(100, Math.round((debito.debito / 480) * 100))}%`, minWidth: debito.debito ? 6 : 0, background: colDebito }} />
+        </div>
+        <p className="mt-2 text-sm text-muted">{stato_}</p>
+        <Approfondisci>
+          <p>Ogni notte sotto l&apos;obiettivo aumenta il debito. Ogni notte sopra lo riduce, ma solo della metà: il sonno perso non si recupera tutto in una notte.</p>
+          <p>Le notti senza dato non contano: non ti penalizzo se non hai sincronizzato.</p>
+        </Approfondisci>
+      </div>
+
+      <div className="rounded-2xl bg-card p-4">
         <div className="text-sm text-muted">Regolarità (ultime 7 notti)</div>
         <div className="mt-2 grid grid-cols-2 gap-2">
           <Regola titolo="Ora del letto" sd={reg.letto} />
           <Regola titolo="Sveglia" sd={reg.sveglia} />
         </div>
-        <p className="mt-2 text-[11px] text-muted">Con i turni gli orari cambiano per forza: conta soprattutto non lasciare mai che la notte diventi troppo corta.</p>
+        <Approfondisci><p>Misura quanto variano l&apos;ora del letto e della sveglia nelle ultime 7 notti (± minuti). Con i turni gli orari cambiano per forza: conta soprattutto non lasciare che la notte diventi troppo corta.</p></Approfondisci>
       </div>
     </div>
   );

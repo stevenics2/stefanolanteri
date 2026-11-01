@@ -305,3 +305,10 @@
 - Ordine: Livello e XP (come prima), Allenamenti, Sonno, Disciplina, Calma e mente (lettura, poi meditazione), calendario (più piccolo, da rivedere), record, passi, traguardi, archivio.
 - Grafici (`GraficoLinea`, `TessereKpi`): linea luminosa con i punti, griglia tratteggiata, riga dell'obiettivo, variazione in alto a destra, linea che si disegna all'apertura; sotto, tessere con numeri grandi. Allenamenti: allenamenti per settimana (8 settimane concluse; variazione = ultime 4 contro le 4 prima). Sonno: ore per notte (14 notti) con la riga dell'obiettivo. Disciplina: andamento dell'indice nelle ultime 8 settimane dentro la sua scheda.
 - Disciplina: resta una scheda con il punteggio e le cinque barre (sonno, allenamento, ordine, lettura, meditazione), ora sotto Allenamenti e Sonno e con il grafico dell'andamento.
+
+## Progressi: stile «Garmin», tendine e Disciplina compatta
+- **Livello**: mostrina con il grado (scudo), sei tacche dei gradi, XP che salgono, chip «+N XP oggi», XP al giorno, barra con il riflesso e percentuale, giorni stimati al prossimo grado, XP degli ultimi 7 giorni a mini-barre; la barra pulsa quando manca poco (oltre l'85%).
+- **Sonno**: ordine grafico → tessere → debito di sonno → regolarità. Le spiegazioni sono in «Approfondisci» (tendina chiusa, `Approfondisci.tsx`).
+- **Tessere** più piccole (valore da 20 px).
+- **Disciplina**: a sinistra le cinque voci con le barre, a destra il quadrante ad arco (270°, fasce di colore rosso/giallo/lime/verde/oro) con il punteggio e il livello, sotto il grafico dell'andamento e una frase del giorno (`fraseDisciplina`: tono diretto, scelta in base alla fascia e fissa per la giornata). I dettagli del calcolo stanno in «Approfondisci».
+- Il carattere resta quello attuale (niente Barlow).

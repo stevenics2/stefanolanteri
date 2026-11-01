@@ -74,3 +74,19 @@ export function calcolaDisciplina(s: Stato, salute: GiornoSalute[], oggi: string
   const miglioraSubito = voci.filter((x) => x.punteggio !== null && x.punteggio < 100).sort((a, b) => b.peso * (100 - b.punteggio!) - a.peso * (100 - a.punteggio!))[0] ?? null;
   return { punteggio, prima, voci, livello: punteggio === null ? "—" : livelloDisciplina(punteggio), miglioraSubito };
 }
+
+// Una frase del giorno per ogni fascia: tono diretto, mai offensivo. Si sceglie «a caso» ma resta la stessa per tutta la giornata.
+const FRASI: { fino: number; frasi: string[] }[] = [
+  { fino: 40, frasi: ["Ehi, cosa succede? Riparti da una cosa sola, adesso.", "Nessun dramma: ripartire oggi vale più di rimandare a lunedì.", "Il punto più basso è il posto migliore da cui risalire. Una task."] },
+  { fino: 60, frasi: ["Si può fare meglio, e lo sai. Cosa ti sta frenando?", "A metà strada non ha mai vinto nessuno: spingi.", "Sei in cammino: alza di un gradino lo standard di oggi."] },
+  { fino: 75, frasi: ["Buona base. Sai che hai ancora di più da dare.", "Solido. Ora il passo successivo: la voce più debole.", "Stai tenendo: non accontentarti."] },
+  { fino: 90, frasi: ["Avanti così. Ti tengo d'occhio.", "Costante e concreto. Non è ancora il tuo massimo.", "Bel ritmo: difendilo anche nei giorni storti."] },
+  { fino: 101, frasi: ["Che drago! Questo è lo standard: difendilo.", "Livello altissimo. Non mollare adesso.", "Forma da missione. Continua esattamente così."] },
+];
+
+export function fraseDisciplina(punteggio: number, giorno: string): string {
+  const fascia = FRASI.find((f) => punteggio < f.fino) ?? FRASI[FRASI.length - 1];
+  let h = 0;
+  for (const c of giorno) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return fascia.frasi[h % fascia.frasi.length];
+}

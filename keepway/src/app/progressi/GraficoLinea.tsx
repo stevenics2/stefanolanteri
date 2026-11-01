@@ -7,7 +7,7 @@ export type PuntoGrafico = { etichetta: string; v: number | null };
 // Un grafico a linea come nelle app di allenamento: linea luminosa con i punti, griglia tratteggiata, riga dell'obiettivo,
 // titolo e variazione in alto. La linea si disegna da sinistra a destra.
 export default function GraficoLinea({
-  titolo, grande, grandeColore, sotto, colore, punti, yMin, yMax, passo, formatoY = (n) => String(n), riferimento, annidato = false,
+  titolo, grande, grandeColore, sotto, colore, punti, yMin, yMax, passo, formatoY = (n) => String(n), riferimento, annidato = false, alto = 170,
 }: {
   titolo: string;
   grande?: string; // in alto a destra (es. «+33%»)
@@ -21,10 +21,11 @@ export default function GraficoLinea({
   formatoY?: (n: number) => string;
   riferimento?: { v: number; etichetta: string };
   annidato?: boolean;
+  alto?: number; // altezza del disegno
 }) {
   const id = useId().replace(/:/g, "");
   const W = 340;
-  const H = 170;
+  const H = alto;
   const sx = 34;
   const dx = 12;
   const top = 12;
@@ -98,9 +99,9 @@ export function TessereKpi({ voci }: { voci: { icona: React.ReactNode; titolo: s
   return (
     <div className="grid grid-cols-2 gap-2">
       {voci.map((v) => (
-        <div key={v.titolo} className="rounded-2xl bg-card p-3">
-          <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide"><span style={{ color: v.colore }}>{v.icona}</span> {v.titolo}</div>
-          <div className="mt-1 text-3xl font-black tabular-nums leading-none">{v.valore}<span className="ml-0.5 text-base font-bold text-muted">{v.unita}</span></div>
+        <div key={v.titolo} className="rounded-xl bg-card px-3 py-2">
+          <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-muted"><span style={{ color: v.colore }}>{v.icona}</span> {v.titolo}</div>
+          <div className="mt-0.5 text-xl font-black tabular-nums leading-none">{v.valore}<span className="ml-0.5 text-xs font-bold text-muted">{v.unita}</span></div>
         </div>
       ))}
     </div>

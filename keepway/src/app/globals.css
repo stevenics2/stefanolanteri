@@ -435,3 +435,11 @@ button:not(:disabled):active, a[href]:active {
 @keyframes puntoCompare { from { opacity: 0; transform: scale(0.3); } to { opacity: 1; transform: none; } }
 .punto-compare { animation: puntoCompare 0.4s var(--molla) both; transform-box: fill-box; transform-origin: center; }
 @media (prefers-reduced-motion: reduce) { .linea-disegna, .punto-compare { animation-duration: 0.01ms; } }
+
+/* «Approfondisci»: una tendina che si apre senza salti (altezza animata) */
+.tendina { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.35s var(--posa); }
+.tendina[data-aperta="true"] { grid-template-rows: 1fr; }
+.tendina > div { overflow: hidden; }
+@media (prefers-reduced-motion: reduce) { .tendina { transition-duration: 0.01ms; } }
+@keyframes respira { 0%, 100% { box-shadow: 0 0 0 0 rgba(245, 165, 36, 0.0); } 50% { box-shadow: 0 0 14px 2px rgba(245, 165, 36, 0.55); } }
+.respira { animation: respira 2s ease-in-out infinite; }
