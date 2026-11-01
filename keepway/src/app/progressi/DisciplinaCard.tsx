@@ -6,6 +6,8 @@ import { calcolaDisciplina } from "@/lib/disciplina";
 import { useStore } from "@/lib/store";
 import { useContaSu } from "@/lib/useContaSu";
 import { useSalute } from "@/lib/useSalute";
+import { dataPiù, MESI_BREVI } from "@/lib/date";
+import GraficoLinea from "./GraficoLinea";
 
 const R = 54;
 const CIRC = 2 * Math.PI * R;
@@ -17,6 +19,10 @@ export default function DisciplinaCard() {
   const salute = useSalute(40);
   const anim = stato.impostazioni.animazioni;
   const d = calcolaDisciplina(stato, salute ?? [], oggi);
+  const andamento = Array.from({ length: 8 }, (_, i) => {
+    const fine = dataPiù(oggi, -7 * (7 - i));
+    return { etichetta: `${Number(fine.slice(8))} ${MESI_BREVI[Number(fine.slice(5, 7)) - 1]}`, v: calcolaDisciplina(stato, salute ?? [], fine).punteggio };
+  });
   const [montato, setMontato] = useState(false);
   useEffect(() => {
     const id = requestAnimationFrame(() => setMontato(true));
@@ -54,6 +60,8 @@ export default function DisciplinaCard() {
           {d.miglioraSubito && <div className="mt-2 text-xs text-muted">Il modo più rapido per salire: <b className="text-foreground">{d.miglioraSubito.nome.toLowerCase()}</b> ({d.miglioraSubito.punteggio}).</div>}
         </div>
       </div>
+
+      <GraficoLinea annidato titolo="Andamento" sotto="ultime 8 settimane" colore={colore} punti={andamento} yMin={0} yMax={100} passo={25} grande={diff === null ? undefined : `${diff > 0 ? "+" : ""}${diff}`} grandeColore={diff === null ? undefined : diff >= 0 ? "#4ade80" : "#f87171"} />
 
       <div className="mt-4 space-y-2.5">
         {d.voci.map((v) => (

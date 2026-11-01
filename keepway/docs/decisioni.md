@@ -300,3 +300,8 @@
 - Durata 20 / 30 / 45 minuti (30 consigliato: oltre 45 si rischia di svegliarsi intontiti). Il momento: prima scelta alle 14:00, poi dalle 13:30 alle 15:00, dentro una finestra libera tra turni, appuntamenti e sonno, e comunque almeno 6 ore prima di andare a letto.
 - «Pianifica» crea una task di oggi «Power nap» (area Self care, 15 punti, icona luna) con il suo momento e il promemoria. «Non oggi» la nasconde per il resto della giornata.
 - Provato in browser con l'orologio simulato (notte corta, notte normale, pomeriggio tardi).
+
+## Progressi: nuovo ordine e grafici in stile app di allenamento
+- Ordine: Livello e XP (come prima), Allenamenti, Sonno, Disciplina, Calma e mente (lettura, poi meditazione), calendario (più piccolo, da rivedere), record, passi, traguardi, archivio.
+- Grafici (`GraficoLinea`, `TessereKpi`): linea luminosa con i punti, griglia tratteggiata, riga dell'obiettivo, variazione in alto a destra, linea che si disegna all'apertura; sotto, tessere con numeri grandi. Allenamenti: allenamenti per settimana (8 settimane concluse; variazione = ultime 4 contro le 4 prima). Sonno: ore per notte (14 notti) con la riga dell'obiettivo. Disciplina: andamento dell'indice nelle ultime 8 settimane dentro la sua scheda.
+- Disciplina: resta una scheda con il punteggio e le cinque barre (sonno, allenamento, ordine, lettura, meditazione), ora sotto Allenamenti e Sonno e con il grafico dell'andamento.

@@ -428,3 +428,10 @@ button:not(:disabled):active, a[href]:active {
 .compare-piano > div { overflow: hidden; min-height: 0; }
 .compare-piano.visibile { grid-template-rows: 1fr; opacity: 1; filter: blur(0); }
 @media (prefers-reduced-motion: reduce) { .compare-piano { transition-duration: 0.01ms; } }
+
+/* Le linee dei grafici si disegnano da sinistra a destra quando compaiono */
+@keyframes disegna { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.linea-disegna { stroke-dasharray: 1; animation: disegna 1.3s var(--posa) both; }
+@keyframes puntoCompare { from { opacity: 0; transform: scale(0.3); } to { opacity: 1; transform: none; } }
+.punto-compare { animation: puntoCompare 0.4s var(--molla) both; transform-box: fill-box; transform-origin: center; }
+@media (prefers-reduced-motion: reduce) { .linea-disegna, .punto-compare { animation-duration: 0.01ms; } }

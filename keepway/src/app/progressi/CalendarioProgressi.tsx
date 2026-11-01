@@ -65,25 +65,25 @@ export default function CalendarioProgressi() {
   };
 
   return (
-    <div className="rounded-2xl bg-card p-4">
+    <div className="rounded-2xl bg-card p-3">
       <div className="flex items-center justify-between">
         <button aria-label="Mese precedente" data-suono="nessuno" onClick={() => { setVista((v) => spostaMese(v.anno, v.mese, -1)); setScelto(null); }} className="rounded-full bg-ov/10 p-2"><ChevronLeft size={16} /></button>
         <div className="text-center">
-          <div className="text-lg font-bold first-letter:uppercase">{MESI_LUNGHI[vista.mese]} {vista.anno}</div>
+          <div className="text-base font-bold first-letter:uppercase">{MESI_LUNGHI[vista.mese]} {vista.anno}</div>
           <div className="text-xs text-muted">{faiTotale} {faiTotale === 1 ? "giornata piena" : "giornate piene"}</div>
         </div>
         <button aria-label="Mese successivo" data-suono="nessuno" disabled={vista.anno === a0 && vista.mese === m0 - 1} onClick={() => { setVista((v) => spostaMese(v.anno, v.mese, 1)); setScelto(null); }} className="rounded-full bg-ov/10 p-2 disabled:opacity-30"><ChevronRight size={16} /></button>
       </div>
 
-      <div className="mt-3 grid grid-cols-7 gap-1.5 text-center text-[10px] text-muted">{SETTIMANA.map((x, i) => <div key={i}>{x}</div>)}</div>
-      <div key={`${vista.anno}-${vista.mese}`} className="stagger mt-1 grid grid-cols-7 gap-1.5">
+      <div className="mt-3 grid grid-cols-7 gap-1 text-center text-[10px] text-muted">{SETTIMANA.map((x, i) => <div key={i}>{x}</div>)}</div>
+      <div key={`${vista.anno}-${vista.mese}`} className="stagger mt-1 grid grid-cols-7 gap-1">
         {Array.from({ length: vuotiPrima }, (_, i) => <div key={`v${i}`} />)}
         {celle.map((c) => (
           <button
             key={c.data}
             disabled={c.futuro}
             onClick={() => setScelto(scelto === c.data ? null : c.data)}
-            className={`relative flex aspect-square items-center justify-center rounded-lg text-xs font-semibold transition-transform active:scale-90 ${c.data === oggi ? "ring-2 ring-accent" : ""} ${scelto === c.data ? "outline outline-2 outline-foreground" : ""}`}
+            className={`relative flex h-7 items-center justify-center rounded-md text-[11px] font-semibold transition-transform active:scale-90 ${c.data === oggi ? "ring-2 ring-accent" : ""} ${scelto === c.data ? "outline outline-2 outline-foreground" : ""}`}
             style={{ background: colore(c), color: c.piena ? "#1a1a1a" : undefined }}
           >
             {c.piena ? <Check size={15} strokeWidth={3} /> : c.n}

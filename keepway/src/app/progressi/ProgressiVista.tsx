@@ -4,6 +4,7 @@ import { Flame } from "lucide-react";
 import { dataPiù, GIORNI_LUNGHI, giornoSettimana } from "@/lib/date";
 import { serie } from "@/lib/regole";
 import { useStore } from "@/lib/store";
+import Livello from "../components/Livello";
 import SaluteCard from "../components/SaluteCard";
 import Abitudine from "./Abitudine";
 import Allenamenti from "./Allenamenti";
@@ -11,7 +12,6 @@ import DisciplinaCard from "./DisciplinaCard";
 import CalendarioProgressi from "./CalendarioProgressi";
 import Medaglie from "./Medaglie";
 import Record from "./Record";
-import Riepilogo from "./Riepilogo";
 import Sonno from "./Sonno";
 
 export default function ProgressiVista() {
@@ -37,13 +37,13 @@ export default function ProgressiVista() {
   return (
     <section className="stagger space-y-5">
       <h1 className="text-2xl font-bold">Progressi</h1>
-      <DisciplinaCard />
+      <Livello />
 
-      <Riepilogo />
+      <Allenamenti />
 
       <Sonno />
 
-      <Allenamenti />
+      <DisciplinaCard />
 
       <div className="space-y-2">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Calma e mente</h2>

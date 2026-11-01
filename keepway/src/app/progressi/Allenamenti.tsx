@@ -2,16 +2,17 @@
 
 import { Dumbbell, Flame, Footprints, Trophy } from "lucide-react";
 import { useEffect, useState } from "react";
-import { dataPiù, giornoSettimana, GIORNI_LUNGHI, inizioSettimana } from "@/lib/date";
-import { dataBreve } from "@/lib/eventi";
+import { dataPiù, giornoSettimana, GIORNI_LUNGHI, inizioSettimana, MESI_BREVI } from "@/lib/date";
 import { tipoDellaTask } from "@/lib/saluteAuto";
 import { useStore } from "@/lib/store";
 import { ALLENAMENTI_A_SETTIMANA as OBIETTIVO, èAllenamento, settimaneDiAllenamento } from "@/lib/traguardi";
 import { useContaSu } from "@/lib/useContaSu";
+import GraficoLinea, { TessereKpi } from "./GraficoLinea";
 
 const R = 46;
 const CIRC = 2 * Math.PI * R;
 const SETTIMANE = 8;
+const breve = (d: string) => `${Number(d.slice(8))} ${MESI_BREVI[Number(d.slice(5, 7)) - 1]}`;
 
 // Gli allenamenti: l'obiettivo è almeno 3 a settimana. Più ti alleni, più sei in salute: oltre il 3 l'anello diventa oro.
 export default function Allenamenti() {
@@ -23,13 +24,17 @@ export default function Allenamenti() {
   const dettaglio = settimaneDiAllenamento(stato, oggi);
 
   const settimane = Array.from({ length: SETTIMANE }, (_, i) => {
-    const inizio = dataPiù(lunedi, (i - (SETTIMANE - 1)) * 7);
+    const inizio = dataPiù(lunedi, (i - SETTIMANE) * 7); // solo settimane concluse: quella in corso è nell'anello
     const fine = dataPiù(inizio, 6);
     const n = fatti.filter((c) => c.data >= inizio && c.data <= fine).length;
-    return { inizio, n, corrente: inizio === lunedi };
+    return { inizio, n };
   });
-  const questa = settimane[SETTIMANE - 1].n;
-  const max = Math.max(OBIETTIVO + 1, ...settimane.map((s) => s.n));
+  const questa = fatti.filter((c) => c.data >= lunedi && c.data <= dataPiù(lunedi, 6)).length;
+  const yMax = Math.max(4, Math.ceil(Math.max(...settimane.map((s) => s.n)) / (Math.max(...settimane.map((s) => s.n)) > 6 ? 2 : 1)) * (Math.max(...settimane.map((s) => s.n)) > 6 ? 2 : 1));
+  const media = (v: number[]) => v.reduce((t, n) => t + n, 0) / v.length;
+  const ultime4 = media(settimane.slice(4).map((s) => s.n));
+  const prime4 = media(settimane.slice(0, 4).map((s) => s.n));
+  const variazione = prime4 > 0 ? Math.round(((ultime4 - prime4) / prime4) * 100) : null; // ultime 4 settimane contro le 4 prima
   const mancano = Math.max(0, OBIETTIVO - questa);
   const giorniRimasti = 7 - ((giornoSettimana(oggi) + 6) % 7); // oggi compreso, fino a domenica
   const raggiunto = questa >= OBIETTIVO;
@@ -38,7 +43,6 @@ export default function Allenamenti() {
   const corse = contaTipo("corsa");
   const palestra = contaTipo("palestra");
   const altro = contaTipo("altro");
-  const minuti = fatti.reduce((t, c) => t + c.minuti, 0);
 
   const [montato, setMontato] = useState(false);
   useEffect(() => {
@@ -94,42 +98,27 @@ export default function Allenamenti() {
         </div>
       </div>
 
-      <div className="rounded-2xl bg-card p-4">
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-muted">Ultime {SETTIMANE} settimane</div>
-          <div className="flex items-center gap-1 text-sm font-semibold" style={{ color: dettaglio.inCorso > 0 ? "#ffb340" : undefined }}><Flame size={15} /> {dettaglio.inCorso} {dettaglio.inCorso === 1 ? "settimana" : "settimane"} di fila</div>
-        </div>
-        <div className="relative mt-3 flex h-28 items-end gap-2">
-          <div className="pointer-events-none absolute inset-x-0 border-t border-dashed border-green-400/60" style={{ bottom: `${(OBIETTIVO / max) * 100}%` }}>
-            <span className="absolute -top-2 right-0 z-10 rounded bg-card px-1 text-[10px] text-green-400">obiettivo {OBIETTIVO}</span>
-          </div>
-          {settimane.map((s) => (
-            <div key={s.inizio} className="flex h-full flex-1 flex-col items-center gap-1">
-              <div className="flex w-full flex-1 items-end">
-                <div className="barra-sale w-full rounded-md" style={{ height: `${(s.n / max) * 100}%`, minHeight: s.n ? 4 : 0, background: s.n >= OBIETTIVO ? "#22c55e" : s.corrente ? "#ef4444" : "#f5a524", opacity: s.corrente ? 1 : 0.85 }} />
-              </div>
-              <div className="text-[10px] tabular-nums text-muted">{s.n}</div>
-            </div>
-          ))}
-        </div>
-        <div className="mt-1 flex justify-between text-[10px] text-muted"><span>dal {dataBreve(settimane[0].inizio)}</span><span>questa settimana →</span></div>
-        {dettaglio.migliore > 0 && <div className="mt-2 text-xs text-muted">La tua serie migliore: {dettaglio.migliore} {dettaglio.migliore === 1 ? "settimana" : "settimane"} di fila con almeno {OBIETTIVO} allenamenti.</div>}
-      </div>
-
-      <div className="grid grid-cols-3 gap-2 text-center">
-        <Numero icona={<Footprints size={16} />} valore={corse} etichetta="corse" colore="#38bdf8" />
-        <Numero icona={<Dumbbell size={16} />} valore={palestra + altro} etichetta="palestra e altro" colore="#ef4444" />
-        <Numero icona={<Flame size={16} />} valore={minuti} etichetta="minuti in tutto" colore="#ffb340" />
-      </div>
+      <GraficoLinea
+        titolo="Allenamenti a settimana"
+        sotto={`ultime ${SETTIMANE} settimane concluse`}
+        grande={variazione === null ? undefined : `${variazione > 0 ? "+" : ""}${variazione}%`}
+        grandeColore={variazione === null ? undefined : variazione >= 0 ? "#4ade80" : "#f87171"}
+        colore="#ef4444"
+        punti={settimane.map((s) => ({ etichetta: breve(s.inizio), v: s.n }))}
+        yMin={0}
+        yMax={yMax}
+        passo={yMax > 6 ? 2 : 1}
+        riferimento={{ v: OBIETTIVO, etichetta: `obiettivo ${OBIETTIVO}` }}
+      />
+      <TessereKpi
+        voci={[
+          { icona: <Dumbbell size={14} />, titolo: "Questa settimana", valore: `${questa}`, unita: `/${OBIETTIVO}`, colore: "#ef4444" },
+          { icona: <Flame size={14} />, titolo: "Serie", valore: `${dettaglio.inCorso}`, unita: dettaglio.inCorso === 1 ? " sett." : " sett.", colore: "#ffb340" },
+          { icona: <Footprints size={14} />, titolo: "Corse", valore: `${corse}`, colore: "#38bdf8" },
+          { icona: <Dumbbell size={14} />, titolo: "Palestra e altro", valore: `${palestra + altro}`, colore: "#ef4444" },
+        ]}
+      />
     </div>
   );
 }
 
-function Numero({ icona, valore, etichetta, colore }: { icona: React.ReactNode; valore: number; etichetta: string; colore: string }) {
-  return (
-    <div className="rounded-2xl bg-card p-3">
-      <div className="mx-auto flex w-fit items-center gap-1.5" style={{ color: colore }}>{icona}<span className="text-xl font-black tabular-nums">{valore}</span></div>
-      <div className="mt-0.5 text-[10px] text-muted">{etichetta}</div>
-    </div>
-  );
-}

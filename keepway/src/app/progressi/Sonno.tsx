@@ -1,23 +1,20 @@
 "use client";
 
-import { Minus, Moon, Plus } from "lucide-react";
+import { BedDouble, Minus, Moon, Plus, TrendingDown, TrendingUp } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
 import { dataPiù } from "@/lib/date";
-import { dataBreve } from "@/lib/eventi";
 import { useStore } from "@/lib/store";
 import { useSalute } from "@/lib/useSalute";
 import { debitoDiSonno, giudizioRegolarita, notti, oreEMinuti, regolarita } from "@/lib/sonnoProgressi";
 import { useContaSu } from "@/lib/useContaSu";
+import GraficoLinea, { TessereKpi } from "./GraficoLinea";
 
 const NOTTI = 14;
-const SOGLIA_CORTA_MIN = 6 * 60;
 
 // Il sonno degli ultimi 14 giorni: le notti a barre, il debito di sonno, la regolarità. Si basa sui dati dell'iPhone (vedi Impostazioni → Salute).
 export default function Sonno() {
   const { stato, oggi, impostazioni } = useStore();
   const dati = useSalute(NOTTI + 14);
-  const [scelta, setScelta] = useState<string | null>(null);
   const obiettivo = stato.impostazioni.obiettivoSonnoMin;
   const anim = stato.impostazioni.animazioni;
   const tutte = notti(dati ?? []);
@@ -43,11 +40,10 @@ export default function Sonno() {
   const migliore = conDato.reduce((m, s) => (!m || s.n!.minuti > m.n!.minuti ? s : m), null as (typeof conDato)[number] | null);
   const peggiore = conDato.reduce((m, s) => (!m || s.n!.minuti < m.n!.minuti ? s : m), null as (typeof conDato)[number] | null);
   const buone = conDato.filter((s) => s.n!.minuti >= obiettivo).length;
-  const max = Math.max(obiettivo + 90, ...conDato.map((s) => s.n!.minuti));
   const reg = regolarita(tutte);
   const colDebito = debito.debito < 60 ? "#4ade80" : debito.debito < 240 ? "#fbbf24" : "#f87171";
   const stato_ = debito.debito < 60 ? "Sei in pari: continua così." : debito.debito < 240 ? "Un debito piccolo: una o due notti più lunghe lo riducono." : "Debito alto: stai accumulando stanchezza. Conta la costanza, non una notte sola.";
-  const dettaglio = scelta ? perGiorno.get(scelta) ?? null : null;
+  const ultima = tutte[tutte.length - 1] ?? null;
 
   return (
     <div className="space-y-2">
@@ -75,43 +71,26 @@ export default function Sonno() {
         <p className="mt-1 text-[11px] text-muted">Ogni notte sotto l&apos;obiettivo aumenta il debito. Ogni notte sopra lo riduce, ma solo della metà: il sonno perso non si recupera tutto in una notte. Le notti senza dato non contano.</p>
       </div>
 
-      <div className="rounded-2xl bg-card p-4">
-        <div className="flex items-baseline justify-between">
-          <div className="text-sm text-muted">Ultime {NOTTI} notti</div>
-          <div className="text-sm text-muted"><b className="text-foreground">{buone}</b>/{conDato.length} sopra l&apos;obiettivo</div>
-        </div>
-        <div className="relative mt-4 flex h-32 items-end gap-1">
-          <div className="pointer-events-none absolute inset-x-0 border-t border-dashed border-indigo-300/70" style={{ bottom: `${(obiettivo / max) * 100}%` }} />
-          {serie.map((s) => {
-            const m = s.n?.minuti ?? 0;
-            const colore = m >= obiettivo ? "#a5b4fc" : m >= SOGLIA_CORTA_MIN ? "#fbbf24" : "#f87171";
-            return (
-              <button key={s.giorno} disabled={!s.n} onClick={() => setScelta(scelta === s.giorno ? null : s.giorno)} className="flex h-full flex-1 flex-col items-center gap-1">
-                <div className="flex w-full flex-1 items-end">
-                  <div className="barra-sale w-full rounded-md" style={{ height: `${(m / max) * 100}%`, minHeight: m ? 4 : 0, background: colore, opacity: s.giorno === scelta ? 1 : 0.9, outline: s.giorno === scelta ? "2px solid currentColor" : undefined }} />
-                </div>
-                <div className={`text-[9px] tabular-nums ${s.giorno === oggi ? "font-bold text-accent" : "text-muted"}`}>{Number(s.giorno.slice(8))}</div>
-              </button>
-            );
-          })}
-        </div>
-        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-muted">
-          <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-indigo-300" /> sopra l&apos;obiettivo</span>
-          <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-amber-400" /> 6 h o più</span>
-          <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-red-400" /> sotto le 6 h</span>
-        </div>
-        {dettaglio && (
-          <div className="entra mt-3 rounded-xl bg-ov/5 p-3 text-sm">
-            <b className="first-letter:uppercase">{dataBreve(dettaglio.giorno)}</b>: {oreEMinuti(dettaglio.minuti)}
-            {dettaglio.letto && dettaglio.sveglia ? ` · dalle ${dettaglio.letto} alle ${dettaglio.sveglia}` : ""}
-          </div>
-        )}
-        <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-          <Dato titolo="Media" valore={oreEMinuti(media)} />
-          <Dato titolo="Migliore" valore={migliore?.n ? oreEMinuti(migliore.n.minuti) : "—"} />
-          <Dato titolo="Più corta" valore={peggiore?.n ? oreEMinuti(peggiore.n.minuti) : "—"} />
-        </div>
-      </div>
+      <GraficoLinea
+        titolo="Ore di sonno"
+        sotto={`${buone}/${conDato.length} notti sopra l'obiettivo`}
+        grande={media ? oreEMinuti(media).replace(" h ", "h") : undefined}
+        colore="#a5b4fc"
+        punti={serie.map((s) => ({ etichetta: `${Number(s.giorno.slice(8))}/${Number(s.giorno.slice(5, 7))}`, v: s.n ? Math.round((s.n.minuti / 60) * 10) / 10 : null }))}
+        yMin={3}
+        yMax={10}
+        passo={1}
+        formatoY={(n) => `${n}h`}
+        riferimento={{ v: obiettivo / 60, etichetta: `obiettivo ${oreEMinuti(obiettivo).replace(" h 00", " h")}` }}
+      />
+      <TessereKpi
+        voci={[
+          { icona: <Moon size={14} />, titolo: "Media", valore: oreEMinuti(media).replace(" h ", "h"), colore: "#a5b4fc" },
+          { icona: <TrendingUp size={14} />, titolo: "Migliore", valore: migliore?.n ? oreEMinuti(migliore.n.minuti).replace(" h ", "h") : "—", colore: "#4ade80" },
+          { icona: <TrendingDown size={14} />, titolo: "Più corta", valore: peggiore?.n ? oreEMinuti(peggiore.n.minuti).replace(" h ", "h") : "—", colore: "#f87171" },
+          { icona: <BedDouble size={14} />, titolo: "Ultima notte", valore: ultima ? oreEMinuti(ultima.minuti).replace(" h ", "h") : "—", colore: "#fbbf24" },
+        ]}
+        />
 
       <div className="rounded-2xl bg-card p-4">
         <div className="text-sm text-muted">Regolarità (ultime 7 notti)</div>
@@ -121,15 +100,6 @@ export default function Sonno() {
         </div>
         <p className="mt-2 text-[11px] text-muted">Con i turni gli orari cambiano per forza: conta soprattutto non lasciare mai che la notte diventi troppo corta.</p>
       </div>
-    </div>
-  );
-}
-
-function Dato({ titolo, valore }: { titolo: string; valore: string }) {
-  return (
-    <div className="rounded-xl bg-ov/5 p-2">
-      <div className="text-lg font-black">{valore}</div>
-      <div className="text-[10px] text-muted">{titolo}</div>
     </div>
   );
 }
