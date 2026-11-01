@@ -218,10 +218,11 @@ async function prova(env, request) {
 
 // --- Semafori del Trieste Marine Terminal («Empty cntr yard» e «Full cntr yard»): verde = operativo, rosso = operazioni sospese ---
 // Il sito li legge da un indirizzo pubblico (/arrivals.php, campo `semaphores`: prima lettera Empty yard, seconda Full yard; G = verde).
-// Lo controlliamo ogni 5 minuti (e, se serve, quando l'app lo chiede e il dato è vecchio di più di 4 minuti). Se cambia, avvisiamo
+// Lo controlliamo ogni 10 minuti, solo in prossimità dei turni (da 3 ore prima a mezz'ora dopo); fuori da quelle finestre non si chiede niente al sito. Se cambia, avvisiamo
 // i telefoni che in quel momento sono dentro una loro finestra (da 3 ore prima di un turno a mezz'ora dopo).
 const TMT_URL = 'https://www.trieste-marine-terminal.com/arrivals.php';
-const TMT_FRESCO_MS = 4 * 60_000;
+const TMT_FRESCO_MS = 9 * 60_000; // un dato di meno di 9 minuti non si rilegge
+const TMT_ANTICIPO_MS = 10 * 60_000; // si comincia a controllare 10 minuti prima dell'inizio di una finestra
 
 async function scaricaTerminal() {
   const ac = new AbortController();
@@ -255,11 +256,18 @@ async function avvisaTerminal(env, stato) {
   return results.length;
 }
 
+// C'è almeno un telefono vicino a un turno (dentro la sua finestra, o a meno di 10 minuti dall'inizio)? Fuori dalle finestre il sito non si controlla.
+async function qualcunoInFinestra(env, ora) {
+  return !!(await env.DB.prepare('SELECT 1 AS x FROM terminal_finestre WHERE da <= ? AND a >= ? LIMIT 1').bind(ora + TMT_ANTICIPO_MS, ora).first());
+}
+
 async function aggiornaTerminal(env, { forza = false } = {}) {
   const riga = await env.DB.prepare("SELECT value FROM meta WHERE key = 'terminal'").first();
   const prec = riga ? JSON.parse(riga.value) : null;
   const ora = Date.now();
   if (prec && !forza && ora - prec.controllato < TMT_FRESCO_MS) return prec;
+  // Il sito si interroga solo in prossimità dei turni (la prima lettura in assoluto, quando non c'è ancora nessuno stato, si fa comunque).
+  if (prec && !(await qualcunoInFinestra(env, ora))) return prec;
   let nuovo = null;
   try {
     nuovo = await scaricaTerminal();
@@ -287,7 +295,7 @@ async function tick(env) {
   await schema(env);
   const ora = Date.now();
   await env.DB.prepare('DELETE FROM piano WHERE quando < ?').bind(ora - TROPPO_TARDI_MS).run(); // troppo vecchie: via
-  if (new Date(ora).getUTCMinutes() % 5 === 0) await aggiornaTerminal(env, { forza: true }).catch((e) => console.log('terminal', String(e))); // i semafori del terminal, ogni 5 minuti
+  if (new Date(ora).getUTCMinutes() % 10 === 0) await aggiornaTerminal(env, { forza: true }).catch((e) => console.log('terminal', String(e))); // i semafori del terminal, ogni 10 minuti (e solo vicino ai turni)
   await env.DB.prepare('DELETE FROM terminal_finestre WHERE a < ?').bind(ora - 86_400_000).run();
   const { results: dovute } = await env.DB.prepare(
     `DELETE FROM piano WHERE rowid IN (SELECT rowid FROM piano WHERE quando <= ? ORDER BY quando LIMIT 40) RETURNING *`,

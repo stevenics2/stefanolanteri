@@ -374,3 +374,8 @@
 - **Pagina Oggi**: due luci che pulsano piano a destra della scheda del turno, con sotto «Terminal operativo» / «Operazioni sospese» / «Operativo in parte» / «Stato non disponibile»; se il dato è vecchio (più di 20 minuti o sito non raggiungibile) compare «dato delle HH:MM». La scheda del turno ora ha il nome del turno e l'orario su due righe.
 - Provato: server con database finto (cambio di stato → un solo telefono avvisato, sito giù → stato mantenuto), finestre sul calendario vero (turno 4 il 4/11 → 16:00–01:30; turno 3 il 5/11 → 10:00–19:30), interfaccia in browser nei cinque stati.
 - Cautela: è un indirizzo del sito non documentato come servizio pubblico; può cambiare senza avviso. Un solo controllo ogni 5 minuti.
+
+## Semafori del terminal: controllo più discreto
+- Il sito del terminal si interroga **solo in prossimità dei turni** (da 10 minuti prima dell'inizio della finestra, cioè da 3 ore e 10 minuti prima del turno, fino a mezz'ora dopo la fine) e **ogni 10 minuti** (prima 5, sempre). Fuori dalle finestre non si chiede niente al sito: l'app mostra l'ultimo stato noto, con «dato delle HH:MM» se è vecchio. Un dato di meno di 9 minuti non si rilegge. L'unica eccezione è la primissima lettura, quando ancora non c'è nessuno stato.
+- Il `robots.txt` del sito non vieta `/arrivals.php` e chiede 10 secondi tra una richiesta e l'altra; noi siamo molto sopra. L'identificazione resta onesta («Keepway/1.0, uso personale»). Se Stefano lavora lì, conviene avvisare chi gestisce il sito.
+- Provato con database finto: fuori dalle finestre 0 richieste al sito; a 5 minuti dall'inizio 1 richiesta; cambio di stato → un solo telefono avvisato.
