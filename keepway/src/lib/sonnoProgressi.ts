@@ -1,6 +1,6 @@
 import { dataPiù } from "./date";
 // Il sonno visto nel tempo: le notti, il debito di sonno e quanto sei regolare. I dati arrivano dall'iPhone (una riga per giorno).
-import { cicliDiSonno, debitoDaCicli, type Ciclo } from "./cicliSonno";
+import { cicliDiSonno, debitoDaCicli, passoDebito, type Ciclo } from "./cicliSonno";
 import type { GiornoSalute, SessioneSonno } from "./salute";
 
 export const OBIETTIVO_SONNO_PREDEFINITO = 420; // 7 ore
@@ -19,21 +19,21 @@ export const notti = (giorni: GiornoSalute[]): Notte[] =>
 // Così aggiungere sonno non fa mai salire il debito.
 export const GIORNI_DEBITO = 14; // il debito guarda solo le ultime due settimane: un debito vecchio scade
 
-export function debitoDiSonno(n: Notte[], obiettivoMin: number, oggi?: string): { debito: number; storia: { giorno: string; debito: number }[] } {
-  let debito = 0;
+export function debitoDiSonno(n: Notte[], obiettivoMin: number, oggi?: string): { debito: number; riserva: number; storia: { giorno: string; debito: number }[] } {
+  let conto = { debito: 0, riserva: 0 };
   const storia: { giorno: string; debito: number }[] = [];
   const dal = oggi ? dataPiù(oggi, -(GIORNI_DEBITO - 1)) : "";
   for (const x of n) {
     if (x.giorno < dal) continue;
     const manca = obiettivoMin - x.minuti;
     if (manca > 0 && x.giorno === oggi) {
-      storia.push({ giorno: x.giorno, debito: Math.round(debito) }); // oggi è ancora in corso: il deficit lo conto domani
+      storia.push({ giorno: x.giorno, debito: Math.round(conto.debito) }); // oggi è ancora in corso: il deficit lo conto domani
       continue;
     }
-    debito = Math.max(0, debito + (manca > 0 ? manca : manca * 0.5));
-    storia.push({ giorno: x.giorno, debito: Math.round(debito) });
+    conto = passoDebito(conto, manca);
+    storia.push({ giorno: x.giorno, debito: Math.round(conto.debito) });
   }
-  return { debito: Math.round(debito), storia };
+  return { debito: Math.round(conto.debito), riserva: Math.round(conto.riserva), storia };
 }
 
 const minuti = (hhmm: string) => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
@@ -60,7 +60,8 @@ export function debitoComplessivo(giorni: GiornoSalute[], sonni: SessioneSonno[]
   if (sonni && sonni.length >= 2 && adesso > 0) {
     const cicli = cicliDiSonno(sonni, adesso, obiettivoMin, GIORNI_DEBITO);
     const d = debitoDaCicli(cicli);
-    return { debito: d.debito, ultimoCiclo: d.ultimo, cicli, perCicli: true };
+    return { debito: d.debito, riserva: d.riserva, ultimoCiclo: d.ultimo, cicli, perCicli: true };
   }
-  return { debito: debitoDiSonno(notti(giorni), obiettivoMin, oggi).debito, ultimoCiclo: null, cicli: [] as Ciclo[], perCicli: false };
+  const d = debitoDiSonno(notti(giorni), obiettivoMin, oggi);
+  return { debito: d.debito, riserva: d.riserva, ultimoCiclo: null, cicli: [] as Ciclo[], perCicli: false };
 }

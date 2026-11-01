@@ -1,6 +1,6 @@
 "use client";
 
-import { BedDouble, Minus, Moon, Plus, TrendingDown, TrendingUp } from "lucide-react";
+import { BedDouble, CircleCheck, Minus, Moon, Plus, TrendingDown, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { dataPiù } from "@/lib/date";
 import { useStore } from "@/lib/store";
@@ -43,8 +43,9 @@ export default function Sonno() {
   const peggiore = conDato.reduce((m, s) => (!m || s.n!.minuti < m.n!.minuti ? s : m), null as (typeof conDato)[number] | null);
   const buone = conDato.filter((s) => s.n!.minuti >= obiettivo).length;
   const reg = regolarita(tutte);
+  const inPari = debito.debito === 0; // debito zero (o riserva): sei in pari o in vantaggio
   const colDebito = debito.debito < 60 ? "#4ade80" : debito.debito < 240 ? "#fbbf24" : "#f87171";
-  const stato_ = debito.debito < 60 ? "Sei in pari: continua così." : debito.debito < 240 ? "Un debito piccolo: una o due notti più lunghe lo riducono." : "Debito alto: stai accumulando stanchezza. Conta la costanza, non una notte sola.";
+  const stato_ = inPari ? (debito.riserva > 0 ? "Sei in vantaggio: la riserva è il sonno in più, fino a 2 ore." : "Sei in pari.") : debito.debito < 60 ? "Sei in pari: continua così." : debito.debito < 240 ? "Un debito piccolo: una o due notti più lunghe lo riducono." : "Debito alto: stai accumulando stanchezza. Conta la costanza, non una notte sola.";
   const ultima = tutte[tutte.length - 1] ?? null;
 
   return (
@@ -67,10 +68,15 @@ export default function Sonno() {
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1">
             <div className="whitespace-nowrap text-[10px] font-bold uppercase tracking-wide text-muted">Debito di sonno</div>
-            <div className="whitespace-nowrap text-lg font-black leading-tight tabular-nums" style={{ color: colDebito }}>{oreEMinuti(debitoMostrato)} min</div>
+            {inPari ? (
+              <div className="flex items-center gap-1.5 whitespace-nowrap text-lg font-black leading-tight text-green-400"><CircleCheck size={20} strokeWidth={2.4} /> {debito.riserva > 0 ? `Riserva +${debito.riserva} min` : "In pari"}</div>
+            ) : (
+              <div className="whitespace-nowrap text-lg font-black leading-tight tabular-nums" style={{ color: colDebito }}>{oreEMinuti(debitoMostrato)} min</div>
+            )}
             <div className="mt-1 h-1 overflow-hidden rounded-full bg-ov/10">
-              <div className="barra-cresce h-full rounded-full" style={{ width: `${Math.min(100, Math.round((debito.debito / 480) * 100))}%`, minWidth: debito.debito ? 4 : 0, background: colDebito }} />
+              <div className="barra-cresce h-full rounded-full" style={{ width: inPari ? "100%" : `${Math.min(100, Math.round((debito.debito / 480) * 100))}%`, minWidth: debito.debito ? 4 : 0, background: inPari ? "#4ade80" : colDebito }} />
             </div>
+            {inPari && <div className="mt-1 text-xs font-semibold text-green-400">Dovresti essere ben riposato!</div>}
           </div>
           <div className="shrink-0 text-center text-[10px] text-muted">
             <div>obiettivo a notte</div>
@@ -89,7 +95,7 @@ export default function Sonno() {
           ) : (
             <p>Per ora confronto giorno per giorno. Appena arrivano le sessioni di sonno dall&apos;iPhone (alla prossima sincronizzazione) passo al confronto tra un turno e l&apos;altro.</p>
           )}
-          <p>Sotto il necessario il debito sale; sopra scende, ma solo della metà: il sonno perso non si recupera tutto in una notte. Il ciclo ancora in corso può solo ridurlo. I cicli senza dati non contano. Il debito guarda solo le ultime 2 settimane: quello più vecchio scade.</p>
+          <p>Sotto il necessario il debito sale; sopra scende, ma solo della metà: il sonno perso non si recupera tutto in una notte. Quando il debito è finito, il sonno in più riempie una piccola riserva (al massimo 2 ore), che si consuma per prima con le notti corte. Il ciclo ancora in corso può solo ridurlo. I cicli senza dati non contano. Il debito guarda solo le ultime 2 settimane: quello più vecchio scade.</p>
         </Approfondisci>
       </div>
 

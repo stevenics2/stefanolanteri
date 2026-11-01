@@ -329,3 +329,8 @@
 
 ## Il debito di sonno scade dopo 14 giorni
 - Il debito guarda solo gli ultimi 14 giorni (`GIORNI_DEBITO`), sia con il calcolo giorno per giorno sia con i cicli: una notte corta di tre settimane fa non pesa più. Provato: due notti molto corte a inizio mese non cambiano il debito di oggi (59 minuti con e senza).
+
+## Riserva di sonno e stato verde
+- Quando il debito è zero (o c'è una riserva) la riga diventa **verde** con la spunta e la scritta «Dovresti essere ben riposato!». Se c'è sonno in più, compare «Riserva +N min».
+- La **riserva** (`passoDebito` in `cicliSonno.ts`) si riempie con il sonno in più quando il debito è finito (per intero, fino a 2 ore) e si consuma per prima con le notti corte, prima che il debito risalga. Vale con entrambi i calcoli (giorno per giorno e cicli) e scade con il resto dopo 14 giorni.
+- Provato con numeri: notte corta + notte lunga → debito 0; quattro notti da 10 h → riserva 120 min; riserva 120 poi notte da 5 h → debito 0, riserva 0.

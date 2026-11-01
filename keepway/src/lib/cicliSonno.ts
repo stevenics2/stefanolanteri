@@ -48,17 +48,41 @@ export function cicliDiSonno(sessioni: SessioneSonno[], adesso: number, obiettiv
   return out;
 }
 
+export const RISERVA_MAX_MIN = 120; // la riserva (sonno in più quando sei già in pari) si ferma a 2 ore
+
+// Un passo del conto: `manca` = minuti sotto il necessario (negativo = sonno in più).
+// Sotto il necessario il debito sale (e prima si consuma la riserva); sopra scende solo della metà; quando il debito è finito, il sonno in più
+// riempie la riserva per intero, fino a 2 ore.
+export function passoDebito(s: { debito: number; riserva: number }, manca: number): { debito: number; riserva: number } {
+  let { debito, riserva } = s;
+  if (manca > 0) {
+    const daRiserva = Math.min(riserva, manca);
+    riserva -= daRiserva;
+    debito += manca - daRiserva;
+  } else if (manca < 0) {
+    const inPiu = -manca;
+    if (debito > 0) {
+      if (inPiu / 2 >= debito) {
+        riserva += inPiu - debito * 2; // il debito è finito: avanza sonno vero
+        debito = 0;
+      } else debito -= inPiu / 2;
+    } else riserva += inPiu;
+    riserva = Math.min(RISERVA_MAX_MIN, riserva);
+  }
+  return { debito, riserva };
+}
+
 // Il debito di sonno sui cicli: stesse regole di prima (sotto il necessario sale, sopra scende della metà), ma il ciclo ancora aperto può solo ridurlo.
-export function debitoDaCicli(cicli: Ciclo[]): { debito: number; ultimo: Ciclo | null } {
-  let debito = 0;
+export function debitoDaCicli(cicli: Ciclo[]): { debito: number; riserva: number; ultimo: Ciclo | null } {
+  let conto = { debito: 0, riserva: 0 };
   let ultimo: Ciclo | null = null;
   for (const c of cicli) {
     const manca = c.necessariMin - c.sonnoMin;
     if (c.aperto && manca > 0) continue;
-    debito = Math.max(0, debito + (manca > 0 ? manca : manca * 0.5));
+    conto = passoDebito(conto, manca);
     if (!c.aperto) ultimo = c;
   }
-  return { debito: Math.round(debito), ultimo };
+  return { debito: Math.round(conto.debito), riserva: Math.round(conto.riserva), ultimo };
 }
 
 // Il punteggio di sonno (0–100) sui cicli conclusi tra `da` e `a` (ms): quanto del necessario hai dormito, in media. null se i cicli sono meno di 3.
