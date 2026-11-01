@@ -394,3 +394,6 @@
 - Notifica «Il piano è cambiato — Pulizia stufa: apri per confermare», 10 minuti dopo l'ultima volta che hai usato l'app (si sposta o sparisce se la riapri; non ti sveglia).
 - **Non** avvisa per le scelte tue (creare o modificare una task, accendere o spegnere un giorno, fissare i giorni, rifare la proposta): in quel caso il piano nuovo è quello visto. Non avvisa nemmeno quando la quota della settimana è già raggiunta con task fatte, né dopo aver fatto una task «ogni N giorni» (le date si ricontano).
 - Provato: logica con dati finti (primo giro silenzioso, giorno saltato → cambio con motivo, nessun duplicato, conferma, scelta dell'utente senza avviso) e interfaccia in browser (carta con motivo e pulsanti, «Tieni» fissa i giorni e lascia gli altri cambi in attesa).
+
+## Correzione degli spazi in Oggi
+- Il box ricompensa era attaccato alla striscia dei giorni: la regola della transizione azzerava per errore il margine sotto. Ora lo spazio è quello normale della pagina (20 px, misurato nel browser), anche dopo «Esci»; in modalità settimanale resta un po' d'aria sopra la striscia.

@@ -473,8 +473,8 @@ button:not(:disabled):active, a[href]:active {
 @media (prefers-reduced-motion: reduce) { .terminal-luce { animation-duration: 0.01ms; } }
 
 /* Dalla vista di oggi alla settimana: il box ricompensa sfuma e si chiude, e i giorni salgono in alto */
-.collassa { display: grid; grid-template-rows: 1fr; margin-bottom: 0; transition: grid-template-rows 0.65s var(--posa), margin-bottom 0.65s var(--posa); }
-.collassa[data-chiuso="true"] { grid-template-rows: 0fr; margin-bottom: -0.75rem; }
+.collassa { display: grid; grid-template-rows: 1fr; transition: grid-template-rows 0.65s var(--posa), margin-bottom 0.65s var(--posa); } /* il margine sotto lo dà lo spazio tra gli elementi della pagina: qui non si tocca, tranne quando si chiude */
+.collassa[data-chiuso="true"] { grid-template-rows: 0fr; margin-bottom: -0.4rem; }
 .collassa > div { overflow: hidden; min-height: 0; }
 .sfuma { transition: opacity 0.45s ease, filter 0.45s ease, transform 0.65s var(--posa); }
 .sfuma-via { opacity: 0; filter: blur(10px); transform: translateY(-14px) scale(0.96); }
