@@ -131,4 +131,5 @@ export type Stato = {
   eventi: Evento[];
   modifiche: Modifica[];
   bonus: Bonus[];
+  traguardi?: Record<string, number>; // il livello (0-3) già sbloccato di ogni traguardo: serve a festeggiare solo i nuovi
 };

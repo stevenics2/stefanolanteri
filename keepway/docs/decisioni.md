@@ -276,3 +276,10 @@
 - Come si capisce la pausa: l'app segna l'ultimo momento in cui era in uso (`keepway.presenza`, ogni minuto e quando va in secondo piano).
 - Le automazioni a orari fissi (7, 11, 15, 19) e quella di sveglia restano facoltative; la notifica/popup delle 22:30 resta come rete di sicurezza.
 - Provato in browser con l'orologio simulato: popup dopo una notte; non compare con pausa breve, dati freschi o mai sincronizzato.
+
+## Progressi, primo blocco
+- Pagina Progressi: **riepilogo** (anello del livello che si riempie, XP che salgono, serie, giornate piene, prove fatte), **calendario del mese** (oro = tutte le task fatte, verde = quasi, giallo = qualcosa, puntino rosso = allenamento; si tocca un giorno per il dettaglio; mesi precedenti navigabili), **record personali**, carte **Meditazione** e **Lettura** (serie, ultimi 7 giorni, tempo totale, prossimo traguardo), poi Salute, punti, **traguardi**, archivio.
+- **Traguardi** (`lib/traguardi.ts`), 3 livelli ciascuno, pensati per la costanza e non per i clic: settimane di fila con almeno 3 allenamenti (4/8/12), corse in un mese (6/10/14), giornate piene (10/30/60), boss sconfitti (1/3/8), ripartenze dopo 3 giorni fermi (1/3/6), serie di meditazione e di lettura (7/21/66 giorni), tempo totale di meditazione e di lettura. Mai chilometri (non li abbiamo): solo volte.
+- Gli allenamenti sono corsa, palestra e le task dell'area Allenamento, tranne la programmazione settimanale.
+- Il livello sbloccato di ogni traguardo si salva (`Stato.traguardi`): non si perde annullando una task e il popup di festa (medaglia) compare una volta sola. La prima volta si registra in silenzio ciò che c'è già.
+- Provato in browser con 40 giorni di storico inventato; da vedere sull'iPhone. Sonno e Allenamenti (sezioni complete, debito di sonno, power nap) sono nei blocchi 2 e 3.

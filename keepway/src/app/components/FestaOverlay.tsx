@@ -1,6 +1,6 @@
 "use client";
 
-import { Gift, PackageOpen, Swords, Trophy, Zap } from "lucide-react";
+import { Gift, Medal, PackageOpen, Swords, Trophy, Zap } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { coriandoli, monete, suono } from "@/lib/effetti";
 import { useStore } from "@/lib/store";
@@ -11,8 +11,8 @@ export const EVENTO_COMBO = "keepway-combo"; // la combo compare nel riquadro di
 const DURATA_COMBO_BOX_MS = 2400;
 const ANTICIPO_FLASH_MS = 300; // il flash oro (picco dopo ~0,2 s) coincide con la chiusura del popup
 const ATTESA_ANELLI_MS = 1500; // il tempo dell'animazione degli anelli, che parte per prima
-const ICONE = { forziere: Gift, record: Trophy, boss: Swords, combo: Zap } as const;
-const COLORI = { forziere: "#fcd34d", record: "#fcd34d", boss: "#fca5a5", combo: "#7dd3fc" } as const;
+const ICONE = { forziere: Gift, record: Trophy, boss: Swords, combo: Zap, traguardo: Medal } as const;
+const COLORI = { forziere: "#fcd34d", record: "#fcd34d", boss: "#fca5a5", combo: "#7dd3fc", traguardo: "#fcd34d" } as const;
 
 // I momenti "da festa": combo, record, forziere, boss. Un popup al centro, uno alla volta; si chiude da solo o con un tocco.
 export default function FestaOverlay() {

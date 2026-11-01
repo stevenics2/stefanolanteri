@@ -26,7 +26,7 @@ export type Ricompensa = {
 };
 
 // Momenti "da festa": combo, record, forziere, boss. Compaiono in un popup, uno alla volta.
-export type Festa = { id: string; tipo: "combo" | "record" | "forziere" | "boss"; titolo: string; testo: string; xp: number };
+export type Festa = { id: string; tipo: "combo" | "record" | "forziere" | "boss" | "traguardo"; titolo: string; testo: string; xp: number };
 
 const COMBO_PAUSA_MS = 60 * 60_000; // task di fila = tra una e l'altra meno di un'ora
 const COMBO_MINIMO = 3;
@@ -80,6 +80,7 @@ type Contesto = {
   avviso: Avviso | null;
   festa: Festa[];
   chiudiFesta: () => void;
+  sbloccaTraguardi: (livelli: Record<string, number>, feste: Festa[]) => void; // salva i livelli raggiunti e festeggia i nuovi
   annullaAvviso: () => void;
   chiudiAvviso: () => void;
   azzera: () => void;
@@ -454,6 +455,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       chiudiAvviso: () => setAvviso(null),
       festa,
       chiudiFesta: () => setFesta((f) => f.slice(1)),
+      sbloccaTraguardi: (livelli, feste) => {
+        aggiorna((x) => ({ ...x, traguardi: livelli }));
+        if (feste.length) setFesta((f) => [...f, ...feste]);
+      },
       segnaEvento: (id, fatto) => aggiorna((x) => ({ ...x, eventi: x.eventi.map((e) => (e.id === id ? { ...e, fatto } : e)) })),
       azzera: () => {
         aggiorna(() => statoIniziale());
