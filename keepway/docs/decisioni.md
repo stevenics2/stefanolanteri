@@ -267,3 +267,4 @@
 - `worker/sonno.js`: legge le date scritte da Comandi rapidi (`02/11/26, 04:12`, `2 nov 2026 alle 04:12`, ISO), scarta «Awake» e «In bed», fonde i pezzi sovrapposti, unisce i pezzi separati da meno di 90 minuti nella stessa notte, assegna la notte al giorno in cui finisce, tiene gli ultimi 2 giorni e **sovrascrive** sonno, letto e sveglia di quei giorni. Si può rimandare più volte: il risultato è sempre lo stesso.
 - Così letto e sveglia arrivano insieme al sonno e sparisce la parte più difficile del comando. Il vecchio `&sonno=` funziona ancora ma non serve più.
 - Provato con dati inventati (due notti, un risveglio, una notte fuori finestra) e con il database finto; da provare sull'iPhone.
+- Se `&campioni=` arriva ma non contiene righe leggibili, il server risponde «Sonno non leggibile: ricevuti N caratteri…» (così si distingue da «Nessun dato da salvare», che è la risposta del server vecchio).

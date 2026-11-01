@@ -294,6 +294,7 @@ async function inviaSalute(env, url, request) {
   const km = numero(dati.km);
   const analisi = dati.campioni ? analizzaCampioni(dati.campioni, 2) : null; // il sonno grezzo: i conti li facciamo noi
   const haCampioni = !!analisi && analisi.righe > 0;
+  if (dati.campioni && !haCampioni) return err(`Sonno non leggibile: ricevuti ${String(dati.campioni).length} caratteri e nessuna riga valida (versione sonno-1)`);
   if (passi === null && sonno === null && !letto && !sveglia && !tipo && !haCampioni) return err('Nessun dato da salvare');
   const cod = await impronta(t);
   await env.DB.prepare('INSERT INTO ultimo (codice, quando) VALUES (?, ?) ON CONFLICT(codice) DO UPDATE SET quando = excluded.quando').bind(cod, Date.now()).run();
