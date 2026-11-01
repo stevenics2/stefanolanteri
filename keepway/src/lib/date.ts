@@ -36,3 +36,16 @@ export function dataLunga(s: string): string {
   const d = daStringa(s);
   return `${GIORNI_LUNGHI[d.getDay()]} ${d.getDate()} ${MESI_LUNGHI[d.getMonth()]}`;
 }
+
+// «2026-11-01» -> «01/11/2026» (formato europeo)
+export function dataEuropea(s: string): string {
+  const [a, m, g] = s.split("-");
+  return a && m && g ? `${g}/${m}/${a}` : s;
+}
+
+// Un istante (ms) -> «01/11/2026 alle 01:15»
+export function dataOraEuropea(ms: number): string {
+  const d = new Date(ms);
+  const due = (n: number) => String(n).padStart(2, "0");
+  return `${due(d.getDate())}/${due(d.getMonth() + 1)}/${d.getFullYear()} alle ${due(d.getHours())}:${due(d.getMinutes())}`;
+}

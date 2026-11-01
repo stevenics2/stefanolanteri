@@ -320,7 +320,7 @@ async function leggiSalute(env, url) {
   const { results } = await env.DB.prepare('SELECT giorno, passi, sonno_min, letto, sveglia, aggiornato FROM salute WHERE codice = ? ORDER BY giorno DESC LIMIT ?')
     .bind(await impronta(t), giorni).all();
   const cod = await impronta(t);
-  const { results: al } = await env.DB.prepare('SELECT giorno, tipo, inizio, minuti, km FROM allenamenti WHERE codice = ? ORDER BY giorno DESC, inizio DESC LIMIT 60').bind(cod).all();
+  const { results: al } = await env.DB.prepare('SELECT giorno, tipo, inizio, minuti, km, aggiornato FROM allenamenti WHERE codice = ? ORDER BY giorno DESC, inizio DESC LIMIT 60').bind(cod).all();
   const u = await env.DB.prepare('SELECT quando FROM ultimo WHERE codice = ?').bind(cod).first();
   return json({ ultimo: u?.quando ?? null, allenamenti: al, giorni: results.map((r) => ({ giorno: r.giorno, passi: r.passi, sonnoMin: r.sonno_min, letto: r.letto, sveglia: r.sveglia, aggiornato: r.aggiornato })) });
 }

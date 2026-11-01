@@ -3,6 +3,7 @@
 import { Check, Copy, HeartPulse } from "lucide-react";
 import { useState } from "react";
 import { cancellaSalute, codiceSalute, indirizzoInvio, linkSincronizza, oreMinuti, rigeneraCodice } from "@/lib/salute";
+import { dataEuropea, dataOraEuropea } from "@/lib/date";
 import { useDatiSalute } from "@/lib/useSalute";
 
 const quandoFa = (ms: number) => {
@@ -44,21 +45,22 @@ export default function SaluteImpostazioni() {
       <div className="space-y-3 rounded-2xl bg-card p-4">
         <div className="flex items-center justify-between gap-3 text-sm">
           <span>
-            Ultima sincronizzazione: <b>{tutti?.ultimo ? quandoFa(tutti.ultimo) : "mai"}</b>
+            Ultima sincronizzazione: <b>{tutti?.ultimo ? quandoFa(tutti.ultimo) : "mai"}</b>{tutti?.ultimo ? <span className="block text-xs text-muted">{dataOraEuropea(tutti.ultimo)}</span> : null}
           </span>
           <a href={linkSincronizza()} data-suono="nessuno" className="shrink-0 rounded-xl bg-ov/10 px-3 py-1.5 text-xs font-semibold">Sincronizza</a>
         </div>
         {ultimoAllenamento && (
           <div className="text-sm text-muted">
-            Ultimo allenamento: {ultimoAllenamento.tipo} · {ultimoAllenamento.giorno}
+            Ultimo allenamento: {ultimoAllenamento.tipo} · {dataEuropea(ultimoAllenamento.giorno)}
             {ultimoAllenamento.minuti ? ` · ${ultimoAllenamento.minuti} min` : ""}
             {ultimoAllenamento.km ? ` · ${ultimoAllenamento.km.toLocaleString("it-IT")} km` : ""}
+            {ultimoAllenamento.aggiornato ? <><br />Ricevuto il {dataOraEuropea(ultimoAllenamento.aggiornato)}</> : null}
           </div>
         )}
         <div className="text-sm">
           {ultimo ? (
             <>
-              Ultimo dato ricevuto: <b>{ultimo.giorno}</b>
+              Ultimo dato ricevuto: <b>{dataEuropea(ultimo.giorno)}</b>
               {ultimo.passi ? ` · ${ultimo.passi.toLocaleString("it-IT")} passi` : ""}
               {ultimo.sonnoMin ? ` · ${oreMinuti(ultimo.sonnoMin)} di sonno` : ""}
             </>

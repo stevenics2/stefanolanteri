@@ -246,3 +246,15 @@
 - Il collegamento codice → telefono (tabella `collega`) lo scrive il piano notifiche che l'app manda già con il codice: serve aver aperto l'app almeno una volta dopo il deploy.
 - Un secondo invio dello stesso allenamento non rimanda la notifica.
 - Il comando rapido può mandare solo `&allenamento=corsa` (o `palestra`) dall'automazione «Allenamento Apple Watch → Termina»: niente minuti/km, ma la task si segna.
+
+## Date europee
+- Le date mostrate come numeri (Impostazioni → Salute) sono sempre `gg/mm/aaaa`; per gli allenamenti e l'ultima sincronizzazione si vede anche l'ora di ricezione («Ricevuto il 01/11/2026 alle 01:15»). Nel resto dell'app le date sono già scritte a parole («lun 2 nov»). Per ogni nuova data mostrata usare `dataEuropea` / `dataOraEuropea` (`lib/date.ts`).
+
+## Da fare (prossima sessione)
+- Minuti e km della corsa: provare a leggerli nel Comando Rapido (non c'è il tipo «Workouts» tra i campioni; «Distanza camminata/corsa» include anche le camminate).
+- Orari di letto e sveglia dal Comando Rapido (`&letto=` e `&sveglia=`) e uso nel sonno.
+- Unire passi e sonno in un solo invio; preparare il comando da condividere con il segnaposto per il codice (Domande di importazione).
+- Automazioni: sveglia («Quando mi sveglio») e orari fissi (12:00, 18:00, 22:30). Le due di fine allenamento (corsa, palestra) sono fatte e funzionano.
+- Provare un'altra palestra (Rafforzamento muscolare funzionale) e controllare che la task si segni da sola toccando la notifica.
+- Sonno reale → giornata più leggera dopo notte corta, debito di sonno, orari di letto personalizzati.
+- Idee in sospeso: aprire dalla notifica la task giusta (`/oggi/?apri=…`), numero sull'icona, «proponi automaticamente» per gli appuntamenti, vista settimana, Kit SOS e routine serale, uniformare i form Allenamento/Lavatrice.
