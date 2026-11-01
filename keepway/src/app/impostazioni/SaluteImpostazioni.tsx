@@ -88,16 +88,16 @@ export default function SaluteImpostazioni() {
             <b>Sonno</b> (quattro azioni, senza calcoli: i conti li fa Keepway).
             <ol className="mt-1 list-[lower-alpha] space-y-1 pl-5">
               <li><b>Trova campioni di dati sanitari</b>: <b>Tipo è Sleep</b> e <b>Data di inizio è negli ultimi 3 giorni</b>. Nessun altro filtro.</li>
-              <li><b>Ripeti con ciascun elemento</b> (sul risultato). Dentro metti un&apos;azione <b>Testo</b> con tre pezzi separati da <b>;</b> (punto e virgola): <i>Valore</i> ; <i>Data di inizio</i> ; <i>Data di fine</i>. Si inseriscono toccando <b>Elemento ripetuto</b> e scegliendo la proprietà.</li>
+              <li><b>Ripeti per ciascun elemento</b> (sul risultato). Dentro metti un&apos;azione <b>Testo</b> con tre pezzi separati da <b>;</b> (punto e virgola): <i>Valore</i> ; <i>Data di inizio</i> ; <i>Data di fine</i>. Si inseriscono toccando <b>Elemento ripetizione</b> e scegliendo la proprietà. Il primo pezzetto può restare scritto «Elemento ripetizione» anche con <b>Valore</b> scelto, e va bene: la lista deve mostrare «Core», «Awake», «REM»… Se mostra «Campione di dati sanitari», usa invece la proprietà <b>Valore</b>.</li>
               <li>Dopo <b>Fine ripetizione</b>, aggiungi <b>Combina testo</b> sul <b>Risultato della ripetizione</b>, con separatore <b>Nuova riga</b>.</li>
-              <li><b>Ottieni contenuti dell&apos;URL</b> con l&apos;indirizzo e, di seguito, <span className="break-all font-mono text-[11px]">&amp;campioni=<i>Testo combinato</i></span></li>
+              <li><b>Ottieni contenuti dell&apos;URL</b> con l&apos;indirizzo (senza altro dopo il codice), <b>Metodo POST</b>, <b>Corpo della richiesta: JSON</b>, e un campo di tipo <b>Testo</b> con chiave <span className="font-mono text-[11px]">campioni</span> e valore <i>Testo combinato</i>. Nell&apos;indirizzo il testo lungo si perde; nel corpo no.</li>
             </ol>
           </li>
           <li>
             <b>Allenamenti.</b> Aggiungi <b>Trova campioni di Salute</b>: tipo <b>Allenamenti</b>, data di inizio <b>è oggi</b>. Poi <b>Ripeti con ciascun elemento</b> e, dentro, un altro <b>Ottieni contenuti dell&apos;URL</b> con: <span className="break-all font-mono text-[11px]">{indirizzo || "…"}&amp;allenamento=<i>Tipo</i>&amp;minuti=<i>Durata</i>&amp;km=<i>Distanza</i>&amp;inizio=<i>Ora di inizio</i></span> (<i>Ora di inizio</i> = <b>Data di inizio</b> con <b>Formatta data</b> <b>HH:mm</b>; la distanza va in <b>km</b>, e per la palestra non serve).
             Se lo stesso allenamento arriva due volte non c&apos;è problema: Keepway lo riconosce e lo conta una volta sola.
           </li>
-          <li>Toccalo una volta a mano: l&apos;iPhone chiede i permessi per Salute e per inviare i dati. Poi guarda qui sopra: deve comparire «Ultimo dato ricevuto».</li>
+          <li>Toccalo una volta a mano: l&apos;iPhone chiede i permessi per Salute e per inviare i dati. Per il sonno, in <b>Impostazioni → App → Comandi rapidi</b> bisogna consentire <b>la condivisione di grandi quantità di dati</b>. Poi guarda qui sopra: deve comparire «Ultimo dato ricevuto».</li>
         </ol>
 
         <h3 className="mt-4 font-semibold">Farlo partire da solo: tre automazioni</h3>

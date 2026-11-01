@@ -268,3 +268,5 @@
 - Così letto e sveglia arrivano insieme al sonno e sparisce la parte più difficile del comando. Il vecchio `&sonno=` funziona ancora ma non serve più.
 - Provato con dati inventati (due notti, un risveglio, una notte fuori finestra) e con il database finto; da provare sull'iPhone.
 - Se `&campioni=` arriva ma non contiene righe leggibili, il server risponde «Sonno non leggibile: ricevuti N caratteri…» (così si distingue da «Nessun dato da salvare», che è la risposta del server vecchio).
+- Il testo del sonno va nel corpo di una richiesta POST (JSON, chiave `campioni`), non nell'indirizzo: un testo lungo a più righe in un GET viene troncato da Comandi rapidi. Va attivata anche l'opzione iOS che permette di condividere molti elementi di Salute. Nel comando, la prima parola di ogni riga è la proprietà **Valore** del campione (Core/Deep/REM/Awake), mentre «Nome» dà solo «Campione di dati sanitari».
+- Provato sull'iPhone: 101 righe → due notti calcolate correttamente (6 h 21 e 3 h 06).
