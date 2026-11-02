@@ -439,3 +439,7 @@
 ## Bagliore: niente alone esterno (quadrato chiaro all'angolo)
 - Segnalato un angolo quadrato più chiaro fuori dal bordo arrotondato del box (iPhone). Probabile causa: l'ombra esterna del bagliore, che Safari disegna come rettangolo quando è animata insieme all'angolo arrotondato.
 - Ora il bagliore è solo interno al box (ombra interna + filo bianco sottile): non può uscire dai bordi. Non verificabile su iPhone dal sandbox.
+
+## Angolo quadrato chiaro a riposo (box ricompensa)
+- Il difetto restava a transizione finita, quindi non era il bagliore. Cause probabili (Safari iPhone): l'ombra esterna del box (`RiepilogoOggi`) disegnata come rettangolo quando il box è su un livello a parte (`will-change` su `.sfuma`, animazioni interne).
+- Tolti `will-change` da `.sfuma` e dal bagliore, e l'ombra esterna del box (resta quella interna e il bordo colorato). Non verificabile su iPhone dal sandbox; se serve l'alone si può rimettere con un altro metodo.

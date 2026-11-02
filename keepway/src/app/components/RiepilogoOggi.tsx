@@ -270,7 +270,7 @@ function Pannello({
   return (
     <div
       data-box-avanzamento="" className={`relative overflow-hidden rounded-2xl border bg-black p-3 font-mono text-[11px] ${ricalcolo ? "ricalcolo" : ""}`}
-      style={{ borderColor: rgba(rgb, 0.35), boxShadow: `0 0 28px -10px ${rgba(rgb, 0.6)}, inset 0 0 24px ${rgba(rgb, 0.06)}`, color: rgba(rgb), transition: "color .8s, border-color .8s" }}
+      style={{ borderColor: rgba(rgb, 0.35), boxShadow: `inset 0 0 24px ${rgba(rgb, 0.06)}`, color: rgba(rgb), transition: "color .8s, border-color .8s" }}
     >
       {ricalcolo && <div className="lampo" aria-hidden />}
       {ricalcolo && <div className="scansione" aria-hidden />}
