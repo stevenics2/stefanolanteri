@@ -472,3 +472,6 @@
 ## Angolino e bagliore rettangolare: ritaglio con la curva
 - Il box ora è ritagliato con `clip-path: inset(0 round 1rem)`: qualunque cosa Safari disegni fuori dalla curva (ombre, strati) non si vede più. Vale come rimedio indipendente dalla causa.
 - Il bagliore è solo interno e ritagliato con la stessa curva, quindi segue la forma del box e non esce come rettangolo.
+
+## Contenitori del box con la stessa curva
+- Ipotesi dell'utente: il livello rettangolare dietro il box (non il bagliore) crea l'angolino. Ora i contenitori `.collassa > div` e `.sfuma` hanno lo stesso raggio del box (1rem), così anche il loro livello è tondo.
