@@ -222,6 +222,7 @@ async function prova(env, request) {
 // i telefoni che in quel momento sono dentro una loro finestra (da 3 ore prima di un turno a mezz'ora dopo).
 const TMT_URL = 'https://www.trieste-marine-terminal.com/arrivals.php';
 const TMT_FRESCO_MS = 9 * 60_000; // un dato di meno di 9 minuti non si rilegge
+const TMT_MANUALE_MS = 60_000; // se l'utente tocca i semafori si rilegge subito il sito, ma non più di una volta al minuto
 const TMT_ANTICIPO_MS = 10 * 60_000; // si comincia a controllare 10 minuti prima dell'inizio di una finestra
 
 async function scaricaTerminal() {
@@ -261,13 +262,17 @@ async function qualcunoInFinestra(env, ora) {
   return !!(await env.DB.prepare('SELECT 1 AS x FROM terminal_finestre WHERE da <= ? AND a >= ? LIMIT 1').bind(ora + TMT_ANTICIPO_MS, ora).first());
 }
 
-async function aggiornaTerminal(env, { forza = false } = {}) {
+async function aggiornaTerminal(env, { forza = false, manuale = false } = {}) {
   const riga = await env.DB.prepare("SELECT value FROM meta WHERE key = 'terminal'").first();
   const prec = riga ? JSON.parse(riga.value) : null;
   const ora = Date.now();
-  if (prec && !forza && ora - prec.controllato < TMT_FRESCO_MS) return prec;
-  // Il sito si interroga solo in prossimità dei turni (la prima lettura in assoluto, quando non c'è ancora nessuno stato, si fa comunque).
-  if (prec && !(await qualcunoInFinestra(env, ora))) return prec;
+  if (manuale) {
+    if (prec && ora - prec.controllato < TMT_MANUALE_MS) return prec; // appena letto: niente richieste a raffica al sito
+  } else {
+    if (prec && !forza && ora - prec.controllato < TMT_FRESCO_MS) return prec;
+    // Il sito si interroga solo in prossimità dei turni (la prima lettura in assoluto, quando non c'è ancora nessuno stato, si fa comunque).
+    if (prec && !(await qualcunoInFinestra(env, ora))) return prec;
+  }
   let nuovo = null;
   try {
     nuovo = await scaricaTerminal();
@@ -462,7 +467,7 @@ const gestore = {
       if (p === '/api/push/test' && m === 'POST') return await prova(env, request);
       if (p === '/api/piano' && m === 'PUT') return await salvaPiano(env, request);
       if (p === '/api/terminal' && m === 'GET') {
-        const s = await aggiornaTerminal(env);
+        const s = await aggiornaTerminal(env, { manuale: url.searchParams.get('aggiorna') === '1' }); // «aggiorna»: l'utente ha toccato i semafori
         return json(s ? { empty: s.empty, full: s.full, controllato: s.controllato, cambio: s.cambio, fallito: s.fallito ?? null } : { vuoto: true });
       }
       if (p === '/api/salute/invia' && (m === 'GET' || m === 'POST')) return await inviaSalute(env, url, request); // anche GET: più facile da fare nei Comandi Rapidi

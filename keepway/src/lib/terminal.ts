@@ -19,8 +19,8 @@ export function terminalInCache(): StatoTerminal | null {
   }
 }
 
-export async function scaricaTerminal(): Promise<StatoTerminal | null> {
-  const r = await fetch("/api/terminal", { cache: "no-store" });
+export async function scaricaTerminal(aggiorna = false): Promise<StatoTerminal | null> {
+  const r = await fetch(aggiorna ? "/api/terminal?aggiorna=1" : "/api/terminal", { cache: "no-store" }); // «aggiorna»: l'ha chiesto l'utente toccando i semafori
   if (!r.ok) throw new Error("Terminal non raggiungibile");
   const d = (await r.json()) as Partial<StatoTerminal> & { vuoto?: boolean };
   if (d.vuoto || !d.empty || !d.full) return null;

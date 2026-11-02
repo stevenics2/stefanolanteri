@@ -10,7 +10,7 @@ const GRIGIO = "#94a3b8";
 
 // I due semafori del terminal («Empty» e «Full yard»), a destra del turno: pulsano piano. Sotto, a parole: operativo o sospeso.
 export default function SemaforiTerminal() {
-  const t = useTerminal();
+  const { stato: t, aggiorna, aggiornando } = useTerminal();
   const { adesso } = useStore();
   const empty = t ? (èAperto(t.empty) ? VERDE : ROSSO) : GRIGIO;
   const full = t ? (èAperto(t.full) ? VERDE : ROSSO) : GRIGIO;
@@ -23,14 +23,21 @@ export default function SemaforiTerminal() {
   const ora = t ? new Date(t.controllato).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }) : "";
 
   return (
-    <div className="flex w-[7.2rem] shrink-0 flex-col items-center justify-center rounded-2xl bg-card px-2 py-2 text-center" aria-label={`Terminal: ${testo}`} title={t ? `Controllato alle ${ora}` : undefined}>
+    <button
+      type="button"
+      onClick={aggiorna}
+      aria-busy={aggiornando}
+      className="flex w-[7.2rem] shrink-0 flex-col items-center justify-center rounded-2xl bg-card px-2 py-2 text-center active:scale-[0.97]"
+      aria-label={`Terminal: ${aggiornando ? "aggiorno" : testo}. Tocca per aggiornare`}
+      title={t ? `Controllato alle ${ora}` : undefined}
+    >
       <div className="flex items-start justify-center gap-3">
         <Luce colore={empty} etichetta="Empty" sfasamento={0} />
         <Luce colore={full} etichetta="Full" sfasamento={-1.6} />
       </div>
-      <div className="mt-1.5 text-[10px] font-bold leading-tight" style={{ color: colore }}>{testo}</div>
-      {vecchio && <div className="text-[9px] text-muted">dato delle {ora}</div>}
-    </div>
+      <div className={`mt-1.5 text-[10px] font-bold leading-tight ${aggiornando ? "animate-pulse" : ""}`} style={{ color: aggiornando ? GRIGIO : colore }}>{aggiornando ? "Aggiorno..." : testo}</div>
+      {vecchio && !aggiornando && <div className="text-[9px] text-muted">dato delle {ora}</div>}
+    </button>
   );
 }
 

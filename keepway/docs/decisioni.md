@@ -492,3 +492,7 @@
 - La striscia dei giorni parte da ieri (chip «Ieri», poi «Oggi»). Toccando «Ieri» si apre la modalità settimanale sul giorno di ieri, con le task previste per ieri: «Fatto» le segna per ieri (`completa` accetta `data`), «Annulla» le toglie. Componente `GiornoIeri`.
 - La regola «solo da guardare» resta per tutti gli altri giorni (futuri e più vecchi di ieri).
 - Dopo la mezzanotte, con la giornata ancora aperta, «Oggi» è il giorno aperto e «Ieri» quello prima.
+
+## Semafori: tocco = aggiorna, con «Aggiorno...»
+- I semafori in Oggi sono un pulsante: al tocco il testo sotto diventa «Aggiorno...» (pulsa piano, almeno 1 secondo) e si rilegge subito lo stato dal server (`/api/terminal?aggiorna=1`).
+- Worker: la lettura su richiesta salta il limite delle finestre dei turni (l'ha chiesta l'utente), ma al massimo una al minuto (`TMT_MANUALE_MS`): niente richieste a raffica al sito del terminal. Serve il deploy del Worker; senza, il tocco mostra «Aggiorno...» e rilegge l'ultimo dato del server.
