@@ -435,3 +435,7 @@
 ## Bagliore: parte e finisce nel colore dello sfondo
 - In uscita il bagliore si spegne del tutto al 58% (prima era 65%), con il box ancora visibile.
 - In entrata il bagliore resta spento fino al 42%, poi sale (massimo al 75%) e si spegne a fine movimento: nasce dallo sfondo invece di comparire subito.
+
+## Bagliore: niente alone esterno (quadrato chiaro all'angolo)
+- Segnalato un angolo quadrato più chiaro fuori dal bordo arrotondato del box (iPhone). Probabile causa: l'ombra esterna del bagliore, che Safari disegna come rettangolo quando è animata insieme all'angolo arrotondato.
+- Ora il bagliore è solo interno al box (ombra interna + filo bianco sottile): non può uscire dai bordi. Non verificabile su iPhone dal sandbox.
