@@ -468,3 +468,7 @@
 
 ## Angolino, passo 2 (una sola modifica)
 - Il passo 1 non ha cambiato nulla. Ora solo `RiepilogoOggi`: tolta l'ombra esterna statica del box (resta quella interna). Il resto è identico al passo 1. Se la dissolvenza si rompe, la causa è questa e si annulla.
+
+## Angolino e bagliore rettangolare: ritaglio con la curva
+- Il box ora è ritagliato con `clip-path: inset(0 round 1rem)`: qualunque cosa Safari disegni fuori dalla curva (ombre, strati) non si vede più. Vale come rimedio indipendente dalla causa.
+- Il bagliore è solo interno e ritagliato con la stessa curva, quindi segue la forma del box e non esce come rettangolo.
