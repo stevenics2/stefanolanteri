@@ -427,3 +427,7 @@
 - Il bagliore ora è bianco (in uscita e in entrata).
 - Causa dello scatto in uscita: la chiusura partiva con 0,25 s di ritardo (tutto fermo, poi i giorni salivano di colpo), il bagliore finiva prima del movimento, e la striscia dei giorni saltava di 8 px quando diventava fissa.
 - Ora la chiusura parte subito, dura 1,1 s con curva dolce, dissolvenza e bagliore sono in contemporanea (picco a metà movimento), e il margine sotto la striscia è sempre presente, quindi niente salto.
+
+## Transizione del box: bagliore che si spegne prima della chiusura
+- In uscita il bagliore ora raggiunge il massimo al 28% e torna a zero al 65% della transizione, quindi si fonde con lo sfondo prima che il box sia chiuso del tutto.
+- La dissolvenza del box in uscita usa le stesse durate e la stessa curva dell'entrata (0,85 s opacità/sfocatura, 0,95 s movimento), per avere la stessa fluidità.
