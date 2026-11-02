@@ -52,7 +52,7 @@ type Contesto = {
   oggi: string;
   adesso: number; // ora corrente (ms), aggiornata ogni 30 secondi; 0 finché i dati non sono pronti
   xp: number;
-  completa: (taskId: string, opzioni: { minima: boolean; minuti?: number; daTimer?: boolean; punti?: number }) => void;
+  completa: (taskId: string, opzioni: { minima: boolean; minuti?: number; daTimer?: boolean; punti?: number; data?: string }) => void; // `data`: il giorno a cui segnarla (solo ieri; di solito è oggi)
   annulla: (completamentoId: string) => void;
   salvaTask: (t: Task) => void;
   eliminaTask: (id: string) => void;
@@ -270,11 +270,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const completa: Contesto["completa"] = useCallback(
-    (taskId, { minima, minuti, daTimer, punti: puntiBase }) => {
+    (taskId, { minima, minuti, daTimer, punti: puntiBase, data: giornoScelto }) => {
       const s = ref.current;
       const t = s.task.find((x) => x.id === taskId);
       if (!t) return;
-      const data = oggiLogico();
+      const data = giornoScelto ?? oggiLogico();
       if (s.completamenti.some((c) => c.taskId === taskId && c.data === data)) return; // una volta al giorno
 
       // Combo: task fatte di fila oggi, con meno di un'ora tra l'una e l'altra. Dalla terza i punti valgono di più.

@@ -487,3 +487,8 @@
 
 ## «In ritardo»: promemoria piccolo e discreto
 - Sotto il titolo di una task non fatta compare «· in ritardo da ieri» / «da N giorni» (ambra tenue, 11 px). Vale per: task di una sola volta riportate (`riportataDa`), task «ogni N giorni» oltre il giorno in cui erano da rifare (ultima volta + N), stanza a rotazione dall'ultima stanza fatta. Le abitudini quotidiane non l'hanno mai. Logica in `lib/ritardo.ts`.
+
+## Ieri si può riprendere
+- La striscia dei giorni parte da ieri (chip «Ieri», poi «Oggi»). Toccando «Ieri» si apre la modalità settimanale sul giorno di ieri, con le task previste per ieri: «Fatto» le segna per ieri (`completa` accetta `data`), «Annulla» le toglie. Componente `GiornoIeri`.
+- La regola «solo da guardare» resta per tutti gli altri giorni (futuri e più vecchi di ieri).
+- Dopo la mezzanotte, con la giornata ancora aperta, «Oggi» è il giorno aperto e «Ieri» quello prima.

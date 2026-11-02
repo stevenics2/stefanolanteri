@@ -30,6 +30,7 @@ import InterruttoreTema from "../components/InterruttoreTema";
 import GiornoSeguente from "../components/GiornoSeguente";
 import StrisciaGiorni from "../components/StrisciaGiorni";
 import GiornataAperta from "../components/GiornataAperta";
+import GiornoIeri from "../components/GiornoIeri";
 import Timeline from "../components/Timeline";
 import FormEvento from "../task/FormEvento";
 import { minutiNelGiorno } from "@/lib/giornoLogico";
@@ -184,7 +185,7 @@ export default function OggiVista() {
         </div>
       ) : giorno !== oggi ? (
         <div key={giorno} className="entra">
-          <GiornoSeguente data={giorno} onApri={setDaModificare} />
+          {giorno === dataPiù(oggi, -1) ? <GiornoIeri data={giorno} /> : <GiornoSeguente data={giorno} onApri={setDaModificare} />}
         </div>
       ) : (
       <div className="dissolve space-y-5">
