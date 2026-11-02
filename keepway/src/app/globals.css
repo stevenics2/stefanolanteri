@@ -483,7 +483,12 @@ button:not(:disabled):active, a[href]:active {
 .collassa[data-chiuso="true"] { grid-template-rows: 0fr; margin-bottom: 0; transition: grid-template-rows 1.1s cubic-bezier(0.4, 0, 0.2, 1), margin-bottom 1.1s cubic-bezier(0.4, 0, 0.2, 1); } /* da chiuso l'intestazione e i giorni restano a 20 px */
 .collassa > div { overflow: hidden; min-height: 0; }
 .sfuma { transition: opacity 0.85s ease-in-out 0.1s, filter 0.85s ease-in-out 0.1s, transform 0.95s var(--posa) 0.1s; will-change: opacity, transform; }
-.sfuma-via { opacity: 0; filter: blur(6px); transform: translateY(-14px) scale(0.96); transition: opacity 0.85s ease-in-out, filter 0.85s ease-in-out, transform 0.95s var(--posa); }
+.sfuma-via { opacity: 0; filter: blur(6px); transform: translateY(-14px) scale(0.96); }
+/* Dissolvenza con animazioni a fotogrammi (non «transition»): su Safari iPhone le transizioni di opacità/sfocatura sul box a volte scattano alla fine di colpo */
+@keyframes box-via { from { opacity: 1; filter: blur(0); transform: none; } to { opacity: 0; filter: blur(6px); transform: translateY(-14px) scale(0.96); } }
+@keyframes box-torna { from { opacity: 0; filter: blur(6px); transform: translateY(-14px) scale(0.96); } to { opacity: 1; filter: blur(0); transform: none; } }
+.collassa[data-bagliore="chiude"] .sfuma { transition: none; animation: box-via 0.95s cubic-bezier(0.4, 0, 0.2, 1) backwards; }
+.collassa[data-bagliore="apre"] .sfuma { transition: none; animation: box-torna 0.95s cubic-bezier(0.4, 0, 0.2, 1) 0.1s backwards; }
 
 /* Il bagliore: uno strato bianco che segue il box (non è dentro il box, quindi non sfuma con lui), dolce, sia in uscita sia in entrata */
 .collassa::after { content: ""; position: absolute; inset: 0; border-radius: 1rem; pointer-events: none; opacity: 0; }

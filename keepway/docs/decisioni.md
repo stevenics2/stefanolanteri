@@ -451,3 +451,7 @@
 ## Due correzioni dopo la prova su iPhone
 - Primo bagliore all'apertura: il picco dell'alone aveva un'ombra esterna che su Safari usciva dalla curva come un angolino. Ora il picco è solo interno al box (più intenso, stesso tempo).
 - Box che spariva di colpo e restava la sagoma del bagliore: tolto `will-change` da `.sfuma` aveva fatto perdere la dissolvenza su Safari. Rimesso su `.sfuma`; il bagliore perde il filo bianco sul bordo (restava come sagoma) ed è solo luce interna.
+
+## Dissolvenza del box con animazioni a fotogrammi
+- Su iPhone il box spariva di colpo (uscita) e riappariva di colpo (entrata) mentre il bagliore restava come sagoma. Le «transition» di opacità e sfocatura sul box non erano affidabili su Safari.
+- Ora uscita ed entrata usano animazioni `@keyframes` (`box-via`, `box-torna`, 0,95 s, stessa curva), attivate dallo stato del bagliore. Stato finale invariato.
