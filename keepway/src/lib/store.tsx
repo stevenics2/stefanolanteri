@@ -193,7 +193,7 @@ function sistemaTaskAutomatiche(s: Stato, oggi: string): Stato {
   // Le task di una sola volta non fatte (non solo i seguiti) si riportano a oggi, fino a due settimane indietro: non spariscono se salti il giorno.
   const daRiportare = (t: Task) => t.attiva && t.ricorrenza.tipo === "una_volta" && t.ricorrenza.data < oggi && t.ricorrenza.data >= dataPiù(oggi, -14) && !fatta(t.id);
   if (task.some(daRiportare)) {
-    task = task.map((t) => (daRiportare(t) ? { ...t, ricorrenza: { tipo: "una_volta" as const, data: oggi } } : t));
+    task = task.map((t) => (daRiportare(t) ? { ...t, riportataDa: t.riportataDa ?? (t.ricorrenza.tipo === "una_volta" ? t.ricorrenza.data : undefined), ricorrenza: { tipo: "una_volta" as const, data: oggi } } : t));
   }
   return task === s.task ? s : { ...s, task };
 }

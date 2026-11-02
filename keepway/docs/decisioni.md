@@ -484,3 +484,6 @@
 - Le task segnate in quel periodo contano per il giorno aperto (le scrive lo store con il giorno di lavoro). I minuti «adesso» dei componenti (`minutiNelGiorno`) superano 1440 dopo la mezzanotte (00:30 = 1470), così il pianificatore e i momenti suggeriti non propongono la mattina di ieri.
 - **Task che tornano**: le stanze e le task «ogni N giorni» già si ripianificavano da sole (non fatte = si riparte dall'ultima volta fatta, appena possibile). Aggiunto: le task di una sola volta non fatte si riportano a oggi (fino a 14 giorni indietro), non solo i «seguiti».
 - Limite noto: se il sonno non viene sincronizzato, la giornata si chiude da sola alle 05:00 (o all'inizio del turno).
+
+## «In ritardo»: promemoria piccolo e discreto
+- Sotto il titolo di una task non fatta compare «· in ritardo da ieri» / «da N giorni» (ambra tenue, 11 px). Vale per: task di una sola volta riportate (`riportataDa`), task «ogni N giorni» oltre il giorno in cui erano da rifare (ultima volta + N), stanza a rotazione dall'ultima stanza fatta. Le abitudini quotidiane non l'hanno mai. Logica in `lib/ritardo.ts`.

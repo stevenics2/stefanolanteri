@@ -7,6 +7,7 @@ import { puntiMinima, serie } from "@/lib/regole";
 import { durataMin } from "@/lib/durata";
 import { momentoAttuale } from "@/lib/momento";
 import { hhmm } from "@/lib/sonno";
+import { giorniInRitardo, testoRitardo } from "@/lib/ritardo";
 import { stanzaDelGiorno, titoloTask } from "@/lib/stanze";
 import { useStore } from "@/lib/store";
 import type { Task } from "@/lib/tipi";
@@ -35,6 +36,7 @@ export default function TaskCard({ task, soloMinima, senzaOrario = false }: { ta
   const momento = !fatto ? momentoAttuale(task, oggi, { oggi, adessoMin, eventi: stato.eventi, scelto }) : null;
   const finestra = momento?.finestra ?? null;
   const spostato = !!momento?.spostato;
+  const ritardo = giorniInRitardo(task, stato, oggi);
   const seraTarda = !!momento?.primaDiDormire;
   const esaurito = !!momento?.esaurito;
   const senzaTempo = task.adattaATurni && !fatto && !finestra;
@@ -73,6 +75,7 @@ export default function TaskCard({ task, soloMinima, senzaOrario = false }: { ta
             ) : esaurito && !senzaOrario ? (
               <span className="whitespace-nowrap text-amber-300">nessun momento libero oggi</span>
             ) : null}
+            {ritardo > 0 && !fatto && <span className="text-[11px] font-medium text-amber-300/80">· {testoRitardo(ritardo)}</span>}
             {dettaglio && <span>{dettaglio}</span>}
             {rinvio && !fatto && (
               <span className="inline-flex items-center gap-1 whitespace-nowrap text-sky-300">

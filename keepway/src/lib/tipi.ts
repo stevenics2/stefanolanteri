@@ -43,6 +43,7 @@ export type Task = {
   adattaATurni?: boolean; // il momento giusto e i promemoria si scelgono nei momenti liberi tra turni e sonno
   attiva: boolean;
   creatoIl: string;
+  riportataDa?: string; // task di una sola volta non fatta: il giorno per cui era prevista (si riporta a oggi finché non la fai)
 };
 
 export type Completamento = {
