@@ -475,3 +475,6 @@
 
 ## Contenitori del box con la stessa curva
 - Ipotesi dell'utente: il livello rettangolare dietro il box (non il bagliore) crea l'angolino. Ora i contenitori `.collassa > div` e `.sfuma` hanno lo stesso raggio del box (1rem), così anche il loro livello è tondo.
+
+## Notifica del terminal: formato fisso con luci
+- Il testo è sempre «Operatività Terminal :» e sotto «Empty cntr 🔴 | Full cntr 🟢» (🔴 chiuso, 🟢 aperto). Niente più titoli diversi per operativo/sospeso/in parte. I dati letti erano giusti (l'inversione segnalata era un malinteso: sul sito Empty chiuso e Full aperto, come nella notifica). Il Worker va ridistribuito da Cloudflare.

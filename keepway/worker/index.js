@@ -239,9 +239,9 @@ async function scaricaTerminal() {
 
 const aperto = (c) => c === 'g';
 function testoTerminal(s) {
-  if (aperto(s.empty) && aperto(s.full)) return { titolo: 'Terminal operativo', dettaglio: 'Empty e Full yard aperti', emoji: '🟢' };
-  if (!aperto(s.empty) && !aperto(s.full)) return { titolo: 'Operazioni sospese', dettaglio: 'Empty e Full yard chiusi', emoji: '🔴' };
-  return { titolo: 'Operativo in parte', dettaglio: `Empty ${aperto(s.empty) ? 'aperto' : 'chiuso'} · Full ${aperto(s.full) ? 'aperto' : 'chiuso'}`, emoji: '🟡' };
+  // sempre 🔴 chiuso e 🟢 aperto
+  const luce = (c) => (aperto(c) ? '🟢' : '🔴');
+  return { titolo: 'Operatività Terminal :', dettaglio: `Empty cntr ${luce(s.empty)} | Full cntr ${luce(s.full)}` };
 }
 
 async function avvisaTerminal(env, stato) {
@@ -251,7 +251,7 @@ async function avvisaTerminal(env, stato) {
   const vapid = await chiavi(env, null);
   const t = testoTerminal(stato);
   for (const sub of results) {
-    await spedisci(env, vapid, sub, { titolo: '\u2800', testo: `→ ${grassetto(t.titolo)}\n${t.dettaglio} ${t.emoji}`, url: '/oggi/', tag: 'terminal', urgente: true });
+    await spedisci(env, vapid, sub, { titolo: '\u2800', testo: `→ ${grassetto(t.titolo)}\n${t.dettaglio}`, url: '/oggi/', tag: 'terminal', urgente: true });
   }
   return results.length;
 }
