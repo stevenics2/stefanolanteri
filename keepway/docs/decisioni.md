@@ -459,3 +459,6 @@
 ## Ritorno alla dissolvenza fluida (come nel commit 4e9f3eb), tenendo solo la correzione dell'angolino
 - Ripristinate le transizioni di opacità/sfocatura/movimento del box e il bagliore con alone esterno, come nella versione che funzionava su iPhone. Tolte le animazioni a fotogrammi.
 - Tenuto solo ciò che toglie l'angolino a riposo: l'animazione `alone` non lascia più ombra esterna (`backwards`) e il box non ha l'ombra esterna statica. Il picco dell'alone è solo interno.
+
+## Ritorno esatto alla versione fluida 4e9f3eb (globals.css e RiepilogoOggi)
+- Anche dopo il ripristino parziale la dissolvenza del box su Safari non era fluida. Ripristinati i due file esattamente come nel commit 4e9f3eb (l'ultima versione confermata fluida). Torna di conseguenza l'angolino chiaro a riposo: lo si affronta solo dopo aver confermato che la dissolvenza è tornata.
