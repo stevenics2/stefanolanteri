@@ -465,3 +465,6 @@
 
 ## Angolino, passo 1 (una sola modifica sulla versione fluida)
 - Solo `.ricalcolo`: l'animazione `alone` non resta più applicata a fine corsa (`both` → `backwards`). Il resto è identico a 4e9f3eb. Se la dissolvenza resta fluida e l'angolino sparisce, fine; altrimenti si prova il passo 2.
+
+## Angolino, passo 2 (una sola modifica)
+- Il passo 1 non ha cambiato nulla. Ora solo `RiepilogoOggi`: tolta l'ombra esterna statica del box (resta quella interna). Il resto è identico al passo 1. Se la dissolvenza si rompe, la causa è questa e si annulla.
