@@ -431,3 +431,7 @@
 ## Transizione del box: bagliore che si spegne prima della chiusura
 - In uscita il bagliore ora raggiunge il massimo al 28% e torna a zero al 65% della transizione, quindi si fonde con lo sfondo prima che il box sia chiuso del tutto.
 - La dissolvenza del box in uscita usa le stesse durate e la stessa curva dell'entrata (0,85 s opacità/sfocatura, 0,95 s movimento), per avere la stessa fluidità.
+
+## Bagliore: parte e finisce nel colore dello sfondo
+- In uscita il bagliore si spegne del tutto al 58% (prima era 65%), con il box ancora visibile.
+- In entrata il bagliore resta spento fino al 42%, poi sale (massimo al 75%) e si spegne a fine movimento: nasce dallo sfondo invece di comparire subito.
