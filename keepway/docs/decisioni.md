@@ -462,3 +462,6 @@
 
 ## Ritorno esatto alla versione fluida 4e9f3eb (globals.css e RiepilogoOggi)
 - Anche dopo il ripristino parziale la dissolvenza del box su Safari non era fluida. Ripristinati i due file esattamente come nel commit 4e9f3eb (l'ultima versione confermata fluida). Torna di conseguenza l'angolino chiaro a riposo: lo si affronta solo dopo aver confermato che la dissolvenza è tornata.
+
+## Angolino, passo 1 (una sola modifica sulla versione fluida)
+- Solo `.ricalcolo`: l'animazione `alone` non resta più applicata a fine corsa (`both` → `backwards`). Il resto è identico a 4e9f3eb. Se la dissolvenza resta fluida e l'angolino sparisce, fine; altrimenti si prova il passo 2.
