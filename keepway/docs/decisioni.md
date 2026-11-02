@@ -455,3 +455,7 @@
 ## Dissolvenza del box con animazioni a fotogrammi
 - Su iPhone il box spariva di colpo (uscita) e riappariva di colpo (entrata) mentre il bagliore restava come sagoma. Le «transition» di opacità e sfocatura sul box non erano affidabili su Safari.
 - Ora uscita ed entrata usano animazioni `@keyframes` (`box-via`, `box-torna`, 0,95 s, stessa curva), attivate dallo stato del bagliore. Stato finale invariato.
+
+## Ritorno alla dissolvenza fluida (come nel commit 4e9f3eb), tenendo solo la correzione dell'angolino
+- Ripristinate le transizioni di opacità/sfocatura/movimento del box e il bagliore con alone esterno, come nella versione che funzionava su iPhone. Tolte le animazioni a fotogrammi.
+- Tenuto solo ciò che toglie l'angolino a riposo: l'animazione `alone` non lascia più ombra esterna (`backwards`) e il box non ha l'ombra esterna statica. Il picco dell'alone è solo interno.
