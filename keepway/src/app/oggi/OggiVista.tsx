@@ -157,9 +157,9 @@ export default function OggiVista() {
         </div>
       </div>
 
-      <div className="collassa" data-chiuso={settimana}>
+      <div className="collassa" data-chiuso={settimana} data-bagliore={bagliore || undefined}>
         <div>
-          <div data-bagliore={bagliore || undefined} className={`entra sfuma ${settimana ? "sfuma-via" : ""}`}>
+          <div className={`entra sfuma ${settimana ? "sfuma-via" : ""}`}>
             <RiepilogoOggi fatte={fatte} totale={daFare.length} />
           </div>
         </div>

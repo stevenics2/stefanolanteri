@@ -416,3 +416,9 @@
 - **Errore** (registro di Cloudflare, 2/11): `Failed to restore build output from build cache. Skipping.` poi `turbo-persistence … range start index … out of range` e `Aborted (core dumped)`. Cloudflare ricarica la cartella `.next/cache` della build precedente; se è danneggiata, Turbopack (il compilatore di Next 16) ci va a leggere e si schianta. Non è un errore del nostro codice: qui la build da zero funzionava.
 - **Riprodotto** rovinando di proposito un file della cache locale: la build si schianta con lo stesso tipo di errore.
 - **Correzione**: in `next.config.ts` `experimental.turbopackFileSystemCacheForBuild: false` (nessuna cache su disco). Provato: con la cache rovinata ancora presente la build riesce, e non ne crea di nuove. Il sito è piccolo: senza cache la build dura pochi secondi in più.
+
+## Transizione del box: dissolvenza vera in uscita e in entrata, bagliore visibile
+- **Problema**: dopo aver rallentato l'animazione, in uscita lo spazio si chiudeva più in fretta di quanto il box sfumasse (il box veniva «tagliato», non si dissolveva); in entrata il box compariva solo a fine corsa; il bagliore era dentro il box e spariva insieme a lui.
+- **Uscita** (1,1 s): il box sfuma subito (0,7 s); lo spazio parte con 0,25 s di ritardo, mentre i giorni salgono. Misurato: opacità del box 0,94 → 0,73 → 0,38 → 0,04 mentre lo spazio resta a 179 px fino a 250 ms e poi si chiude.
+- **Entrata** (1,1 s): lo spazio si apre subito e in modo regolare (curva dolce) e il box si dissolve in ingresso mentre si apre (da 100 ms). Misurato: spazio 5 → 39 → 102 → 151 → 171 → 179 px con box 0 → 0,08 → 0,29 → 0,68 → 0,95 → 1.
+- **Bagliore**: uno strato ambra separato che segue il box (dentro e intorno, non sfuma con lui), con il massimo a circa un terzo in uscita e a metà in entrata. Spento se le animazioni sono spente.

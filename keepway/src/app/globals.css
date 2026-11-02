@@ -472,19 +472,23 @@ button:not(:disabled):active, a[href]:active {
 .terminal-luce { animation: terminalRespira 3.4s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .terminal-luce { animation-duration: 0.01ms; } }
 
-/* Dalla vista di oggi alla settimana: il box ricompensa sfuma e si chiude, e i giorni salgono in alto */
-.striscia-alta[data-ferma="true"] { padding-top: env(safe-area-inset-top); }
-.collassa { display: grid; grid-template-rows: 1fr; transition: grid-template-rows 1.1s var(--posa), margin-bottom 1.1s var(--posa); } /* il box sfuma e si chiude insieme, mentre i giorni salgono (e viceversa) */ /* il margine sotto lo dà lo spazio tra gli elementi della pagina: qui non si tocca, tranne quando si chiude */
-.collassa[data-chiuso="true"] { grid-template-rows: 0fr; margin-bottom: 0; } /* da chiuso l'intestazione e i giorni restano a 20 px, come il resto della pagina */
-.collassa > div { overflow: hidden; min-height: 0; }
-.sfuma { transition: opacity 0.8s ease-out, filter 0.8s ease-out, transform 1.1s var(--posa); will-change: opacity, transform; }
-.sfuma-via { opacity: 0; filter: blur(6px); transform: translateY(-14px) scale(0.96); }
+/* La striscia dei giorni resta fissa in cima in modalità settimanale (lo spazio della barra di stato dell'iPhone solo quando è davvero in cima) */
 .striscia-alta { position: sticky; top: 0; z-index: 30; margin-inline: -1rem; padding: 0 1rem 0.5rem; background: color-mix(in srgb, var(--background) 88%, transparent); backdrop-filter: blur(14px); }
-@media (prefers-reduced-motion: reduce) { .collassa, .sfuma { transition-duration: 0.01ms; } }
+.striscia-alta[data-ferma="true"] { padding-top: env(safe-area-inset-top); }
 
-/* Un leggero bagliore sul box mentre sfuma (entrata) e mentre ricompare (uscita): dentro il box, così non viene tagliato */
-@keyframes bagliore-chiude { 0% { box-shadow: inset 0 0 0 0 transparent; } 28% { box-shadow: inset 0 0 26px 3px color-mix(in srgb, var(--accent) 55%, transparent); } 100% { box-shadow: inset 0 0 0 0 transparent; } }
-@keyframes bagliore-apre { 0% { box-shadow: inset 0 0 0 0 transparent; } 65% { box-shadow: inset 0 0 26px 3px color-mix(in srgb, var(--accent) 55%, transparent); } 100% { box-shadow: inset 0 0 0 0 transparent; } }
-.sfuma[data-bagliore="chiude"] > [data-box-avanzamento] { animation: bagliore-chiude 1.1s ease-out; }
-.sfuma[data-bagliore="apre"] > [data-box-avanzamento] { animation: bagliore-apre 1.1s ease-out; }
-@media (prefers-reduced-motion: reduce) { .sfuma[data-bagliore] > [data-box-avanzamento] { animation: none; } }
+/* Dalla vista di oggi alla settimana (1,1 s in tutto).
+   USCITA del box: sfuma subito e lo spazio si chiude con un piccolo anticipo di sfumatura, mentre i giorni salgono.
+   ENTRATA del box: lo spazio si apre subito (i giorni scendono) e il box ricompare dissolvendosi mentre lo spazio si apre. */
+.collassa { position: relative; display: grid; grid-template-rows: 1fr; transition: grid-template-rows 1.1s cubic-bezier(0.4, 0, 0.2, 1), margin-bottom 1.1s cubic-bezier(0.4, 0, 0.2, 1); } /* apertura regolare: i giorni scendono piano e il box ricompare mentre scendono */
+.collassa[data-chiuso="true"] { grid-template-rows: 0fr; margin-bottom: 0; transition: grid-template-rows 0.85s var(--posa) 0.25s, margin-bottom 0.85s var(--posa) 0.25s; } /* da chiuso l'intestazione e i giorni restano a 20 px */
+.collassa > div { overflow: hidden; min-height: 0; }
+.sfuma { transition: opacity 0.85s ease-in-out 0.1s, filter 0.85s ease-in-out 0.1s, transform 0.95s var(--posa) 0.1s; will-change: opacity, transform; }
+.sfuma-via { opacity: 0; filter: blur(6px); transform: translateY(-14px) scale(0.96); transition: opacity 0.7s ease-in-out, filter 0.7s ease-in-out, transform 0.85s var(--posa); }
+
+/* Il bagliore: uno strato ambra che segue il box (non è dentro il box, quindi non sfuma con lui), dolce, sia in uscita sia in entrata */
+.collassa::after { content: ""; position: absolute; inset: 0; border-radius: 1rem; pointer-events: none; opacity: 0; }
+@keyframes bagliore-chiude { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes bagliore-apre { 0% { opacity: 0; } 60% { opacity: 1; } 100% { opacity: 0; } }
+.collassa[data-bagliore="chiude"]::after { box-shadow: 0 0 26px 4px color-mix(in srgb, var(--accent) 60%, transparent), inset 0 0 22px 2px color-mix(in srgb, var(--accent) 50%, transparent); animation: bagliore-chiude 1.1s ease-in-out; }
+.collassa[data-bagliore="apre"]::after { box-shadow: 0 0 26px 4px color-mix(in srgb, var(--accent) 60%, transparent), inset 0 0 22px 2px color-mix(in srgb, var(--accent) 50%, transparent); animation: bagliore-apre 1.1s ease-in-out; }
+@media (prefers-reduced-motion: reduce) { .collassa, .sfuma, .sfuma-via { transition-duration: 0.01ms !important; transition-delay: 0s !important; } .collassa::after { animation: none !important; } }
