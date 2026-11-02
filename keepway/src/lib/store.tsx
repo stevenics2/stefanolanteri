@@ -6,6 +6,7 @@ import { impostaModifiche } from "./calendario";
 import { confermaCambio, rilevaCambi } from "./cambiPiano";
 import { èPianificata, impostaPianoAuto } from "./pianoAuto";
 import { dataPiù, inizioSettimana, oggiLocale } from "./date";
+import { EVENTO_GIORNO, oggiLogico } from "./giornoLogico";
 import { bossSettimana, giornata, livello, puntiMinima, xpTotali } from "./regole";
 import { nuovoId, statoIniziale, statoVuoto, taskStanza } from "./seed";
 import { stanzaDelGiorno } from "./stanze";
@@ -124,7 +125,7 @@ function carica(): Stato {
           const v = VECCHI_E_NUOVI[t.id];
           if (v && t.punti === v[0]) t.punti = v[1];
         }
-        if (!task.some((t) => t.id === "stanza")) task.push(taskStanza(oggiLocale()));
+        if (!task.some((t) => t.id === "stanza")) task.push(taskStanza(oggiLogico()));
         return {
           ...base,
           ...s,
@@ -189,20 +190,22 @@ function sistemaTaskAutomatiche(s: Stato, oggi: string): Stato {
   const fatta = (id: string) => s.completamenti.some((c) => c.taskId === id);
   const pulite = task.filter((t) => !(t.seguitoDi && t.ricorrenza.tipo === "una_volta" && t.ricorrenza.data < limite && fatta(t.id)));
   if (pulite.length !== task.length) task = pulite;
-  if (task.some((t) => t.seguitoDi && t.ricorrenza.tipo === "una_volta" && t.ricorrenza.data < oggi && !fatta(t.id))) {
-    task = task.map((t) => (t.seguitoDi && t.ricorrenza.tipo === "una_volta" && t.ricorrenza.data < oggi && !fatta(t.id) ? { ...t, ricorrenza: { tipo: "una_volta" as const, data: oggi } } : t));
+  // Le task di una sola volta non fatte (non solo i seguiti) si riportano a oggi, fino a due settimane indietro: non spariscono se salti il giorno.
+  const daRiportare = (t: Task) => t.attiva && t.ricorrenza.tipo === "una_volta" && t.ricorrenza.data < oggi && t.ricorrenza.data >= dataPiù(oggi, -14) && !fatta(t.id);
+  if (task.some(daRiportare)) {
+    task = task.map((t) => (daRiportare(t) ? { ...t, ricorrenza: { tipo: "una_volta" as const, data: oggi } } : t));
   }
   return task === s.task ? s : { ...s, task };
 }
 
 // Ricalcola il piano automatico delle task "N volte a settimana" (e lo mette a disposizione di chi lo legge).
 function conPiano(stato: Stato): Stato {
-  const s = sistemaTaskAutomatiche(stato, oggiLocale());
+  const s = sistemaTaskAutomatiche(stato, oggiLogico());
   if (!s.task.some(èPianificata)) {
     impostaPianoAuto([]);
     return s.pianoAuto.length ? { ...s, pianoAuto: [] } : s;
   }
-  const piano = pianifica(s, oggiLocale());
+  const piano = pianifica(s, oggiLogico());
   impostaPianoAuto(piano);
   return { ...s, pianoAuto: piano };
 }
@@ -223,7 +226,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const prima = ref.current;
     const dopo = fn(prima);
     if (dopo.modifiche !== prima.modifiche) impostaModifiche(dopo.modifiche); // sonno, conflitti e carico leggono il calendario aggiornato
-    ref.current = rilevaCambi(conPiano(dopo), oggiLocale(), conferma, nuovoId, Date.now());
+    ref.current = rilevaCambi(conPiano(dopo), oggiLogico(), conferma, nuovoId, Date.now());
     setStato(ref.current);
   }, []);
 
@@ -231,9 +234,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const caricato = carica();
     impostaModifiche(caricato.modifiche);
-    ref.current = rilevaCambi(conPiano(caricato), oggiLocale(), false, nuovoId, Date.now());
+    ref.current = rilevaCambi(conPiano(caricato), oggiLogico(), false, nuovoId, Date.now());
     setStato(ref.current);
-    setOggi(oggiLocale());
+    setOggi(oggiLogico());
     setAdesso(Date.now());
     setPronto(true);
   }, []);
@@ -252,13 +255,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (pronto && oggi) aggiorna((x) => x);
   }, [pronto, oggi, aggiorna]);
 
-  // A mezzanotte "oggi" cambia da solo.
+  // «Oggi» cambia da solo: dopo la mezzanotte solo quando dormi, comincia un turno o chiudi la giornata (vedi giornoLogico).
   useEffect(() => {
-    const id = setInterval(() => {
-      setOggi(oggiLocale());
+    const ricalcola = () => {
+      setOggi(oggiLogico());
       setAdesso(Date.now());
-    }, 30_000);
-    return () => clearInterval(id);
+    };
+    const id = setInterval(ricalcola, 30_000);
+    window.addEventListener(EVENTO_GIORNO, ricalcola);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener(EVENTO_GIORNO, ricalcola);
+    };
   }, []);
 
   const completa: Contesto["completa"] = useCallback(
@@ -266,7 +274,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const s = ref.current;
       const t = s.task.find((x) => x.id === taskId);
       if (!t) return;
-      const data = oggiLocale();
+      const data = oggiLogico();
       if (s.completamenti.some((c) => c.taskId === taskId && c.data === data)) return; // una volta al giorno
 
       // Combo: task fatte di fila oggi, con meno di un'ora tra l'una e l'altra. Dalla terza i punti valgono di più.
@@ -400,22 +408,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       ignoraOggi: (taskId) =>
         aggiorna((x) => ({
           ...x,
-          ignorati: [...x.ignorati.filter((i) => !(i.taskId === taskId && i.data === oggiLocale())), { taskId, data: oggiLocale() }],
-          rinvii: x.rinvii.filter((r) => !(r.taskId === taskId && r.data === oggiLocale())),
+          ignorati: [...x.ignorati.filter((i) => !(i.taskId === taskId && i.data === oggiLogico())), { taskId, data: oggiLogico() }],
+          rinvii: x.rinvii.filter((r) => !(r.taskId === taskId && r.data === oggiLogico())),
         })),
       ripristina: (taskId) =>
-        aggiorna((x) => ({ ...x, ignorati: x.ignorati.filter((i) => !(i.taskId === taskId && i.data === oggiLocale())) })),
+        aggiorna((x) => ({ ...x, ignorati: x.ignorati.filter((i) => !(i.taskId === taskId && i.data === oggiLogico())) })),
       rimanda: (taskId, alle) =>
         aggiorna((x) => ({
           ...x,
-          rinvii: [...x.rinvii.filter((r) => !(r.taskId === taskId && r.data === oggiLocale())), { taskId, data: oggiLocale(), alle }],
+          rinvii: [...x.rinvii.filter((r) => !(r.taskId === taskId && r.data === oggiLogico())), { taskId, data: oggiLogico(), alle }],
         })),
       annullaRinvio: (taskId) =>
-        aggiorna((x) => ({ ...x, rinvii: x.rinvii.filter((r) => !(r.taskId === taskId && r.data === oggiLocale())) })),
+        aggiorna((x) => ({ ...x, rinvii: x.rinvii.filter((r) => !(r.taskId === taskId && r.data === oggiLogico())) })),
       impostaMomento: (taskId, momento) =>
         aggiorna((x) => ({
           ...x,
-          momenti: [...x.momenti.filter((m) => !(m.taskId === taskId && m.data === oggiLocale())), ...(momento ? [{ taskId, data: oggiLocale(), ...momento }] : [])],
+          momenti: [...x.momenti.filter((m) => !(m.taskId === taskId && m.data === oggiLogico())), ...(momento ? [{ taskId, data: oggiLogico(), ...momento }] : [])],
         })),
       // Un giorno del piano automatico: acceso = lo fissi tu; spento = lo togli (l'app non lo propone più)
       sistemaGiornoAuto: (taskId, data, attivo) =>
@@ -428,22 +436,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         }), true),
       // Torna tutto automatico: si dimenticano i giorni fissati e tolti da oggi in poi
       ricalcolaPiano: (taskId) =>
-        aggiorna((x) => ({ ...x, pianoAuto: x.pianoAuto.filter((v) => !(v.taskId === taskId && v.tipo !== "auto" && v.data >= oggiLocale())) }), true),
+        aggiorna((x) => ({ ...x, pianoAuto: x.pianoAuto.filter((v) => !(v.taskId === taskId && v.tipo !== "auto" && v.data >= oggiLogico())) }), true),
       // La proposta scelta nel popup: quei giorni diventano «fissati» (restano come li hai scelti); il resto lo continua a decidere l'app
       fissaGiorniAuto: (taskId, date) =>
         aggiorna((x) => ({
           ...x,
           pianoAuto: [
-            ...x.pianoAuto.filter((v) => !(v.taskId === taskId && v.tipo !== "auto" && v.data >= oggiLocale())),
+            ...x.pianoAuto.filter((v) => !(v.taskId === taskId && v.tipo !== "auto" && v.data >= oggiLogico())),
             ...date.map((data) => ({ taskId, data, tipo: "fissato" as const })),
           ],
         }), true),
       // Un cambio di piano fatto da solo: lo confermi (il piano nuovo resta) oppure tieni il giorno di prima, se si può (diventa un giorno fissato)
-      confermaCambioPiano: (id) => aggiorna((x) => confermaCambio(x, id, oggiLocale())),
+      confermaCambioPiano: (id) => aggiorna((x) => confermaCambio(x, id, oggiLogico())),
       tieniGiornoPiano: (id) => {
         const c = ref.current.cambiPiano?.find((x) => x.id === id);
         if (!c || !c.tieniPossibile) return;
-        const oggi0 = oggiLocale();
+        const oggi0 = oggiLogico();
         const date = [...new Set([...ref.current.pianoAuto.filter((v) => v.taskId === c.taskId && v.tipo !== "escluso" && v.data >= oggi0 && v.data !== c.a).map((v) => v.data), c.da])];
         aggiorna((x) => ({
           ...x,
@@ -458,7 +466,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       salvaModifiche: (nuove, testo) => {
         const sostituite = ref.current.modifiche.filter((m) => nuove.some((n) => n.data === m.data));
         aggiorna((x) => ({ ...x, modifiche: [...x.modifiche.filter((m) => !nuove.some((n) => n.data === m.data)), ...nuove] }));
-        setAvviso({ id: Date.now().toString(36), testo, data: nuove[0]?.data ?? oggiLocale(), rimuovi: nuove.map((n) => n.id), ripristina: sostituite });
+        setAvviso({ id: Date.now().toString(36), testo, data: nuove[0]?.data ?? oggiLogico(), rimuovi: nuove.map((n) => n.id), ripristina: sostituite });
       },
       annullaModifiche: (ids) =>
         aggiorna((x) => {

@@ -478,3 +478,9 @@
 
 ## Notifica del terminal: formato fisso con luci
 - Il testo è sempre «Operatività Terminal :» e sotto «Empty cntr 🔴 | Full cntr 🟢» (🔴 chiuso, 🟢 aperto). Niente più titoli diversi per operativo/sospeso/in parte. I dati letti erano giusti (l'inversione segnalata era un malinteso: sul sito Empty chiuso e Full aperto, come nella notifica). Il Worker va ridistribuito da Cloudflare.
+
+## La giornata resta aperta fino al sonno + task di una volta che tornano
+- **Giorno di lavoro** (`lib/giornoLogico.ts`): dopo la mezzanotte «oggi» resta il giorno di ieri finché non succede una di queste: una sessione di sonno (dai dati di Salute già scaricati) tocca il periodo dopo la mezzanotte; comincia un turno (es. turno 1 alle 01:00); sono le 05:00 (limite massimo, se i dati del sonno non sono ancora arrivati); oppure si tocca «Chiudi» nel riquadro che compare in Oggi (`GiornataAperta`). Si ricalcola ogni 30 secondi e subito dopo «Chiudi».
+- Le task segnate in quel periodo contano per il giorno aperto (le scrive lo store con il giorno di lavoro). I minuti «adesso» dei componenti (`minutiNelGiorno`) superano 1440 dopo la mezzanotte (00:30 = 1470), così il pianificatore e i momenti suggeriti non propongono la mattina di ieri.
+- **Task che tornano**: le stanze e le task «ogni N giorni» già si ripianificavano da sole (non fatte = si riparte dall'ultima volta fatta, appena possibile). Aggiunto: le task di una sola volta non fatte si riportano a oggi (fino a 14 giorni indietro), non solo i «seguiti».
+- Limite noto: se il sonno non viene sincronizzato, la giornata si chiude da sola alle 05:00 (o all'inizio del turno).

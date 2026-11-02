@@ -11,6 +11,7 @@ import type { ObiettivoSett } from "@/lib/tipi";
 import { useDatiSalute } from "@/lib/useSalute";
 import { Schermo } from "../task/ui";
 import VistaInsieme from "./VistaInsieme";
+import { minutiNelGiorno } from "@/lib/giornoLogico";
 
 const TITOLI = ["Com'è andata", "La settimana che arriva", "I tuoi obiettivi"];
 
@@ -22,7 +23,7 @@ export default function RitoSettimana() {
   const [passo, setPasso] = useState(0);
   const [bozza, setBozza] = useState<ObiettivoSett[] | null>(null);
   const [finito, setFinito] = useState(false);
-  const oraMin = adesso > 0 ? new Date(adesso).getHours() * 60 + new Date(adesso).getMinutes() : 0;
+  const oraMin = adesso > 0 ? minutiNelGiorno(adesso, oggi) : 0;
   const lunedi = adesso > 0 ? ritoDaFare(stato, oggi, oraMin) : null;
 
   const dati = useDatiSalute(30);

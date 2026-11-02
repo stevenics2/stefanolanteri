@@ -29,8 +29,10 @@ import Presenza from "../components/Presenza";
 import InterruttoreTema from "../components/InterruttoreTema";
 import GiornoSeguente from "../components/GiornoSeguente";
 import StrisciaGiorni from "../components/StrisciaGiorni";
+import GiornataAperta from "../components/GiornataAperta";
 import Timeline from "../components/Timeline";
 import FormEvento from "../task/FormEvento";
+import { minutiNelGiorno } from "@/lib/giornoLogico";
 
 // Dalle 18 le task non ancora fatte passano in "prima di dormire". Spenta durante lo sviluppo, per vedere tutto il resto.
 const REGOLA_SERA_ATTIVA = false;
@@ -67,7 +69,7 @@ export default function OggiVista() {
   // Planner: prima le task con un momento consigliato, in ordine di orario; poi le altre (si parte dalla pulizia: la stanza
   // del giorno, poi il resto della casa). Le fatte vanno in fondo.
   const peso = (t: Task) => (t.tipo === "stanza" ? 0 : t.areaId === "casa" ? 1 : 2);
-  const adessoMin = adesso > 0 ? new Date(adesso).getHours() * 60 + new Date(adesso).getMinutes() : 0;
+  const adessoMin = adesso > 0 ? minutiNelGiorno(adesso, oggi) : 0;
   const inizioMomento = (t: Task) =>
     momentoAttuale(t, oggi, { oggi, adessoMin, eventi: stato.eventi, scelto: stato.momenti.find((m) => m.taskId === t.id && m.data === oggi) }).finestra?.da ?? Infinity;
   const ordina = (a: Task, b: Task) => Number(èFatta(a)) - Number(èFatta(b)) || (inizioMomento(a) === inizioMomento(b) ? 0 : inizioMomento(a) < inizioMomento(b) ? -1 : 1) || peso(a) - peso(b);
@@ -171,6 +173,7 @@ export default function OggiVista() {
         </div>
       </div>
 
+      <GiornataAperta />
       <CambiPiano />
 
       {!settimana && <RitoSettimana />}

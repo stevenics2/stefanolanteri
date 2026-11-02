@@ -9,6 +9,7 @@ import { hhmm } from "@/lib/sonno";
 import { useStore } from "@/lib/store";
 import { useDatiSalute } from "@/lib/useSalute";
 import type { Task } from "@/lib/tipi";
+import { minutiNelGiorno } from "@/lib/giornoLogico";
 
 const chiave = (oggi: string) => `keepway.nap.${oggi}`;
 const letto = (oggi: string) => {
@@ -34,9 +35,9 @@ export default function PowerNap() {
   const stanotte = n.find((x) => x.giorno === oggi) ?? null;
   const { debito } = debitoComplessivo(salute, tutti?.sonni, stato.impostazioni.obiettivoSonnoMin, oggi, adesso);
   if (!serveNap(stanotte?.minuti ?? null, debito, stato.impostazioni.obiettivoSonnoMin)) return null;
-  const d = new Date(adesso);
-  const slot = momentoNap(oggi, d.getHours() * 60 + d.getMinutes(), durata);
-  if (!DURATE_NAP.some((m) => momentoNap(oggi, d.getHours() * 60 + d.getMinutes(), m))) return null; // nessun momento adatto, con nessuna durata: meglio non proporlo
+  const minOra = minutiNelGiorno(adesso, oggi);
+  const slot = momentoNap(oggi, minOra, durata);
+  if (!DURATE_NAP.some((m) => momentoNap(oggi, minOra, m))) return null; // nessun momento adatto, con nessuna durata: meglio non proporlo
 
   const chiudi = (esito: "ok" | "no") => {
     try {

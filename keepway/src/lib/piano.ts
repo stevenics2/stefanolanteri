@@ -8,6 +8,7 @@ import { èADormire, èInSilenzio, hhmm, istanteDaMinutiAssoluti, situazioneAdes
 import { iconaTask } from "../app/components/AreaIcona";
 import { titoloTask } from "./stanze";
 import type { Stato, Task } from "./tipi";
+import { minutiNelGiorno } from "./giornoLogico";
 
 // Una notifica da consegnare: l'app decide cosa e quando, il server la spedisce all'ora giusta.
 export type Notifica = {
@@ -158,7 +159,7 @@ export function pianoNotifiche(stato: Stato, ora: number, oggi: string, haSincro
       const emoji = emojiDi(iconaTask(task, stato.aree.find((a) => a.id === task.areaId)?.icona ?? ""));
       const rinvio = èOggi ? stato.rinvii.find((r) => r.taskId === task.id && r.data === oggi) : undefined;
 
-      const adessoMin = new Date(ora).getHours() * 60 + new Date(ora).getMinutes();
+      const adessoMin = minutiNelGiorno(ora, oggi);
       const orari = orariPerGiorno(task, giorno, { oggi, adessoMin, eventi: stato.eventi }, stato.momenti.find((m) => m.taskId === task.id && m.data === giorno));
       orari.forEach((hhmm, n) => {
         const quando = istante(giorno, hhmm);

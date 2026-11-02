@@ -1,10 +1,8 @@
+import { oggiLogico } from "./giornoLogico";
 import { adessoMs } from "./seed";
 import type { Completamento, Stato, Task } from "./tipi";
 
-const oggiLocale = () => {
-  const d = new Date(adessoMs());
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-};
+const oggiLocale = () => oggiLogico(adessoMs()); // il giorno di lavoro: dopo la mezzanotte resta quello di ieri finché non dormi
 
 // Rotazione delle stanze: ogni giorno una, senza ripetere finché non le hai fatte tutte (poi si ricomincia).
 // Se salti una stanza, resta in coda: domani ti viene riproposta la stessa.

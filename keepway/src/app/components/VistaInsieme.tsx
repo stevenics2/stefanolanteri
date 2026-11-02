@@ -7,6 +7,7 @@ import { caricoDelGiorno, righeGiorno, type LivelloCarico } from "@/lib/settiman
 import { useStore } from "@/lib/store";
 import type { Evento } from "@/lib/tipi";
 import AreaIcona from "./AreaIcona";
+import { minutiNelGiorno } from "@/lib/giornoLogico";
 
 const ETICHETTE: Record<LivelloCarico, { testo: string; colore: string }> = {
   recupero: { testo: "Recupero", colore: "#38bdf8" },
@@ -21,7 +22,7 @@ const nomeGiorno = (d: string) => `${GIORNI_LUNGHI[giornoSettimana(d)]} ${Number
 // task di ogni tipo (ogni giorno, giorni fissi, automatiche) e appuntamenti. In alto, gli avvisi sui giorni troppo carichi.
 export default function VistaInsieme({ lunedi, onApriGiorno, onModificaEvento, onSposta }: { lunedi: string; onApriGiorno: (d: string) => void; onModificaEvento?: (e: Evento) => void; onSposta?: (delta: number) => void }) {
   const { stato, oggi, adesso } = useStore();
-  const adessoMin = adesso > 0 ? new Date(adesso).getHours() * 60 + new Date(adesso).getMinutes() : 0;
+  const adessoMin = adesso > 0 ? minutiNelGiorno(adesso, oggi) : 0;
   const giorni = Array.from({ length: 7 }, (_, i) => dataPiù(lunedi, i));
   const dati = giorni.map((d) => ({ d, carico: caricoDelGiorno(stato, d, oggi, adessoMin), righe: righeGiorno(stato, d, oggi, adessoMin), r: riepilogoGiorno(d) }));
   const futuri = dati.filter((x) => x.d >= oggi);

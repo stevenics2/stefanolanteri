@@ -6,6 +6,7 @@ import { attesaPerTask, finestreLibere, inizioUtile, limiteSerale, oreSonnoPrima
 import type { Evento, PianoVoce, Stato, Task } from "./tipi";
 import { èPianificata } from "./pianoAuto";
 import { adessoMs } from "./seed";
+import { minutiNelGiorno } from "./giornoLogico";
 
 // --- Quando ha senso allenarsi, in base ai turni del giorno ---
 // dopo/prima = in che fascia oraria (minuti dalla mezzanotte); qualita = quanto è un buon giorno (3 = il migliore).
@@ -117,8 +118,7 @@ const giorniTraDate = (a: string, b: string) => Math.round((Date.parse(b) - Date
 export function pianifica(stato: Stato, oggi: string): PianoVoce[] {
   const eventi = stato.eventi;
   // Per oggi si propone solo quello che è ancora da venire: alle 23:40 niente «oggi alle 13:00» (e niente oggi, se non c'è più un momento libero).
-  const adesso = new Date(adessoMs());
-  const dopoOggi = Math.ceil((adesso.getHours() * 60 + adesso.getMinutes()) / 15) * 15;
+  const dopoOggi = Math.ceil(minutiNelGiorno(adessoMs(), oggi) / 15) * 15; // dopo la mezzanotte (giornata ancora aperta) supera 1440
   const dopo = (d: string) => (d === oggi ? dopoOggi : 0);
   const limiteVecchi = dataPiù(oggi, -60);
   const lunedi = inizioSettimana(oggi);

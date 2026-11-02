@@ -11,6 +11,7 @@ import { stanzaDelGiorno, titoloTask } from "@/lib/stanze";
 import { useStore } from "@/lib/store";
 import type { Task } from "@/lib/tipi";
 import AreaIcona, { iconaTask } from "./AreaIcona";
+import { minutiNelGiorno } from "@/lib/giornoLogico";
 
 const ora = (ms: number) => new Date(ms).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
 
@@ -30,7 +31,7 @@ export default function TaskCard({ task, soloMinima, senzaOrario = false }: { ta
   // Task che si adatta ai turni: il momento libero più lungo di oggi (né in turno, né a dormire)
   const scelto = stato.momenti.find((m) => m.taskId === task.id && m.data === oggi);
   const durataMom = useRef(0); // durata del momento che stai modificando: se sposti l'inizio, la fine lo segue
-  const adessoMin = adesso > 0 ? new Date(adesso).getHours() * 60 + new Date(adesso).getMinutes() : 0;
+  const adessoMin = adesso > 0 ? minutiNelGiorno(adesso, oggi) : 0;
   const momento = !fatto ? momentoAttuale(task, oggi, { oggi, adessoMin, eventi: stato.eventi, scelto }) : null;
   const finestra = momento?.finestra ?? null;
   const spostato = !!momento?.spostato;

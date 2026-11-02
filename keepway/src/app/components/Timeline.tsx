@@ -10,6 +10,7 @@ import { useStore } from "@/lib/store";
 import type { Evento, Task } from "@/lib/tipi";
 import { RigaEvento } from "./AgendaBox";
 import TaskCard from "./TaskCard";
+import { minutiNelGiorno } from "@/lib/giornoLogico";
 
 type Voce =
   | { t: number; ordine: number; tipo: "evento"; evento: Evento }
@@ -23,8 +24,7 @@ export default function Timeline({
 }: { task: Task[]; soloMinima: boolean; onModificaEvento: (e: Evento) => void }) {
   const { stato, oggi, adesso } = useStore();
   const [mostraPassato, setMostraPassato] = useState(false);
-  const d = adesso > 0 ? new Date(adesso) : null;
-  const adessoMin = d ? d.getHours() * 60 + d.getMinutes() : null;
+  const adessoMin = adesso > 0 ? minutiNelGiorno(adesso, oggi) : null;
 
   const voci: Voce[] = [];
   for (const e of eventiDelGiorno(stato.eventi, oggi, oggi)) {
