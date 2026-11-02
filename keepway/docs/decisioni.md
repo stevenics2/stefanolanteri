@@ -447,3 +447,7 @@
 ## Angolo quadrato: trovata la causa vera (animazione «alone»)
 - L'animazione `alone` del box (lampo di fine ricalcolo) finiva con un'ombra esterna chiara e restava applicata per sempre (`both`): su iPhone veniva disegnata come rettangolo oltre l'angolo arrotondato.
 - Ora parte e finisce senza ombra esterna e non resta applicata a fine animazione (`backwards`). Il picco dell'alone resta uguale.
+
+## Due correzioni dopo la prova su iPhone
+- Primo bagliore all'apertura: il picco dell'alone aveva un'ombra esterna che su Safari usciva dalla curva come un angolino. Ora il picco è solo interno al box (più intenso, stesso tempo).
+- Box che spariva di colpo e restava la sagoma del bagliore: tolto `will-change` da `.sfuma` aveva fatto perdere la dissolvenza su Safari. Rimesso su `.sfuma`; il bagliore perde il filo bianco sul bordo (restava come sagoma) ed è solo luce interna.
