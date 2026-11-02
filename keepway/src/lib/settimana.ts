@@ -5,6 +5,7 @@ import { durataTotaleMin } from "./durata";
 import { eventiDelGiorno } from "./eventi";
 import { riepilogoGiorno } from "./giornata";
 import { momentoAttuale } from "./momento";
+import { titoloTask } from "./stanze";
 import { èIgnorata, èPrevista, giornata } from "./regole";
 import type { GiornoSalute } from "./salute";
 import { èAllenamento, ALLENAMENTI_A_SETTIMANA } from "./traguardi";
@@ -45,7 +46,7 @@ export function righeGiorno(s: Stato, data: string, oggi: string, adessoMin: num
     if (!èPrevista(t, data, { vacanza: s.vacanza }) || èIgnorata(s.ignorati, t.id, data)) continue;
     const scelto = s.momenti.find((m) => m.taskId === t.id && m.data === data);
     const f = momentoAttuale(t, data, { oggi, adessoMin, eventi: s.eventi, scelto }).finestra;
-    out.push({ id: t.id, t: f?.da ?? 9999, orario: f ? `${hh(f.da)}–${hh(f.a)}` : "", titolo: t.titolo, fatto: s.completamenti.some((c) => c.taskId === t.id && c.data === data), task: t });
+    out.push({ id: t.id, t: f?.da ?? 9999, orario: f ? `${hh(f.da)}–${hh(f.a)}` : "", titolo: titoloTask(t, s, data), fatto: s.completamenti.some((c) => c.taskId === t.id && c.data === data), task: t });
   }
   for (const e of eventiDelGiorno(s.eventi, data, oggi).filter((x) => x.data === data)) {
     out.push({ id: e.id, t: e.ora ? Number(e.ora.slice(0, 2)) * 60 + Number(e.ora.slice(3)) : -1, orario: e.ora ?? "tutto il giorno", titolo: e.titolo, fatto: e.fatto, evento: e });

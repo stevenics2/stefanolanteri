@@ -43,6 +43,7 @@ export default function OggiVista() {
   const [scelto, setScelto] = useState<string | null>(null); // il giorno guardato (null = oggi)
   const [settimana, setSettimana] = useState(false); // la modalità settimanale: il box ricompensa sparisce e i giorni salgono in alto
   const [vistaSett, setVistaSett] = useState<"giorno" | "insieme">("giorno");
+  const [bagliore, setBagliore] = useState<"" | "chiude" | "apre">(""); // il bagliore del box ricompensa mentre sfuma e mentre ricompare
   const [lunediVista, setLunediVista] = useState<string | null>(null); // la settimana della vista d'insieme (null = quella in corso)
   // La striscia dei giorni, quando è davvero salita in cima allo schermo, lascia lo spazio della barra di stato dell'iPhone (prima no: restava un vuoto sopra).
   const striscia = useRef<HTMLDivElement>(null);
@@ -88,12 +89,14 @@ export default function OggiVista() {
   function sceglieGiorno(d: string) {
     setVistaSett("giorno");
     setScelto(d === oggi ? null : d);
+    if (!settimana) setBagliore(stato.impostazioni.animazioni ? "chiude" : "");
     setSettimana(true);
   }
   function esciDallaSettimana() {
     setScelto(null);
     setVistaSett("giorno");
     setLunediVista(null);
+    setBagliore(stato.impostazioni.animazioni ? "apre" : "");
     setSettimana(false);
     setFerma(false);
   }
@@ -156,7 +159,7 @@ export default function OggiVista() {
 
       <div className="collassa" data-chiuso={settimana}>
         <div>
-          <div className={`entra sfuma ${settimana ? "sfuma-via" : ""}`}>
+          <div data-bagliore={bagliore || undefined} className={`entra sfuma ${settimana ? "sfuma-via" : ""}`}>
             <RiepilogoOggi fatte={fatte} totale={daFare.length} />
           </div>
         </div>
