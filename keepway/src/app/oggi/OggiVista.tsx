@@ -165,7 +165,7 @@ export default function OggiVista() {
         </div>
       </div>
 
-      <div ref={striscia} className={settimana ? "striscia-alta" : ""} data-ferma={settimana && ferma}>
+      <div ref={striscia} className={settimana ? "striscia-alta" : ""} data-ferma={settimana && ferma} style={{ paddingBottom: "0.5rem", marginBottom: "0.75rem" }}>
         <div className="entra flow-root" style={{ animationDelay: "70ms" }}>
           <StrisciaGiorni quanti={settimana ? 14 : 7} oggi={oggi} selezionato={giorno} onScegli={sceglieGiorno} />
         </div>

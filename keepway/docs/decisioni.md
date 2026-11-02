@@ -422,3 +422,8 @@
 - **Uscita** (1,1 s): il box sfuma subito (0,7 s); lo spazio parte con 0,25 s di ritardo, mentre i giorni salgono. Misurato: opacità del box 0,94 → 0,73 → 0,38 → 0,04 mentre lo spazio resta a 179 px fino a 250 ms e poi si chiude.
 - **Entrata** (1,1 s): lo spazio si apre subito e in modo regolare (curva dolce) e il box si dissolve in ingresso mentre si apre (da 100 ms). Misurato: spazio 5 → 39 → 102 → 151 → 171 → 179 px con box 0 → 0,08 → 0,29 → 0,68 → 0,95 → 1.
 - **Bagliore**: uno strato ambra separato che segue il box (dentro e intorno, non sfuma con lui), con il massimo a circa un terzo in uscita e a metà in entrata. Spento se le animazioni sono spente.
+
+## Transizione del box: bagliore bianco e uscita senza scatto
+- Il bagliore ora è bianco (in uscita e in entrata).
+- Causa dello scatto in uscita: la chiusura partiva con 0,25 s di ritardo (tutto fermo, poi i giorni salivano di colpo), il bagliore finiva prima del movimento, e la striscia dei giorni saltava di 8 px quando diventava fissa.
+- Ora la chiusura parte subito, dura 1,1 s con curva dolce, dissolvenza e bagliore sono in contemporanea (picco a metà movimento), e il margine sotto la striscia è sempre presente, quindi niente salto.
