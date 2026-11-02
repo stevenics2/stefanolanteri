@@ -443,3 +443,7 @@
 ## Angolo quadrato chiaro a riposo (box ricompensa)
 - Il difetto restava a transizione finita, quindi non era il bagliore. Cause probabili (Safari iPhone): l'ombra esterna del box (`RiepilogoOggi`) disegnata come rettangolo quando il box è su un livello a parte (`will-change` su `.sfuma`, animazioni interne).
 - Tolti `will-change` da `.sfuma` e dal bagliore, e l'ombra esterna del box (resta quella interna e il bordo colorato). Non verificabile su iPhone dal sandbox; se serve l'alone si può rimettere con un altro metodo.
+
+## Angolo quadrato: trovata la causa vera (animazione «alone»)
+- L'animazione `alone` del box (lampo di fine ricalcolo) finiva con un'ombra esterna chiara e restava applicata per sempre (`both`): su iPhone veniva disegnata come rettangolo oltre l'angolo arrotondato.
+- Ora parte e finisce senza ombra esterna e non resta applicata a fine animazione (`backwards`). Il picco dell'alone resta uguale.
