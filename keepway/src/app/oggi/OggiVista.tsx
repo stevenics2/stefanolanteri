@@ -5,7 +5,7 @@ import ObiettiviSettimana from "../components/ObiettiviSettimana";
 import CambiPiano from "../components/CambiPiano";
 import RitoSettimana from "../components/RitoSettimana";
 import VistaInsieme from "../components/VistaInsieme";
-import { CalendarClock, ListChecks, Moon, Plane, Undo2 } from "lucide-react";
+import { CalendarClock, ChevronLeft, ListChecks, Moon, Plane, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { caricoGiorno } from "@/lib/carico";
@@ -44,18 +44,14 @@ export default function OggiVista() {
   const [settimana, setSettimana] = useState(false); // la modalità settimanale: il box ricompensa sparisce e i giorni salgono in alto
   const [vistaSett, setVistaSett] = useState<"giorno" | "insieme">("giorno");
   const [lunediVista, setLunediVista] = useState<string | null>(null); // la settimana della vista d'insieme (null = quella in corso)
-  const [toccato, setToccato] = useState<string | null>(null); // il giorno toccato mentre la transizione è in corso
-  const timerSett = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => { if (timerSett.current) clearTimeout(timerSett.current); }, []);
   // La striscia dei giorni, quando è davvero salita in cima allo schermo, lascia lo spazio della barra di stato dell'iPhone (prima no: restava un vuoto sopra).
-  const sentinella = useRef<HTMLDivElement>(null);
+  const striscia = useRef<HTMLDivElement>(null);
   const [ferma, setFerma] = useState(false);
   useEffect(() => {
-    const el = sentinella.current;
-    if (!settimana || !el) return;
-    const io = new IntersectionObserver(([e]) => setFerma(!e.isIntersecting), { threshold: 0 });
-    io.observe(el);
-    return () => io.disconnect();
+    if (!settimana) return;
+    const controlla = () => setFerma((striscia.current?.getBoundingClientRect().top ?? 1) <= 0.5);
+    window.addEventListener("scroll", controlla, { passive: true });
+    return () => window.removeEventListener("scroll", controlla);
   }, [settimana]);
   if (!pronto) return null;
 
@@ -87,28 +83,19 @@ export default function OggiVista() {
   const vista: "compatta" | "estesa" = v === "estesa" || v === "timeline" ? "estesa" : "compatta";
   const giorno = scelto ?? oggi;
 
-  // Tocchi un giorno: se è la prima volta si passa alla modalità settimanale con una transizione (il box sfuma, i giorni salgono in alto),
-  // e alla fine si apre il giorno toccato. Poi i giorni si cambiano subito.
+  // Tocchi un giorno: si passa subito alla modalità settimanale (il box sfuma mentre i giorni salgono) e il giorno toccato è già quello aperto.
+  // Con «Indietro» è il contrario: si torna a oggi subito, il box ricompare e i giorni scendono.
   function sceglieGiorno(d: string) {
-    if (settimana) {
-      setVistaSett("giorno");
-      setScelto(d === oggi ? null : d);
-      return;
-    }
-    setToccato(d);
-    setSettimana(true);
     setVistaSett("giorno");
-    timerSett.current = setTimeout(() => {
-      setScelto(d === oggi ? null : d);
-      setToccato(null);
-    }, stato.impostazioni.animazioni ? 900 : 0);
+    setScelto(d === oggi ? null : d);
+    setSettimana(true);
   }
   function esciDallaSettimana() {
-    setSettimana(false);
     setScelto(null);
-    setToccato(null);
     setVistaSett("giorno");
     setLunediVista(null);
+    setSettimana(false);
+    setFerma(false);
   }
 
   return (
@@ -121,16 +108,36 @@ export default function OggiVista() {
         <div className="flex flex-col items-end gap-2">
         <div className="flex items-center gap-2">
           <InterruttoreTema />
-          {!fuoriCasa && (
-            <button
-              data-suono="via"
-              onClick={() => setVacanza({ dal: oggi, al: null })}
-              className="inline-flex items-center gap-1.5 rounded-full bg-ov/10 px-3 py-1.5 text-sm text-muted"
-            >
-              <Plane size={15} /> Fuori casa
+          {settimana ? (
+            <button data-suono="indietro" onClick={esciDallaSettimana} className="inline-flex items-center gap-1.5 rounded-full bg-ov/10 px-3 py-1.5 text-sm text-muted">
+              <ChevronLeft size={15} /> Indietro
             </button>
+          ) : (
+            !fuoriCasa && (
+              <button
+                data-suono="via"
+                onClick={() => setVacanza({ dal: oggi, al: null })}
+                className="inline-flex items-center gap-1.5 rounded-full bg-ov/10 px-3 py-1.5 text-sm text-muted"
+              >
+                <Plane size={15} /> Fuori casa
+              </button>
+            )
           )}
         </div>
+        {settimana ? (
+          <Segmentato
+            inline
+            voci={[{ id: "giorno", etichetta: "Giorno" }, { id: "insieme", etichetta: "Settimana" }]}
+            valore={vistaSett}
+            onCambia={(v) => setVistaSett(v)}
+            contenitore="rounded-full bg-ov/10 text-xs"
+            pillola="rounded-full bg-foreground"
+            testoAttivo="text-background"
+            bottone="py-1 text-xs"
+            margine={2}
+            aria="Vista della settimana"
+          />
+        ) : (
         <Segmentato
           inline
           voci={[{ id: "compatta", etichetta: "Compatta" }, { id: "estesa", etichetta: "Estesa" }]}
@@ -143,6 +150,7 @@ export default function OggiVista() {
           margine={2}
           aria="Vista"
         />
+        )}
         </div>
       </div>
 
@@ -154,29 +162,10 @@ export default function OggiVista() {
         </div>
       </div>
 
-      {settimana && <div ref={sentinella} aria-hidden className="h-px" />}
-      <div className={settimana ? "striscia-alta" : ""} data-ferma={settimana && ferma}>
-        <div className="entra" style={{ animationDelay: "70ms" }}>
-          <StrisciaGiorni quanti={settimana ? 14 : 7} oggi={oggi} selezionato={toccato ?? giorno} onScegli={sceglieGiorno} />
+      <div ref={striscia} className={settimana ? "striscia-alta" : ""} data-ferma={settimana && ferma}>
+        <div className="entra flow-root" style={{ animationDelay: "70ms" }}>
+          <StrisciaGiorni quanti={settimana ? 14 : 7} oggi={oggi} selezionato={giorno} onScegli={sceglieGiorno} />
         </div>
-        {settimana && (
-          <div className="entra mt-2 flex items-center gap-2">
-            <div className="min-w-0 flex-1">
-              <Segmentato
-                voci={[{ id: "giorno", etichetta: "Giorno" }, { id: "insieme", etichetta: "Vista d'insieme" }]}
-                valore={vistaSett}
-                onCambia={(v) => setVistaSett(v)}
-                contenitore="rounded-full bg-ov/10 text-xs"
-                pillola="rounded-full bg-foreground"
-                testoAttivo="text-background"
-                bottone="py-1.5 text-xs font-semibold"
-                margine={2}
-                aria="Vista"
-              />
-            </div>
-            <button data-suono="indietro" onClick={esciDallaSettimana} className="shrink-0 rounded-full bg-ov/10 px-3 py-1.5 text-xs font-semibold">Esci</button>
-          </div>
-        )}
       </div>
 
       <CambiPiano />

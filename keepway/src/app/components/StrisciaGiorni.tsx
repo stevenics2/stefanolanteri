@@ -9,7 +9,7 @@ const GIORNI = 7;
 export default function StrisciaGiorni({ oggi, selezionato, onScegli, quanti = GIORNI }: { oggi: string; selezionato: string; onScegli: (d: string) => void; quanti?: number }) {
   const giorni = Array.from({ length: quanti }, (_, i) => dataPiù(oggi, i));
   return (
-    <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+    <div className="-mx-1 -my-2 flex gap-1.5 overflow-x-auto px-1 py-2">
       {giorni.map((d, i) => {
         const dt = new Date(`${d}T12:00:00`);
         const sel = d === selezionato;
