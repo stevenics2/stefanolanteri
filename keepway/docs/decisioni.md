@@ -503,3 +503,11 @@
 
 ## Sonno: il numero grande è l'ultima notte, la media sotto in piccolo
 - In «Ore di sonno» il numero grande è ora l'ultima notte, con la scritta «ULTIMA NOTTE»; sotto, più piccolo, «media N notti · X h XX min».
+
+## Backup e ripristino (Impostazioni → Backup)
+- `lib/backup.ts` + `BackupImpostazioni.tsx`. «Crea backup»: un file `keepway-backup-AAAA-MM-GG.json` con `keepway.v1` (tutto: task, completamenti, impostazioni...), il codice Salute, la giornata chiusa e la presenza. Su iPhone si apre il foglio di condivisione (Salva su File, AirDrop, Note); altrove si scarica.
+- Non entrano: i dati Salute e i semafori (si riscaricano), l'identità delle notifiche del telefono (`keepway.device`: si rifà da sola, due telefoni non devono condividerla).
+- «Ripristina da file»: prima controlla che sia un backup di Keepway (app, formato, dati principali), mostra cosa contiene (task, completamenti, date) e chiede conferma. Prima di sostituire tiene una copia dei dati di adesso in `keepway.prima-del-ripristino`. Poi ricarica l'app.
+- Il file contiene il codice personale della Salute: va tenuto privato.
+- Non c'è backup automatico nel cloud né account: è il passo 1 del piano in `turni-multiutente.md`.
+- Provato: esporto, svuoto lo storage, importo (file sbagliato rifiutato, file giusto ripristinato con i completamenti e il codice).

@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { inVacanza } from "@/lib/regole";
 import { useStore } from "@/lib/store";
 import AreaIcona from "../components/AreaIcona";
+import BackupImpostazioni from "./BackupImpostazioni";
 import SaluteImpostazioni from "./SaluteImpostazioni";
 import NotificheImpostazioni from "./NotificheImpostazioni";
 
@@ -88,6 +89,8 @@ export default function ImpostazioniVista() {
       <NotificheImpostazioni />
 
       <SaluteImpostazioni />
+
+      <BackupImpostazioni />
 
       <div id="sveglia" className="space-y-2">
         <h2 className={`${titolo} flex items-center gap-2`}><AlarmClock size={15} /> Sveglia dell&apos;iPhone</h2>
