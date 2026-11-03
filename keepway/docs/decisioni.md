@@ -496,3 +496,7 @@
 ## Semafori: tocco = aggiorna, con «Aggiorno...»
 - I semafori in Oggi sono un pulsante: al tocco il testo sotto diventa «Aggiorno...» (pulsa piano, almeno 1 secondo) e si rilegge subito lo stato dal server (`/api/terminal?aggiorna=1`).
 - Worker: la lettura su richiesta salta il limite delle finestre dei turni (l'ha chiesta l'utente), ma al massimo una al minuto (`TMT_MANUALE_MS`): niente richieste a raffica al sito del terminal. Serve il deploy del Worker; senza, il tocco mostra «Aggiorno...» e rilegge l'ultimo dato del server.
+
+## Sonno: il numero grande del grafico è la media (ora si legge)
+- In «Ore di sonno» il numero grande in alto a destra è la media delle notti (non l'ultima notte) e non aveva etichetta: confondeva con il dato dell'ultima notte. Ora sotto c'è «MEDIA 14 NOTTI». L'ultima notte è nella tessera «Ultima notte».
+- Il calcolo server delle notti (`worker/sonno.js`) non è stato toccato: unisce i pezzi di sonno vero (senza «sveglio» e «a letto»), fonde quelli separati da meno di 90 minuti e assegna la notte al giorno in cui finisce.

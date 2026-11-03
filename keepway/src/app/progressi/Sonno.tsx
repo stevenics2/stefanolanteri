@@ -56,6 +56,7 @@ export default function Sonno() {
         titolo="Ore di sonno"
         sotto={`${buone}/${conDato.length} notti sopra l'obiettivo`}
         grande={media ? `${oreEMinuti(media)} min` : undefined}
+        grandeEtichetta={`media ${conDato.length} notti`}
         colore="#a5b4fc"
         punti={serie.map((s) => ({ etichetta: `${Number(s.giorno.slice(8))}/${Number(s.giorno.slice(5, 7))}`, v: s.n ? Math.round((s.n.minuti / 60) * 10) / 10 : null }))}
         yMin={3}

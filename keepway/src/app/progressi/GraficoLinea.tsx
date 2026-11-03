@@ -7,10 +7,11 @@ export type PuntoGrafico = { etichetta: string; v: number | null };
 // Un grafico a linea come nelle app di allenamento: linea luminosa con i punti, griglia tratteggiata, riga dell'obiettivo,
 // titolo e variazione in alto. La linea si disegna da sinistra a destra.
 export default function GraficoLinea({
-  titolo, grande, grandeColore, sotto, colore, punti, yMin, yMax, passo, formatoY = (n) => String(n), riferimento, annidato = false, alto = 170,
+  titolo, grande, grandeEtichetta, grandeColore, sotto, colore, punti, yMin, yMax, passo, formatoY = (n) => String(n), riferimento, annidato = false, alto = 170,
 }: {
   titolo: string;
   grande?: string; // in alto a destra (es. «+33%»)
+  grandeEtichetta?: string; // piccola scritta sotto il numero grande (es. «media»)
   grandeColore?: string;
   sotto?: string; // sotto il titolo, nel colore del grafico (es. «1 ott – 31 ott»)
   colore: string;
@@ -54,7 +55,12 @@ export default function GraficoLinea({
           <div className="text-lg font-black uppercase tracking-wide">{titolo}</div>
           {sotto && <div className="text-xs font-medium" style={{ color: colore }}>{sotto}</div>}
         </div>
-        {grande && <div className="text-2xl font-black tabular-nums" style={{ color: grandeColore ?? colore }}>{grande}</div>}
+        {grande && (
+          <div className="text-right">
+            <div className="text-2xl font-black tabular-nums" style={{ color: grandeColore ?? colore }}>{grande}</div>
+            {grandeEtichetta && <div className="-mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted">{grandeEtichetta}</div>}
+          </div>
+        )}
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} className="mt-2 w-full" role="img" aria-label={titolo}>
         <defs>
