@@ -500,3 +500,6 @@
 ## Sonno: il numero grande del grafico è la media (ora si legge)
 - In «Ore di sonno» il numero grande in alto a destra è la media delle notti (non l'ultima notte) e non aveva etichetta: confondeva con il dato dell'ultima notte. Ora sotto c'è «MEDIA 14 NOTTI». L'ultima notte è nella tessera «Ultima notte».
 - Il calcolo server delle notti (`worker/sonno.js`) non è stato toccato: unisce i pezzi di sonno vero (senza «sveglio» e «a letto»), fonde quelli separati da meno di 90 minuti e assegna la notte al giorno in cui finisce.
+
+## Sonno: il numero grande è l'ultima notte, la media sotto in piccolo
+- In «Ore di sonno» il numero grande è ora l'ultima notte, con la scritta «ULTIMA NOTTE»; sotto, più piccolo, «media N notti · X h XX min».
