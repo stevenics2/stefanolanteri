@@ -519,3 +519,6 @@
 
 ## Turni: il 1+4 resta blu
 - Nel calendario del mese e nell'elenco dei turni il 1+4 del roster è blu, come ogni altro turno di lavoro (prima era viola e si confondeva con lo straordinario, che è viola). Gli straordinari restano viola nella striscia sotto il blocco. I colori dei singoli turni nei puntini della striscia dei giorni e nel bordo della scheda non sono cambiati.
+
+## Nuova icona: spunta azzurra
+- L'icona è una spunta azzurra (`#29a3f0`, come il vecchio visualizzatore) con un leggero bagliore su fondo blu notte quasi nero; sostituisce la bussola. File in `public/icons` (180, 192, 512, 1024 px, quadrati e opachi: iOS arrotonda da solo gli angoli). iOS tiene l'icona vecchia: per vederla va tolta e rimessa l'app dalla Home (prima backup da Impostazioni → Backup).
