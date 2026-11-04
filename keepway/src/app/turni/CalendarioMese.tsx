@@ -17,12 +17,11 @@ import MenuTurno from "./MenuTurno";
 const SETTIMANA = ["L", "M", "M", "G", "V", "S", "D"];
 const p2 = (n: number) => String(n).padStart(2, "0");
 
-// Colore della casella: blu = lavoro, viola = notte + sera, verde = riposo, ambra = assenza, grigio = non ho i turni.
+// Colore della casella: blu = lavoro (anche il 1+4 del roster), verde = riposo, ambra = assenza, grigio = non ho i turni.
 function stileTurno(g: GiornoEffettivo | undefined) {
   if (!g) return "bg-ov/5 text-muted";
   if (g.modifica?.tipo === "assenza") return "bg-amber-500/25 text-amber-100";
   if (g.riposo) return "bg-emerald-500/20 text-emerald-200";
-  if (g.codici.includes("1") && g.codici.includes("4")) return "bg-violet-600 text-white";
   return "bg-blue-600 text-white";
 }
 

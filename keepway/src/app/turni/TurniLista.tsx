@@ -112,13 +112,12 @@ export default function TurniLista() {
   );
 }
 
-// Il blocco colorato: blu = turno, viola = notte + sera, verde = riposo, ambra = assenza. Sotto, la striscia della modifica.
+// Il blocco colorato: blu = turno (anche il 1+4 del roster), verde = riposo, ambra = assenza. Sotto, la striscia della modifica.
 function Blocco({ g, avviso }: { g: GiornoEffettivo; avviso?: string }) {
   const assenza = g.modifica?.tipo === "assenza";
   let classe: string;
   if (assenza) classe = "border border-amber-500/60 bg-amber-500/15 text-amber-100";
   else if (g.riposo) classe = "border border-emerald-500/60 bg-emerald-500/15 text-emerald-100";
-  else if (g.codici.includes("1") && g.codici.includes("4")) classe = "bg-violet-700 text-white";
   else classe = "bg-blue-700 text-white";
 
   // Con uno straordinario gli orari dei turni stanno uno sotto l'altro, nell'ordine del tempo (07:00–13:00, 13:00–19:00); sotto la striscia viola

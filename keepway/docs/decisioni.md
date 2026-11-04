@@ -516,3 +516,6 @@
 - `lib/punteggioMese.ts` + `turni/AndamentoMese.tsx` (in cima al Recap, sopra le voci). Punti: turno lineare 0; cambio turno pagato dall'azienda +25 (uno per gruppo, nel giorno in cui si compie); doppio consecutivo (2+3, 3+4) +25 sempre; 1+4 +25 solo se nato da straordinario o da cambio pagato (quello del roster di base non è pagato); straordinario +75 per ogni turno extra; assenza −15 per giorno. Esempi verificati: cambio + doppio il giorno dopo = 50; riposo con 2 straordinari consecutivi = 175; base 1 + straordinario 4 = 100.
 - Il grafico è cumulato (da inizio mese, fino a oggi se il mese è in corso), con la linea dello zero «paga base». Colore dal valore: verde normale sullo zero, sempre più acceso salendo; rosso normale sotto lo zero, sempre più acceso scendendo (`colorePerValore` in `GraficoLinea`).
 - Da fare: «da sinistra a destra» (anche per il sonno): lo screenshot promesso non è arrivato; nel codice la linea si disegna già da sinistra a destra.
+
+## Turni: il 1+4 resta blu
+- Nel calendario del mese e nell'elenco dei turni il 1+4 del roster è blu, come ogni altro turno di lavoro (prima era viola e si confondeva con lo straordinario, che è viola). Gli straordinari restano viola nella striscia sotto il blocco. I colori dei singoli turni nei puntini della striscia dei giorni e nel bordo della scheda non sono cambiati.
