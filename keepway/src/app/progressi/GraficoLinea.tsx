@@ -7,7 +7,7 @@ export type PuntoGrafico = { etichetta: string; v: number | null };
 // Un grafico a linea come nelle app di allenamento: linea luminosa con i punti, griglia tratteggiata, riga dell'obiettivo,
 // titolo e variazione in alto. La linea si disegna da sinistra a destra.
 export default function GraficoLinea({
-  titolo, grande, grandeEtichetta, grandeNota, grandeColore, sotto, colore, punti, yMin, yMax, passo, formatoY = (n) => String(n), riferimento, annidato = false, alto = 170,
+  titolo, grande, grandeEtichetta, grandeNota, grandeColore, sotto, colore, punti, yMin, yMax, passo, formatoY = (n) => String(n), riferimento, annidato = false, alto = 170, colorePerValore,
 }: {
   titolo: string;
   grande?: string; // in alto a destra (es. «+33%»)
@@ -24,6 +24,7 @@ export default function GraficoLinea({
   riferimento?: { v: number; etichetta: string };
   annidato?: boolean;
   alto?: number; // altezza del disegno
+  colorePerValore?: (v: number) => string; // se c'è, la linea e i punti cambiano colore secondo il valore (es. verde sopra lo zero, rosso sotto)
 }) {
   const id = useId().replace(/:/g, "");
   const W = 340;
@@ -66,6 +67,15 @@ export default function GraficoLinea({
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} className="mt-2 w-full" role="img" aria-label={titolo}>
         <defs>
+          {colorePerValore && (
+            <linearGradient id={`v${id}`} gradientUnits="userSpaceOnUse" x1="0" x2="0" y1={y(yMax)} y2={y(yMin)}>
+              {Array.from({ length: 41 }, (_, k) => {
+                const v = yMax - ((yMax - yMin) * k) / 40;
+                return <stop key={k} offset={`${(k / 40) * 100}%`} stopColor={colorePerValore(v)} />;
+              })}
+              <stop offset={`${((yMax - 0) / (yMax - yMin)) * 100}%`} stopColor={colorePerValore(0)} />
+            </linearGradient>
+          )}
           <linearGradient id={`g${id}`} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor={colore} stopOpacity="0.35" />
             <stop offset="100%" stopColor={colore} stopOpacity="0" />
@@ -89,12 +99,12 @@ export default function GraficoLinea({
         {segmenti.map((seg, k) =>
           seg.length > 1 ? (
             <g key={k}>
-              <path d={`M ${x(seg[0].i)} ${H - bot} ${seg.map((p) => `L ${x(p.i)} ${y(p.v)}`).join(" ")} L ${x(seg[seg.length - 1].i)} ${H - bot} Z`} fill={`url(#g${id})`} />
-              <path d={seg.map((p, j) => `${j ? "L" : "M"} ${x(p.i)} ${y(p.v)}`).join(" ")} pathLength={1} fill="none" stroke={colore} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="linea-disegna" style={{ filter: `drop-shadow(0 0 4px ${colore}aa)` }} />
+              {!colorePerValore && <path d={`M ${x(seg[0].i)} ${H - bot} ${seg.map((p) => `L ${x(p.i)} ${y(p.v)}`).join(" ")} L ${x(seg[seg.length - 1].i)} ${H - bot} Z`} fill={`url(#g${id})`} />}
+              <path d={seg.map((p, j) => `${j ? "L" : "M"} ${x(p.i)} ${y(p.v)}`).join(" ")} pathLength={1} fill="none" stroke={colorePerValore ? `url(#v${id})` : colore} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="linea-disegna" style={{ filter: `drop-shadow(0 0 4px ${colore}aa)` }} />
             </g>
           ) : null,
         )}
-        {punti.map((p, i) => (p.v === null ? null : <circle key={i} cx={x(i)} cy={y(p.v)} r="3.6" fill={colore} stroke="var(--card)" strokeWidth="1.5" className="punto-compare" style={{ animationDelay: `${Math.min(900, i * 60)}ms` }} />))}
+        {punti.map((p, i) => (p.v === null ? null : <circle key={i} cx={x(i)} cy={y(p.v)} r="3.6" fill={colorePerValore ? colorePerValore(p.v) : colore} stroke="var(--card)" strokeWidth="1.5" className="punto-compare" style={{ animationDelay: `${Math.min(900, i * 60)}ms` }} />))}
         {punti.map((p, i) => (mostra.has(i) ? <text key={i} x={x(i)} y={H - 6} textAnchor={i === 0 ? "start" : i === punti.length - 1 ? "end" : "middle"} fontSize="9" fill="currentColor" fillOpacity="0.6">{p.etichetta}</text> : null))}
       </svg>
     </>

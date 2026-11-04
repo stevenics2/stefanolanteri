@@ -7,6 +7,7 @@ import { giornoEffettivo, recapMese } from "@/lib/calendario";
 import { MESI_LUNGHI } from "@/lib/date";
 import { dataBreve } from "@/lib/eventi";
 import { useStore } from "@/lib/store";
+import AndamentoMese from "./AndamentoMese";
 import { bandaDi } from "./banda";
 
 const p2 = (n: number) => String(n).padStart(2, "0");
@@ -42,6 +43,8 @@ export default function RecapVista() {
         <div className="text-lg font-bold capitalize">{MESI_LUNGHI[m]} {a}</div>
         <button data-suono="via" onClick={() => vai(1)} aria-label="Mese successivo" className="rounded-xl bg-ov/10 p-2"><ChevronRight size={20} /></button>
       </div>
+
+      <AndamentoMese modifiche={stato.modifiche} anno={a} mese0={m} oggi={oggi} />
 
       <div className="space-y-2">
         {voci.map((x) => (
