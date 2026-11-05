@@ -121,13 +121,26 @@ async function sendEmail(env, { subject, text, replyTo }) {
   } catch { return false; }   // sending an email must never block a review
 }
 
-async function notifyPending(env, origin, { shipName, isNewShip, hasTally, rating, comment }) {
+// Approximate origin of a request, from what Cloudflare tells us about the connection (country and continent only; never stored).
+const CONTINENTS = { AF: 'Africa', AN: 'Antarctica', AS: 'Asia', EU: 'Europe', NA: 'North America', OC: 'Oceania', SA: 'South America' };
+function describeOrigin(request) {
+  const cf = request.cf || {};
+  const code = String(cf.country || request.headers.get('cf-ipcountry') || '').toUpperCase();
+  if (!/^[A-Z]{2}$/.test(code) || code === 'XX') return code === 'T1' ? 'unknown (Tor network)' : 'unknown';
+  let name = code;
+  try { name = new Intl.DisplayNames(['en'], { type: 'region' }).of(code) || code; } catch { /* keep the code */ }
+  const continent = CONTINENTS[String(cf.continent || '').toUpperCase()];
+  return `${name} (${code})${continent ? ', ' + continent : ''}`;
+}
+
+async function notifyPending(env, origin, { shipName, isNewShip, hasTally, rating, comment, where }) {
   const verdict = hasTally ? `${rating}/5 stars` : 'No Tally Room on board';
   await sendEmail(env, {
     subject: `${isNewShip ? '[NEW VESSEL] ' : ''}${shipName}: review waiting for approval`,
     text: [
       `${isNewShip ? 'New vessel' : 'New review'}: ${shipName}`,
       `Result: ${verdict}`,
+      `From: ${where || 'unknown'} (approximate, from the connection)`,
       ...(comment ? [`Notes: ${comment.slice(0, 300)}`] : []),
       '',
       `Approve or reject it here: ${origin}/admin`,
@@ -421,7 +434,7 @@ async function submitReview(env, request, ctx) {
   }
   const shipRow = await env.DB.prepare('SELECT name FROM ships WHERE id=?').bind(shipId).first();
   ctx.waitUntil(notifyPending(env, new URL(request.url).origin, {
-    shipName: up(shipRow?.name), isNewShip, hasTally, rating, comment,
+    shipName: up(shipRow?.name), isNewShip, hasTally, rating, comment, where: describeOrigin(request),
   }));
   return json({ ok: true, pending: true });
 }
