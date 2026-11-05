@@ -559,3 +559,8 @@
 - Scheda aperta di una task: premendo **Fatta** (o **Versione minima**) la scheda si illumina di verde, il contenuto sfuma e al centro si disegna una spunta (0,7 s); poi la task si segna e la scheda si chiude. Con le animazioni spente è immediato. Ordine dei pulsanti: **Inizia! · Versione minima · Fatta** (Apri, quando c'è, dopo Inizia).
 - L'orario consigliato sta accanto al titolo, tra parentesi: «Pulizia stufa (10:30–10:45)». Via il bollino che stava a cavallo del bordo nella linea del tempo (resta solo per gli appuntamenti) e via la riga dell'orario sotto il titolo; sotto resta solo «spostato» / «prima di dormire» se serve.
 - Vista settimanale da Oggi: la data in alto a destra (con l'icona del calendario) è ora un pulsante che apre direttamente la vista d'insieme della settimana. Toccare un giorno della striscia (anche Oggi) apre ancora la modalità settimanale su quel giorno. Prima non c'era nessun indizio visibile: con il box grande che si dissolveva era evidente, ora no.
+
+## Ritocchi alle schede task
+- «Adesso»: l'orario torna sotto il titolo (con l'orologio), perché accanto al titolo si sovrapponeva alla fiamma della serie e ai punti. Per tutte le altre task l'orario resta accanto al titolo.
+- Scheda aperta: **Inizia! · Minima (3′) · Fatta** sulla stessa riga (testo corto, niente a capo; se c'è «Apri» possono andare su due righe).
+- «Fatta» più dopaminica e di 1,5 s: la scheda rimbalza e si illumina, un lampo la attraversa, due onde e 16 coriandoli colorati partono dal centro, la spunta rimbalza e «+N XP» compare sotto. La task si segna alla fine. Con le animazioni spente è immediato.

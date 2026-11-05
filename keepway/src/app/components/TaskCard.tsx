@@ -21,7 +21,7 @@ const ora = (ms: number) => new Date(ms).toLocaleTimeString("it-IT", { hour: "2-
 export default function TaskCard({ task, soloMinima, evidenza = false }: { task: Task; soloMinima: boolean; evidenza?: boolean }) {
   const { stato, oggi, adesso, completa, annulla, apriTimer, ignoraOggi, rimanda, annullaRinvio, impostaMomento } = useStore();
   const [piuTardi, setPiuTardi] = useState(false);
-  const [concludendo, setConcludendo] = useState(false); // l'animazione della scheda mentre segni «Fatta»
+  const [concludendo, setConcludendo] = useState<{ xp: number } | null>(null); // l'animazione della scheda mentre segni «Fatta»
   const [modMomento, setModMomento] = useState(false);
   const [aperta, setAperta] = useState(false); // il planner mostra la riga compatta; toccandola si apre la scheda intera
   const area = stato.aree.find((a) => a.id === task.areaId);
@@ -29,13 +29,13 @@ export default function TaskCard({ task, soloMinima, evidenza = false }: { task:
   const rinvio = stato.rinvii.find((r) => r.taskId === task.id && r.data === oggi);
   const giorni = serie(task, stato.completamenti, oggi, { vacanza: stato.vacanza }, stato.ignorati);
   const colore = area?.colore ?? "#888";
-  // «Fatta»: la scheda si illumina di verde con una spunta che si disegna, poi la task si segna e la scheda si chiude (0,7 s; senza animazioni, subito).
+  // «Fatta»: la scheda esplode di verde (onde, coriandoli, spunta che rimbalza, +XP che sale), poi la task si segna e la scheda si chiude (1,5 s; senza animazioni, subito).
   const concludi = (minimaScelta: boolean) => {
     if (concludendo) return;
-    const fine = () => { completa(task.id, { minima: minimaScelta }); setAperta(false); setConcludendo(false); };
+    const fine = () => { completa(task.id, { minima: minimaScelta }); setAperta(false); setConcludendo(null); };
     if (!stato.impostazioni.animazioni) return fine();
-    setConcludendo(true);
-    setTimeout(fine, 700);
+    setConcludendo({ xp: minimaScelta && minima ? puntiMinima(task.punti) : task.punti });
+    setTimeout(fine, 1500);
   };
   const bordo = evidenza ? "#29a3f0" : colore; // la task «Adesso»: bordo azzurro, non il colore dell'area
   const minima = task.minimaMin;
@@ -77,9 +77,12 @@ export default function TaskCard({ task, soloMinima, evidenza = false }: { task:
         <span className="min-w-0 flex-1">
           <span className={`block font-semibold leading-tight ${evidenza ? "text-lg" : ""}`}>
             <span className={`barrato ${fatto ? "fatto" : ""}`}>{titoloTask(task, stato, oggi)}</span>
-            {finestra && !fatto && <span className={`ml-1.5 whitespace-nowrap font-semibold tabular-nums text-emerald-300 ${evidenza ? "text-sm" : "text-xs"}`}>({hhmm(finestra.da)}–{hhmm(finestra.a)})</span>}
+            {finestra && !fatto && !evidenza && <span className="ml-1.5 whitespace-nowrap text-xs font-semibold tabular-nums text-emerald-300">({hhmm(finestra.da)}–{hhmm(finestra.a)})</span>}
           </span>
           <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted">
+            {evidenza && finestra && !fatto && (
+              <span className="inline-flex items-center gap-1 whitespace-nowrap font-semibold tabular-nums text-emerald-300"><Clock size={11} /> {hhmm(finestra.da)}–{hhmm(finestra.a)}</span>
+            )}
             {finestra && spostato ? (
               <span className="whitespace-nowrap font-medium text-amber-300">{seraTarda ? "prima di dormire" : "spostato"}</span>
             ) : esaurito && !finestra ? (
@@ -116,11 +119,20 @@ export default function TaskCard({ task, soloMinima, evidenza = false }: { task:
   return (
     <div className={`apri-scheda relative overflow-hidden rounded-2xl bg-card p-4 transition-opacity duration-500 ${concludendo ? "scheda-fatta" : ""} ${fatto ? "opacity-60" : ""}`} style={{ borderLeft: `${evidenza ? 5 : 4}px solid ${bordo}` }}>
       {concludendo && (
-        <div className="scheda-fatta-spunta pointer-events-none absolute inset-0 z-10 flex items-center justify-center" aria-hidden>
-          <svg viewBox="0 0 96 96" className="spunta-pop h-20 w-20" style={{ filter: "drop-shadow(0 0 12px rgba(34,197,94,0.6))" }}>
-            <circle cx="48" cy="48" r="40" fill="rgba(34,197,94,0.16)" stroke="#22c55e" strokeWidth="5" />
+        <div className="scheda-fatta-spunta pointer-events-none absolute inset-0 z-10 flex items-center justify-center overflow-hidden" aria-hidden>
+          <span className="fatta-lampo absolute inset-0" />
+          <span className="fatta-onda absolute h-24 w-24 rounded-full border-[3px] border-emerald-400" />
+          <span className="fatta-onda absolute h-24 w-24 rounded-full border-2 border-sky-300" style={{ animationDelay: "0.18s" }} />
+          {Array.from({ length: 16 }, (_, k) => {
+            const ang = (k / 16) * Math.PI * 2 + (k % 2 ? 0.2 : 0);
+            const dist = 80 + (k % 3) * 28;
+            return <span key={k} className="fatta-particella absolute left-1/2 top-1/2 rounded-full" style={{ width: k % 3 === 0 ? 9 : 6, height: k % 3 === 0 ? 9 : 6, background: ["#22c55e", "#7dd3fc", "#fbbf24", "#f472b6", "#a78bfa"][k % 5], "--dx": `${Math.cos(ang) * dist}px`, "--dy": `${Math.sin(ang) * dist * 0.7}px`, animationDelay: `${0.12 + (k % 4) * 0.04}s` } as React.CSSProperties} />;
+          })}
+          <svg viewBox="0 0 96 96" className="fatta-spunta relative h-24 w-24" style={{ filter: "drop-shadow(0 0 16px rgba(34,197,94,0.7))" }}>
+            <circle cx="48" cy="48" r="40" fill="rgba(34,197,94,0.2)" stroke="#22c55e" strokeWidth="5" />
             <path d="M28 49 L43 64 L69 34" pathLength={1} fill="none" stroke="#22c55e" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" className="spunta-segno" />
           </svg>
+          <span className="fatta-xp absolute left-1/2 top-[76%] text-xl font-black text-emerald-300" style={{ textShadow: "0 0 12px rgba(34,197,94,0.8)" }}>+{concludendo.xp} XP</span>
         </div>
       )}
       <div className="flex items-start gap-3">
@@ -220,29 +232,29 @@ export default function TaskCard({ task, soloMinima, evidenza = false }: { task:
         </div>
       ) : (
         <>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className={`mt-3 flex gap-2 ${task.apre ? "flex-wrap" : "flex-nowrap"}`}>
             {task.durataMin && !soloMinima && (
-              <button onClick={() => apriTimer(task.id, false, task.durataMin!)} className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-black">
-                <Play size={16} fill="currentColor" /> Inizia!
+              <button onClick={() => apriTimer(task.id, false, task.durataMin!)} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl bg-accent px-3.5 py-2 text-sm font-bold text-black">
+                <Play size={15} fill="currentColor" /> Inizia!
               </button>
             )}
             {soloMinima && minima && (
-              <button onClick={() => apriTimer(task.id, true, minima)} className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-black">
-                <Play size={16} fill="currentColor" /> Inizia! ({minima} min)
+              <button onClick={() => apriTimer(task.id, true, minima)} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl bg-accent px-3.5 py-2 text-sm font-bold text-black">
+                <Play size={15} fill="currentColor" /> Inizia! ({minima}′)
               </button>
             )}
             {task.apre && (
-              <Link href={task.apre} data-suono="via" className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-black">
-                <CalendarClock size={16} /> Apri
+              <Link href={task.apre} data-suono="via" className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl bg-accent px-3.5 py-2 text-sm font-bold text-black">
+                <CalendarClock size={15} /> Apri
               </Link>
             )}
             {minima && !soloMinima && (
-              <button data-suono="nessuno" onClick={() => concludi(true)} className="rounded-xl bg-ov/10 px-4 py-2 text-sm">
-                Versione minima ({minima}′) · +{puntiMinima(task.punti)}
+              <button data-suono="nessuno" onClick={() => concludi(true)} className="whitespace-nowrap rounded-xl bg-ov/10 px-3.5 py-2 text-sm">
+                Minima ({minima}′)
               </button>
             )}
-            <button data-suono="nessuno" onClick={() => concludi(soloMinima && !!minima)} className="inline-flex items-center gap-1.5 rounded-xl bg-ov/10 px-4 py-2 text-sm">
-              <Check size={16} /> Fatta
+            <button data-suono="nessuno" onClick={() => concludi(soloMinima && !!minima)} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl bg-ov/10 px-3.5 py-2 text-sm font-semibold">
+              <Check size={15} /> Fatta
             </button>
           </div>
 
