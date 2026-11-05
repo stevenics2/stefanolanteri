@@ -19,11 +19,12 @@ import GraficoLinea from "../progressi/GraficoLinea";
 
 // Il benvenuto: la prima volta che apri l'app dopo una notte (o dopo il sonno seguito a un turno di notte) ti racconta la giornata, scrivendola a cascata.
 const SALTA_SE_DA_NOTIFICA = "da=notifica";
+export const EVENTO_RIVEDI_BENVENUTO = "keepway:benvenuto"; // lo manda il pulsante «Rivedi il benvenuto» in Impostazioni
 
 export default function Benvenuto() {
   const { pronto, stato } = useStore();
   const percorso = usePathname();
-  const [forzato] = useState(() => typeof location !== "undefined" && location.search.includes("benvenuto=1"));
+  const [forzato, setForzato] = useState(() => typeof location !== "undefined" && location.search.includes("benvenuto=1"));
   const [voglio, setVoglio] = useState(() => {
     if (typeof location === "undefined") return false;
     if (location.search.includes("benvenuto=1")) return true;
@@ -39,13 +40,18 @@ export default function Benvenuto() {
       const u = ultimoBenvenuto();
       if (pausaDaUltimoUso() >= PAUSA_NOTTE_MS && (u === null || Date.now() - u > PAUSA_MINIMA_MS)) setVoglio(true);
     };
+    const rivedi = () => { setForzato(true); setChiuso(false); setVoglio(true); }; // da Impostazioni: si rivede subito, anche se spento o già visto
     document.addEventListener("visibilitychange", cambio);
-    return () => document.removeEventListener("visibilitychange", cambio);
+    window.addEventListener(EVENTO_RIVEDI_BENVENUTO, rivedi);
+    return () => {
+      document.removeEventListener("visibilitychange", cambio);
+      window.removeEventListener(EVENTO_RIVEDI_BENVENUTO, rivedi);
+    };
   }, []);
 
   if (!pronto || chiuso || !voglio || !percorso.startsWith("/oggi")) return null;
   if (!forzato && !stato.impostazioni.benvenuto) return null;
-  return <Schermata onChiudi={() => { segnaBenvenuto(); setChiuso(true); setVoglio(false); }} />;
+  return <Schermata onChiudi={() => { segnaBenvenuto(); setChiuso(true); setVoglio(false); setForzato(false); }} />;
 }
 
 type Pezzo = { t: string; g: boolean };

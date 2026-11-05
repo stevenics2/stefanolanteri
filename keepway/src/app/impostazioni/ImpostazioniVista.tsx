@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { inVacanza } from "@/lib/regole";
 import { useStore } from "@/lib/store";
 import AreaIcona from "../components/AreaIcona";
+import { EVENTO_RIVEDI_BENVENUTO } from "../components/Benvenuto";
 import BackupImpostazioni from "./BackupImpostazioni";
 import SaluteImpostazioni from "./SaluteImpostazioni";
 import NotificheImpostazioni from "./NotificheImpostazioni";
@@ -98,7 +99,7 @@ export default function ImpostazioniVista() {
             className="w-36 rounded-xl bg-ov/10 px-3 py-1.5 text-right outline-none"
           />
         </label>
-        <Link href="/oggi/?benvenuto=1" data-suono="via" className={`${riga} text-sm`}>
+        <Link href="/oggi/?benvenuto=1" data-suono="via" onClick={() => window.dispatchEvent(new Event(EVENTO_RIVEDI_BENVENUTO))} className={`${riga} text-sm`}>
           <span>Rivedi il benvenuto<span className="block text-xs text-muted">Per provarlo durante la giornata</span></span>
           <ChevronRight size={18} className="text-muted" />
         </Link>

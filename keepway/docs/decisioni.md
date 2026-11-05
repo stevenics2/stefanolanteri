@@ -528,3 +528,6 @@
 - Contenuto, scritto a cascata come una persona (tocco per saltare, «riduci movimento» = tutto subito): saluto con l'ora, sonno di stanotte con frase e grafico delle ultime 7 notti, turno di oggi, meteo di Trieste («circa N gradi», Open-Meteo, senza chiave), le task di oggi non ancora fatte in ordine di orario, il turno di domani. Pulsanti: LET'S GO! (resta in Oggi) e Aggiungi qualcosa (apre Task).
 - Sonno non ancora sincronizzato: non si finge di aggiornare. Si controlla il server (max 2,6 s: «Controllo i dati…»), e se la notte non c'è lo dice («non è ancora arrivato dall'iPhone») con un pulsante «Sincronizza ora» (apre il Comando Rapido). Se il meteo non risponde, la riga manca.
 - Tolto il popup «sincronizza» del mattino (resta quello della sera, dopo le 22:30).
+
+## «Rivedi il benvenuto» funziona anche senza ricaricare
+- Il benvenuto vive sopra tutte le schermate e decideva se comparire solo all'avvio: toccando «Rivedi il benvenuto» in Impostazioni (navigazione interna) non succedeva niente. Ora il pulsante manda un segnale (`keepway:benvenuto`) che lo riapre subito, anche se è spento o già visto.
