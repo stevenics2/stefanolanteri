@@ -528,3 +528,8 @@ button:not(:disabled):active, a[href]:active {
 @keyframes fatta-xp { 0% { opacity: 0; transform: translate(-50%, 6px) scale(0.5); } 30% { opacity: 1; transform: translate(-50%, -2px) scale(1.25); } 70% { opacity: 1; transform: translate(-50%, -8px) scale(1); } 100% { opacity: 0; transform: translate(-50%, -16px) scale(0.95); } }
 .fatta-xp { animation: fatta-xp 1.3s 0.25s ease-out both; opacity: 0; }
 @media (prefers-reduced-motion: reduce) { .scheda-fatta, .fatta-lampo, .fatta-onda, .fatta-particella, .fatta-spunta, .fatta-xp { animation: none; } }
+
+/* La scheda completata scompare: si sposta, sfuma e si chiude in altezza; le altre scivolano al suo posto */
+@keyframes scheda-esce { 0% { opacity: 1; max-height: 640px; transform: none; } 55% { opacity: 0; transform: translateX(36px) scale(0.96); max-height: 640px; } 100% { opacity: 0; transform: translateX(36px) scale(0.96); max-height: 0; padding-top: 0; padding-bottom: 0; border-width: 0; } }
+.scheda-esce { animation: scheda-esce 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards; overflow: hidden; }
+@media (prefers-reduced-motion: reduce) { .scheda-esce { animation: none; opacity: 0; } }

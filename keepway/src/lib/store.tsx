@@ -25,6 +25,7 @@ export type Ricompensa = {
   nuovoLivello: string | null;
   daTimer: boolean; // finita con il timer: suona la fanfara
   moltiplicatore: number; // combo: 1 = nessuna
+  suonoGia?: boolean; // il suono è già partito durante l'animazione della scheda
 };
 
 // Momenti "da festa": combo, record, forziere, boss. Compaiono in un popup, uno alla volta.
@@ -52,7 +53,7 @@ type Contesto = {
   oggi: string;
   adesso: number; // ora corrente (ms), aggiornata ogni 30 secondi; 0 finché i dati non sono pronti
   xp: number;
-  completa: (taskId: string, opzioni: { minima: boolean; minuti?: number; daTimer?: boolean; punti?: number; data?: string }) => void; // `data`: il giorno a cui segnarla (solo ieri; di solito è oggi)
+  completa: (taskId: string, opzioni: { minima: boolean; minuti?: number; daTimer?: boolean; punti?: number; data?: string; suonoGia?: boolean }) => void; // `data`: il giorno a cui segnarla (solo ieri; di solito è oggi)
   annulla: (completamentoId: string) => void;
   salvaTask: (t: Task) => void;
   eliminaTask: (id: string) => void;
@@ -270,7 +271,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const completa: Contesto["completa"] = useCallback(
-    (taskId, { minima, minuti, daTimer, punti: puntiBase, data: giornoScelto }) => {
+    (taskId, { minima, minuti, daTimer, punti: puntiBase, data: giornoScelto, suonoGia }) => {
       const s = ref.current;
       const t = s.task.find((x) => x.id === taskId);
       if (!t) return;
@@ -349,6 +350,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         nuovoLivello: dopo.indice > prima.indice ? dopo.nome : null,
         daTimer: !!daTimer,
         moltiplicatore,
+        suonoGia: !!suonoGia,
       });
     },
     [aggiorna],

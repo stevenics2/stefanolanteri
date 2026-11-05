@@ -9,6 +9,7 @@ import { momentoAttuale } from "@/lib/momento";
 import { hhmm } from "@/lib/sonno";
 import { giorniInRitardo, testoRitardo } from "@/lib/ritardo";
 import { stanzaDelGiorno, titoloTask } from "@/lib/stanze";
+import { suono } from "@/lib/effetti";
 import { useStore } from "@/lib/store";
 import type { Task } from "@/lib/tipi";
 import AreaIcona, { iconaTask } from "./AreaIcona";
@@ -21,6 +22,7 @@ const ora = (ms: number) => new Date(ms).toLocaleTimeString("it-IT", { hour: "2-
 export default function TaskCard({ task, soloMinima, evidenza = false }: { task: Task; soloMinima: boolean; evidenza?: boolean }) {
   const { stato, oggi, adesso, completa, annulla, apriTimer, ignoraOggi, rimanda, annullaRinvio, impostaMomento } = useStore();
   const [piuTardi, setPiuTardi] = useState(false);
+  const [uscendo, setUscendo] = useState(false);
   const [concludendo, setConcludendo] = useState<{ xp: number } | null>(null); // l'animazione della scheda mentre segni «Fatta»
   const [modMomento, setModMomento] = useState(false);
   const [aperta, setAperta] = useState(false); // il planner mostra la riga compatta; toccandola si apre la scheda intera
@@ -32,11 +34,14 @@ export default function TaskCard({ task, soloMinima, evidenza = false }: { task:
   // «Fatta»: la scheda esplode di verde (onde, coriandoli, spunta che rimbalza, +XP che sale), poi la task si segna e la scheda si chiude (1,5 s; senza animazioni, subito).
   const concludi = (minimaScelta: boolean) => {
     if (concludendo) return;
-    const fine = () => { completa(task.id, { minima: minimaScelta }); setAperta(false); setConcludendo(null); };
+    const fine = () => { completa(task.id, { minima: minimaScelta, suonoGia: true }); setAperta(false); setConcludendo(null); setUscendo(false); };
     if (!stato.impostazioni.animazioni) return fine();
+    if (stato.impostazioni.suoni) suono("slot"); // il suono parte con l'animazione, non dopo
     setConcludendo({ xp: minimaScelta && minima ? puntiMinima(task.punti) : task.punti });
-    setTimeout(fine, 1500);
+    setTimeout(() => setUscendo(true), 1500); // poi la scheda scompare (0,45 s)
+    setTimeout(fine, 1950);
   };
+  const bottoneGrande = "inline-flex h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl px-2 text-sm"; // tutti i pulsanti della scheda: stessa altezza e stessa larghezza
   const bordo = evidenza ? "#29a3f0" : colore; // la task «Adesso»: bordo azzurro, non il colore dell'area
   const minima = task.minimaMin;
   // Task che si adatta ai turni: il momento libero più lungo di oggi (né in turno, né a dormire)
@@ -117,7 +122,7 @@ export default function TaskCard({ task, soloMinima, evidenza = false }: { task:
   }
 
   return (
-    <div className={`apri-scheda relative overflow-hidden rounded-2xl bg-card p-4 transition-opacity duration-500 ${concludendo ? "scheda-fatta" : ""} ${fatto ? "opacity-60" : ""}`} style={{ borderLeft: `${evidenza ? 5 : 4}px solid ${bordo}` }}>
+    <div className={`apri-scheda relative overflow-hidden rounded-2xl bg-card p-4 transition-opacity duration-500 ${concludendo ? "scheda-fatta" : ""} ${uscendo ? "scheda-esce" : ""} ${fatto ? "opacity-60" : ""}`} style={{ borderLeft: `${evidenza ? 5 : 4}px solid ${bordo}` }}>
       {concludendo && (
         <div className="scheda-fatta-spunta pointer-events-none absolute inset-0 z-10 flex items-center justify-center overflow-hidden" aria-hidden>
           <span className="fatta-lampo absolute inset-0" />
@@ -232,44 +237,44 @@ export default function TaskCard({ task, soloMinima, evidenza = false }: { task:
         </div>
       ) : (
         <>
-          <div className={`mt-3 flex gap-2 ${task.apre ? "flex-wrap" : "flex-nowrap"}`}>
+          <div className="mt-3 grid gap-2" style={{ gridTemplateColumns: `repeat(${[Boolean((task.durataMin && !soloMinima) || (soloMinima && minima)), Boolean(task.apre), Boolean(minima && !soloMinima), true].filter(Boolean).length}, minmax(0, 1fr))` }}>
             {task.durataMin && !soloMinima && (
-              <button onClick={() => apriTimer(task.id, false, task.durataMin!)} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl bg-accent px-3.5 py-2 text-sm font-bold text-black">
+              <button onClick={() => apriTimer(task.id, false, task.durataMin!)} className={bottoneGrande + " bg-accent font-bold text-black"}>
                 <Play size={15} fill="currentColor" /> Inizia!
               </button>
             )}
             {soloMinima && minima && (
-              <button onClick={() => apriTimer(task.id, true, minima)} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl bg-accent px-3.5 py-2 text-sm font-bold text-black">
+              <button onClick={() => apriTimer(task.id, true, minima)} className={bottoneGrande + " bg-accent font-bold text-black"}>
                 <Play size={15} fill="currentColor" /> Inizia! ({minima}′)
               </button>
             )}
             {task.apre && (
-              <Link href={task.apre} data-suono="via" className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl bg-accent px-3.5 py-2 text-sm font-bold text-black">
+              <Link href={task.apre} data-suono="via" className={bottoneGrande + " bg-accent font-bold text-black"}>
                 <CalendarClock size={15} /> Apri
               </Link>
             )}
             {minima && !soloMinima && (
-              <button data-suono="nessuno" onClick={() => concludi(true)} className="whitespace-nowrap rounded-xl bg-ov/10 px-3.5 py-2 text-sm">
+              <button data-suono="nessuno" onClick={() => concludi(true)} className={bottoneGrande + " bg-ov/10"}>
                 Minima ({minima}′)
               </button>
             )}
-            <button data-suono="nessuno" onClick={() => concludi(soloMinima && !!minima)} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl bg-ov/10 px-3.5 py-2 text-sm font-semibold">
+            <button data-suono="nessuno" onClick={() => concludi(soloMinima && !!minima)} className={bottoneGrande + " bg-ov/10 font-semibold"}>
               <Check size={15} /> Fatta
             </button>
           </div>
 
-          <div className="mt-2 flex items-center gap-4 text-sm text-muted">
+          <div className={`mt-2 text-sm text-muted ${rinvio ? "flex items-center" : "grid grid-cols-2 gap-2"}`}>
             {rinvio ? (
               <span className="inline-flex items-center gap-1.5 text-sky-300">
                 <AlarmClock size={15} /> Te lo ricordo alle {ora(rinvio.alle)}
                 <button data-suono="indietro" onClick={() => annullaRinvio(task.id)} className="ml-1 underline">togli</button>
               </span>
             ) : (
-              <button onClick={() => setPiuTardi((v) => !v)} className="inline-flex items-center gap-1.5">
+              <button onClick={() => setPiuTardi((v) => !v)} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-ov/5">
                 <AlarmClock size={15} /> Più tardi
               </button>
             )}
-            <button data-suono="pausa" onClick={() => ignoraOggi(task.id)} className="inline-flex items-center gap-1.5">
+            <button data-suono="pausa" onClick={() => ignoraOggi(task.id)} className={`inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-ov/5 ${rinvio ? "ml-auto px-4" : ""}`}>
               <SkipForward size={15} /> Salta oggi
             </button>
           </div>

@@ -5,7 +5,7 @@ import ObiettiviSettimana from "../components/ObiettiviSettimana";
 import CambiPiano from "../components/CambiPiano";
 import RitoSettimana from "../components/RitoSettimana";
 import VistaInsieme from "../components/VistaInsieme";
-import { CalendarDays, ChevronLeft, Moon, Plane, Undo2 } from "lucide-react";
+import { CalendarDays, CheckCircle2, ChevronLeft, Moon, Plane, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { caricoGiorno } from "@/lib/carico";
@@ -85,8 +85,7 @@ export default function OggiVista() {
   const daFareOra = elenco.filter((t) => !èFatta(t));
   const fatteOggi = elenco.filter((t) => èFatta(t));
   const adessoTask = daFareOra[0] ?? null;
-  const altreTutte = [...daFareOra.slice(1), ...fatteOggi];
-  const daLineaTempo = altreTutte; // sulla linea del tempo: le prossime, e le fatte nel «già passato»
+  const daLineaTempo = daFareOra.slice(1); // sulla linea del tempo: le prossime; le fatte stanno nella loro sezione
   const eventiOggi = eventiDelGiorno(stato.eventi, oggi, oggi).length > 0;
   const soloMinima = carico === "essenziale" && !mostraTutte;
   const giorno = scelto ?? oggi;
@@ -237,7 +236,18 @@ export default function OggiVista() {
       ) : null}
 
       {/* Le prossime task sulla linea del tempo (con gli appuntamenti), in ordine di orario */}
-      {(altreTutte.length > 0 || eventiOggi) && <Timeline task={daLineaTempo} soloMinima={soloMinima} onModificaEvento={setDaModificare} />}
+      {(daLineaTempo.length > 0 || eventiOggi) && <Timeline task={daLineaTempo} soloMinima={soloMinima} onModificaEvento={setDaModificare} />}
+
+      {fatteOggi.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-muted">
+            <CheckCircle2 size={14} className="text-emerald-400" /> Task completate · {fatteOggi.length}
+          </h2>
+          <div className="space-y-2">
+            {fatteOggi.map((t) => <TaskCard key={t.id} task={t} soloMinima={soloMinima} />)}
+          </div>
+        </div>
+      )}
 
       <AgendaDomani onModifica={setDaModificare} />
       <InArrivo onModifica={setDaModificare} />

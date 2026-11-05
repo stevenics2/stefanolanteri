@@ -564,3 +564,12 @@
 - «Adesso»: l'orario torna sotto il titolo (con l'orologio), perché accanto al titolo si sovrapponeva alla fiamma della serie e ai punti. Per tutte le altre task l'orario resta accanto al titolo.
 - Scheda aperta: **Inizia! · Minima (3′) · Fatta** sulla stessa riga (testo corto, niente a capo; se c'è «Apri» possono andare su due righe).
 - «Fatta» più dopaminica e di 1,5 s: la scheda rimbalza e si illumina, un lampo la attraversa, due onde e 16 coriandoli colorati partono dal centro, la spunta rimbalza e «+N XP» compare sotto. La task si segna alla fine. Con le animazioni spente è immediato.
+
+## «Fatta»: suono nell'animazione, uscita della scheda, sezione «Task completate»
+- Il suono della task completata parte con l'animazione (non dopo): `completa` accetta `suonoGia` e il popup dei punti non lo ripete (la fanfara del nuovo livello e quella del timer restano).
+- Dopo l'animazione (1,5 s) la scheda scompare con un movimento (si sposta, sfuma e si chiude in altezza, 0,45 s) e le altre scivolano al suo posto; poi la task si segna.
+- Le task fatte stanno nella sezione **Task completate · N**, subito prima di «Domani hai» (e della scheda Sonno), non più nella linea del tempo. Si aprono per l'«Annulla».
+- I pulsanti della scheda sono grandi e uguali (altezza 44 px, colonne uguali): Inizia! · Minima · Fatta (+ Apri se c'è); sotto, Più tardi e Salta oggi in due colonne uguali.
+
+## Principio di design
+- Ordine e simmetria sempre (come insegna Jobs): elementi dello stesso tipo hanno la stessa dimensione, lo stesso spazio e lo stesso allineamento; le righe di pulsanti si dividono in colonne uguali; niente elementi che si sovrappongono o che vanno a capo a caso. Si controlla ogni volta che si tocca un'interfaccia.
