@@ -18,7 +18,7 @@ const ora = (ms: number) => new Date(ms).toLocaleTimeString("it-IT", { hour: "2-
 
 // Una task nella schermata Oggi: avvia il timer, segna come fatta, fa la versione minima,
 // la rimanda a più tardi oppure la salta per oggi.
-export default function TaskCard({ task, soloMinima, senzaOrario = false }: { task: Task; soloMinima: boolean; senzaOrario?: boolean }) {
+export default function TaskCard({ task, soloMinima, senzaOrario = false, evidenza = false }: { task: Task; soloMinima: boolean; senzaOrario?: boolean; evidenza?: boolean }) {
   const { stato, oggi, adesso, completa, annulla, apriTimer, ignoraOggi, rimanda, annullaRinvio, impostaMomento } = useStore();
   const [piuTardi, setPiuTardi] = useState(false);
   const [modMomento, setModMomento] = useState(false);
@@ -28,6 +28,7 @@ export default function TaskCard({ task, soloMinima, senzaOrario = false }: { ta
   const rinvio = stato.rinvii.find((r) => r.taskId === task.id && r.data === oggi);
   const giorni = serie(task, stato.completamenti, oggi, { vacanza: stato.vacanza }, stato.ignorati);
   const colore = area?.colore ?? "#888";
+  const bordo = evidenza ? "#29a3f0" : colore; // la task «Adesso»: bordo azzurro, non il colore dell'area
   const minima = task.minimaMin;
   // Task che si adatta ai turni: il momento libero più lungo di oggi (né in turno, né a dormire)
   const scelto = stato.momenti.find((m) => m.taskId === task.id && m.data === oggi);
@@ -60,12 +61,12 @@ export default function TaskCard({ task, soloMinima, senzaOrario = false }: { ta
       <button
         data-suono="via"
         onClick={() => setAperta(true)}
-        className={`dissolve flex w-full items-center gap-3 rounded-2xl bg-card px-3 py-2.5 text-left ${fatto ? "opacity-60" : ""}`}
-        style={{ borderLeft: `4px solid ${colore}` }}
+        className={`dissolve flex w-full items-center gap-3 rounded-2xl bg-card text-left ${evidenza ? "px-4 py-4" : "px-3 py-2.5"} ${fatto ? "opacity-60" : ""}`}
+        style={{ borderLeft: `${evidenza ? 5 : 4}px solid ${bordo}` }}
       >
-        <AreaIcona nome={iconaTask(task, area?.icona ?? "")} colore={colore} />
+        <AreaIcona nome={iconaTask(task, area?.icona ?? "")} colore={colore} size={evidenza ? 22 : 18} />
         <span className="min-w-0 flex-1">
-          <span className="block font-semibold leading-tight"><span className={`barrato ${fatto ? "fatto" : ""}`}>{titoloTask(task, stato, oggi)}</span></span>
+          <span className={`block font-semibold leading-tight ${evidenza ? "text-lg" : ""}`}><span className={`barrato ${fatto ? "fatto" : ""}`}>{titoloTask(task, stato, oggi)}</span></span>
           <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted">
             {finestra && !senzaOrario ? (
               <span className="inline-flex items-center gap-1 whitespace-nowrap font-semibold text-emerald-300">
@@ -104,7 +105,7 @@ export default function TaskCard({ task, soloMinima, senzaOrario = false }: { ta
   }
 
   return (
-    <div className={`apri-scheda rounded-2xl bg-card p-4 transition-opacity duration-500 ${fatto ? "opacity-60" : ""}`} style={{ borderLeft: `4px solid ${colore}` }}>
+    <div className={`apri-scheda rounded-2xl bg-card p-4 transition-opacity duration-500 ${fatto ? "opacity-60" : ""}`} style={{ borderLeft: `${evidenza ? 5 : 4}px solid ${bordo}` }}>
       <div className="flex items-start gap-3">
         <AreaIcona nome={iconaTask(task, area?.icona ?? "")} colore={colore} />
         <div className="flex-1">

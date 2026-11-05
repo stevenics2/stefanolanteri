@@ -22,9 +22,9 @@ export default function BarraLivello({ fatte, totale }: { fatte: number; totale:
   const frazioni = [totale > 0 ? fatte / totale : 0, previsteSett > 0 ? Math.min(1, fatteSett / previsteSett) : 0, l.prossimo ? l.progresso : 1];
 
   return (
-    <Link href="/progressi/" data-suono="via" className="block rounded-2xl border border-[#29a3f0]/25 bg-black/60 px-3 py-2.5 active:scale-[0.99]" aria-label="Livello e progressi">
-      <div key={fatte} className="barra-impulso flex items-center gap-3">
-        <svg width="40" height="40" viewBox="0 0 38 38" className="shrink-0 -rotate-90" aria-hidden>
+    <Link href="/progressi/" data-suono="via" className="block rounded-2xl border border-[#29a3f0]/25 bg-black/60 px-2.5 py-2 active:scale-[0.99]" aria-label="Livello e progressi">
+      <div key={fatte} className="barra-impulso flex items-center gap-2.5">
+        <svg width="36" height="36" viewBox="0 0 38 38" className="shrink-0 -rotate-90" aria-hidden>
           {ANELLI.map((a, i) => {
             const c = 2 * Math.PI * a.r;
             return (
@@ -36,14 +36,14 @@ export default function BarraLivello({ fatte, totale }: { fatte: number; totale:
           })}
         </svg>
         <div className="min-w-0 flex-1 font-mono">
-          <div className="flex items-baseline justify-between text-[11px] tracking-wide text-[#9fb3c8]">
+          <div className="flex items-baseline justify-between gap-1 text-[10px] tracking-wide text-[#9fb3c8]">
             <span>LV.{l.numero} {l.nome.toUpperCase()}</span>
             <span>{xp} XP</span>
           </div>
-          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/10">
+          <div className="mt-1 h-1 overflow-hidden rounded-full bg-white/10">
             <div className="h-full rounded-full bg-gradient-to-r from-[#29a3f0] to-[#a5e3ff]" style={{ width: `${Math.round(l.progresso * 100)}%`, transition: "width 0.9s cubic-bezier(.3,.7,.2,1)" }} />
           </div>
-          <div className="mt-1 text-[10px] text-[#6b7c8e]">{l.prossimo ? `${l.mancano} XP al livello ${l.numero + 1}` : "livello massimo"}</div>
+          <div className="mt-0.5 truncate text-[9px] text-[#6b7c8e]">{l.prossimo ? `${l.mancano} XP al livello ${l.numero + 1}` : "livello massimo"}</div>
         </div>
       </div>
     </Link>

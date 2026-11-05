@@ -223,8 +223,8 @@ function Schermata({ onChiudi }: { onChiudi: () => void }) {
               const I = ICONE_SALUTO[b.icona];
               return (
                 <div key={i} className="flex items-center gap-2.5 text-[21px] font-bold leading-tight text-foreground">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#29a3f0]/15 text-[#7cc8f7]"><I size={18} /></span>
                   <span><Scritto testo={b.testo} quanti={n} cursore={scrivendo} /></span>
+                  {!scrivendo && <span className="entra flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#29a3f0]/15 text-[#7cc8f7]"><I size={18} /></span>}
                 </div>
               );
             }

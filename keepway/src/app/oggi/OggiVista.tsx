@@ -15,7 +15,7 @@ import { èIgnorata, èPrevista, inVacanza } from "@/lib/regole";
 import { titoloTask } from "@/lib/stanze";
 import { useStore } from "@/lib/store";
 import type { Evento, Task } from "@/lib/tipi";
-import { AgendaDomani, AgendaOggi, InArrivo } from "../components/AgendaBox";
+import { AgendaDomani, InArrivo } from "../components/AgendaBox";
 import BarraLivello from "../components/BarraLivello";
 import SonnoCard from "../components/SonnoCard";
 import TurniDaSistemare from "../components/TurniDaSistemare";
@@ -24,8 +24,9 @@ import SemaforiTerminal from "../components/SemaforiTerminal";
 import SpiaSeguito from "../components/SpiaSeguito";
 import TaskCard from "../components/TaskCard";
 import BloccoTurno from "../components/BloccoTurno";
-import ListaFlip from "../components/ListaFlip";
 import Presenza from "../components/Presenza";
+import Timeline from "../components/Timeline";
+import { eventiDelGiorno } from "@/lib/eventi";
 import InterruttoreTema from "../components/InterruttoreTema";
 import GiornoSeguente from "../components/GiornoSeguente";
 import StrisciaGiorni from "../components/StrisciaGiorni";
@@ -41,7 +42,6 @@ const ORA_SERA = 18;
 export default function OggiVista() {
   const { pronto, stato, oggi, adesso, setVacanza, ripristina } = useStore();
   const [mostraTutte, setMostraTutte] = useState(false);
-  const [mostraAltre, setMostraAltre] = useState(false);
   const [daModificare, setDaModificare] = useState<Evento | null>(null);
   const [scelto, setScelto] = useState<string | null>(null); // il giorno guardato (null = oggi)
   const [settimana, setSettimana] = useState(false); // la modalità settimanale: il box ricompensa sparisce e i giorni salgono in alto
@@ -85,9 +85,9 @@ export default function OggiVista() {
   const daFareOra = elenco.filter((t) => !èFatta(t));
   const fatteOggi = elenco.filter((t) => èFatta(t));
   const adessoTask = daFareOra[0] ?? null;
-  const prossimoTask = daFareOra[1] ?? null;
-  const altreTutte = [...daFareOra.slice(2), ...fatteOggi];
-  const altreVisibili = mostraAltre ? altreTutte : altreTutte.slice(0, 3);
+  const altreTutte = [...daFareOra.slice(1), ...fatteOggi];
+  const daLineaTempo = altreTutte; // sulla linea del tempo: le prossime, e le fatte nel «già passato»
+  const eventiOggi = eventiDelGiorno(stato.eventi, oggi, oggi).length > 0;
   const soloMinima = carico === "essenziale" && !mostraTutte;
   const giorno = scelto ?? oggi;
 
@@ -109,11 +109,11 @@ export default function OggiVista() {
   return (
     <section className="space-y-5">
       <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Oggi</h1>
-          <p className="text-muted first-letter:uppercase">{dataLunga(oggi)}</p>
+        <div className="min-w-0 flex-1 pr-3">
+          <h1 className="sr-only">Oggi</h1>
+          <BarraLivello fatte={fatte} totale={daFare.length} />
         </div>
-        <div className="flex flex-col items-end gap-2">
+        <div className="flex shrink-0 flex-col items-end gap-2">
         <div className="flex items-center gap-2">
           <InterruttoreTema />
           {settimana ? (
@@ -145,7 +145,9 @@ export default function OggiVista() {
             margine={2}
             aria="Vista della settimana"
           />
-        ) : null}
+        ) : (
+          <p className="text-sm text-muted first-letter:uppercase">{dataLunga(oggi)}</p>
+        )}
         </div>
       </div>
 
@@ -210,14 +212,12 @@ export default function OggiVista() {
 
       <SpiaSeguito />
 
-      <AgendaOggi onModifica={setDaModificare} />
-
       {/* Adesso: la prossima cosa da fare, in una scheda che respira piano */}
       {adessoTask ? (
         <div className="space-y-2">
           <h2 className="text-xs font-bold uppercase tracking-[0.12em] text-muted">Adesso</h2>
           <div className="adesso-respira" key={adessoTask.id}>
-            <TaskCard task={adessoTask} soloMinima={soloMinima} />
+            <TaskCard task={adessoTask} soloMinima={soloMinima} evidenza />
           </div>
         </div>
       ) : daFare.length > 0 ? (
@@ -227,30 +227,8 @@ export default function OggiVista() {
         </div>
       ) : null}
 
-      {prossimoTask && (
-        <div className="space-y-2">
-          <h2 className="text-xs font-bold uppercase tracking-[0.12em] text-muted">Prossimo</h2>
-          <TaskCard task={prossimoTask} soloMinima={soloMinima} />
-        </div>
-      )}
-
-      {(altreVisibili.length > 0 || altreTutte.length > altreVisibili.length) && (
-        <div className="space-y-2">
-          <h2 className="text-xs font-bold uppercase tracking-[0.12em] text-muted">Altre task · il resto di oggi</h2>
-          <ListaFlip className="stagger space-y-2">
-            {altreVisibili.map((t) => (
-              <div key={t.id} data-flip={t.id}>
-                <TaskCard task={t} soloMinima={soloMinima} />
-              </div>
-            ))}
-          </ListaFlip>
-          {altreTutte.length > 3 && (
-            <button onClick={() => setMostraAltre((x) => !x)} className="w-full rounded-xl bg-ov/10 py-2 text-sm text-muted">
-              {mostraAltre ? "Mostra meno" : `+ ${altreTutte.length - 3} altre`}
-            </button>
-          )}
-        </div>
-      )}
+      {/* Le prossime task sulla linea del tempo (con gli appuntamenti), in ordine di orario */}
+      {(altreTutte.length > 0 || eventiOggi) && <Timeline task={daLineaTempo} soloMinima={soloMinima} onModificaEvento={setDaModificare} />}
 
       <AgendaDomani onModifica={setDaModificare} />
       <InArrivo onModifica={setDaModificare} />
@@ -278,7 +256,6 @@ export default function OggiVista() {
       {/* Il sonno chiude la giornata: sta in fondo, dopo tutto il resto */}
       <SonnoCard />
 
-      <BarraLivello fatte={fatte} totale={daFare.length} />
 
       </div>
       )}

@@ -548,3 +548,9 @@
 - Il box grande (`RiepilogoOggi`) è in cima a Progressi. Gli anelli sono in tre blu (#8fd3ff, #29a3f0, #6d7cff). Il suo «tempo che resta» ora usa il giorno di lavoro (dopo mezzanotte supera 1440).
 - Tolti da Oggi: il box grande con la transizione che lo faceva dissolvere (resta il CSS, non usato), Compatta/Estesa (la timeline `Timeline.tsx` non è più collegata). «Fuori casa» è ancora nell'intestazione.
 - Palette: sfondo #0a0f16, schede #0f1a28, testo #e8f1fa, accento azzurro #29a3f0 (tema chiaro #1e88e5); l'ambra resta come `--ambra` e nei colori scritti a mano (attenzione, energia, debito). Colori del tema in `layout.tsx` e manifest aggiornati.
+
+## Home: ritocchi dopo la prova
+- Benvenuto: l'icona del saluto sta dopo il nome («Buon pomeriggio Stefano ☼»), compare quando il nome è scritto.
+- Oggi: la task «Adesso» ha il bordo sinistro azzurro (non il colore dell'area, che stonava) ed è più grande (`evidenza` in `TaskCard`: padding, icona e titolo più grandi).
+- Tolta la scritta «Prossimo»: le prossime task stanno direttamente sulla **linea del tempo** (`Timeline`, con gli appuntamenti, l'orario sopra ogni scheda, la riga rossa «adesso», il «già passato» e «Quando vuoi» per le task senza orario). Per questo non c'è più il box «Appuntamenti di oggi» separato.
+- Il box ricompensa ridotto sta in alto a sinistra, al posto di «Oggi» (resta un titolo nascosto per l'accessibilità); la data è a destra sotto «Fuori casa» (in vista settimanale lì c'è il selettore Giorno/Settimana).
