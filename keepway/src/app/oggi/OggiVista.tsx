@@ -223,7 +223,7 @@ export default function OggiVista() {
       {/* Adesso: la prossima cosa da fare, in una scheda che respira piano */}
       {adessoTask ? (
         <div className="space-y-2">
-          <h2 className="text-xs font-bold uppercase tracking-[0.12em] text-muted">Adesso</h2>
+          <h2 className="text-xs font-bold uppercase tracking-[0.12em] text-muted">NEXT</h2>
           <div className="adesso-respira" key={adessoTask.id}>
             <TaskCard task={adessoTask} soloMinima={soloMinima} evidenza />
           </div>

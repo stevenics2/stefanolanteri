@@ -90,7 +90,7 @@ export default function Timeline({
 
       {senzaOrario.length > 0 && (
         <Fragment>
-          <h2 className="text-sm font-bold uppercase tracking-wide text-muted">Quando vuoi</h2>
+          <h2 className="text-sm font-bold uppercase tracking-wide text-muted">BEFORE SLEEP</h2>
           <div className="space-y-2">
             {senzaOrario.map((t) => (
               <TaskCard key={t.id} task={t} soloMinima={soloMinima} />

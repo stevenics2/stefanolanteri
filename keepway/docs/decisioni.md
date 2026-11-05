@@ -573,3 +573,7 @@
 
 ## Principio di design
 - Ordine e simmetria sempre (come insegna Jobs): elementi dello stesso tipo hanno la stessa dimensione, lo stesso spazio e lo stesso allineamento; le righe di pulsanti si dividono in colonne uguali; niente elementi che si sovrappongono o che vanno a capo a caso. Si controlla ogni volta che si tocca un'interfaccia.
+
+## Etichette di Oggi
+- «Adesso» (la scheda in evidenza) ora si chiama **NEXT**; la sezione «Quando vuoi» (task senza orario) ora si chiama **BEFORE SLEEP**. La riga rossa della linea del tempo con l'ora corrente resta «adesso HH:MM».
+- In sospeso: trascinare le task sulla linea del tempo (tenere premuto, `user-select: none` per evitare la selezione del testo); manca la scelta fra «prende l'orario subito dopo quella sopra» e «scambia l'orario».
