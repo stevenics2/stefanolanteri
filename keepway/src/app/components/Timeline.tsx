@@ -53,7 +53,7 @@ export default function Timeline({
 
   return (
     <div className="space-y-4">
-      <ListaFlip className="stagger space-y-5">
+      <ListaFlip className="stagger space-y-3">
         {nPassate > 0 && (
           <button onClick={() => setMostraPassato((x) => !x)} className="inline-flex items-center gap-1 text-xs font-semibold text-muted">
             {mostraPassato ? "Nascondi il passato" : `Già passato (${nPassate})`} <ChevronDown size={13} className={mostraPassato ? "rotate-180" : ""} />
@@ -73,13 +73,15 @@ export default function Timeline({
           const chiave = v.tipo === "task" ? `t-${v.task.id}` : `e-${v.evento.id}`;
           return (
             <div key={chiave} data-flip={chiave} className="relative">
-              <span className="absolute -top-2.5 left-4 z-10 rounded-full bg-background px-2.5 py-0.5 text-[11px] font-extrabold tabular-nums text-emerald-300 ring-1 ring-emerald-400/40">
-                {etichetta}
-              </span>
+              {v.tipo === "evento" && (
+                <span className="absolute -top-2.5 left-4 z-10 rounded-full bg-background px-2.5 py-0.5 text-[11px] font-extrabold tabular-nums text-emerald-300 ring-1 ring-emerald-400/40">
+                  {etichetta}
+                </span>
+              )}
               {v.tipo === "evento" ? (
                 <RigaEvento e={v.evento} oggi={oggi} senzaOra alTocco={() => onModificaEvento(v.evento)} />
               ) : (
-                <TaskCard task={v.task} soloMinima={soloMinima} senzaOrario />
+                <TaskCard task={v.task} soloMinima={soloMinima} />
               )}
             </div>
           );

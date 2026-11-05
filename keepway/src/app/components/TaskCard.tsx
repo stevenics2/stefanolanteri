@@ -18,9 +18,10 @@ const ora = (ms: number) => new Date(ms).toLocaleTimeString("it-IT", { hour: "2-
 
 // Una task nella schermata Oggi: avvia il timer, segna come fatta, fa la versione minima,
 // la rimanda a più tardi oppure la salta per oggi.
-export default function TaskCard({ task, soloMinima, senzaOrario = false, evidenza = false }: { task: Task; soloMinima: boolean; senzaOrario?: boolean; evidenza?: boolean }) {
+export default function TaskCard({ task, soloMinima, evidenza = false }: { task: Task; soloMinima: boolean; evidenza?: boolean }) {
   const { stato, oggi, adesso, completa, annulla, apriTimer, ignoraOggi, rimanda, annullaRinvio, impostaMomento } = useStore();
   const [piuTardi, setPiuTardi] = useState(false);
+  const [concludendo, setConcludendo] = useState(false); // l'animazione della scheda mentre segni «Fatta»
   const [modMomento, setModMomento] = useState(false);
   const [aperta, setAperta] = useState(false); // il planner mostra la riga compatta; toccandola si apre la scheda intera
   const area = stato.aree.find((a) => a.id === task.areaId);
@@ -28,6 +29,14 @@ export default function TaskCard({ task, soloMinima, senzaOrario = false, eviden
   const rinvio = stato.rinvii.find((r) => r.taskId === task.id && r.data === oggi);
   const giorni = serie(task, stato.completamenti, oggi, { vacanza: stato.vacanza }, stato.ignorati);
   const colore = area?.colore ?? "#888";
+  // «Fatta»: la scheda si illumina di verde con una spunta che si disegna, poi la task si segna e la scheda si chiude (0,7 s; senza animazioni, subito).
+  const concludi = (minimaScelta: boolean) => {
+    if (concludendo) return;
+    const fine = () => { completa(task.id, { minima: minimaScelta }); setAperta(false); setConcludendo(false); };
+    if (!stato.impostazioni.animazioni) return fine();
+    setConcludendo(true);
+    setTimeout(fine, 700);
+  };
   const bordo = evidenza ? "#29a3f0" : colore; // la task «Adesso»: bordo azzurro, non il colore dell'area
   const minima = task.minimaMin;
   // Task che si adatta ai turni: il momento libero più lungo di oggi (né in turno, né a dormire)
@@ -66,14 +75,14 @@ export default function TaskCard({ task, soloMinima, senzaOrario = false, eviden
       >
         <AreaIcona nome={iconaTask(task, area?.icona ?? "")} colore={colore} size={evidenza ? 22 : 18} />
         <span className="min-w-0 flex-1">
-          <span className={`block font-semibold leading-tight ${evidenza ? "text-lg" : ""}`}><span className={`barrato ${fatto ? "fatto" : ""}`}>{titoloTask(task, stato, oggi)}</span></span>
+          <span className={`block font-semibold leading-tight ${evidenza ? "text-lg" : ""}`}>
+            <span className={`barrato ${fatto ? "fatto" : ""}`}>{titoloTask(task, stato, oggi)}</span>
+            {finestra && !fatto && <span className={`ml-1.5 whitespace-nowrap font-semibold tabular-nums text-emerald-300 ${evidenza ? "text-sm" : "text-xs"}`}>({hhmm(finestra.da)}–{hhmm(finestra.a)})</span>}
+          </span>
           <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted">
-            {finestra && !senzaOrario ? (
-              <span className="inline-flex items-center gap-1 whitespace-nowrap font-semibold text-emerald-300">
-                <Clock size={11} /> {hhmm(finestra.da)}–{hhmm(finestra.a)}
-                {spostato && <span className="font-medium text-amber-300">· {seraTarda ? "prima di dormire" : "spostato"}</span>}
-              </span>
-            ) : esaurito && !senzaOrario ? (
+            {finestra && spostato ? (
+              <span className="whitespace-nowrap font-medium text-amber-300">{seraTarda ? "prima di dormire" : "spostato"}</span>
+            ) : esaurito && !finestra ? (
               <span className="whitespace-nowrap text-amber-300">nessun momento libero oggi</span>
             ) : null}
             {ritardo > 0 && !fatto && <span className="text-[11px] font-medium text-amber-300/80">· {testoRitardo(ritardo)}</span>}
@@ -105,7 +114,15 @@ export default function TaskCard({ task, soloMinima, senzaOrario = false, eviden
   }
 
   return (
-    <div className={`apri-scheda rounded-2xl bg-card p-4 transition-opacity duration-500 ${fatto ? "opacity-60" : ""}`} style={{ borderLeft: `${evidenza ? 5 : 4}px solid ${bordo}` }}>
+    <div className={`apri-scheda relative overflow-hidden rounded-2xl bg-card p-4 transition-opacity duration-500 ${concludendo ? "scheda-fatta" : ""} ${fatto ? "opacity-60" : ""}`} style={{ borderLeft: `${evidenza ? 5 : 4}px solid ${bordo}` }}>
+      {concludendo && (
+        <div className="scheda-fatta-spunta pointer-events-none absolute inset-0 z-10 flex items-center justify-center" aria-hidden>
+          <svg viewBox="0 0 96 96" className="spunta-pop h-20 w-20" style={{ filter: "drop-shadow(0 0 12px rgba(34,197,94,0.6))" }}>
+            <circle cx="48" cy="48" r="40" fill="rgba(34,197,94,0.16)" stroke="#22c55e" strokeWidth="5" />
+            <path d="M28 49 L43 64 L69 34" pathLength={1} fill="none" stroke="#22c55e" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" className="spunta-segno" />
+          </svg>
+        </div>
+      )}
       <div className="flex items-start gap-3">
         <AreaIcona nome={iconaTask(task, area?.icona ?? "")} colore={colore} />
         <div className="flex-1">
@@ -219,14 +236,14 @@ export default function TaskCard({ task, soloMinima, senzaOrario = false, eviden
                 <CalendarClock size={16} /> Apri
               </Link>
             )}
-            <button data-suono="nessuno" onClick={() => { completa(task.id, { minima: soloMinima && !!minima }); setAperta(false); }} className="inline-flex items-center gap-1.5 rounded-xl bg-ov/10 px-4 py-2 text-sm">
-              <Check size={16} /> Fatta
-            </button>
             {minima && !soloMinima && (
-              <button data-suono="nessuno" onClick={() => { completa(task.id, { minima: true }); setAperta(false); }} className="rounded-xl bg-ov/10 px-4 py-2 text-sm">
-                Minima ({minima}′) · +{puntiMinima(task.punti)}
+              <button data-suono="nessuno" onClick={() => concludi(true)} className="rounded-xl bg-ov/10 px-4 py-2 text-sm">
+                Versione minima ({minima}′) · +{puntiMinima(task.punti)}
               </button>
             )}
+            <button data-suono="nessuno" onClick={() => concludi(soloMinima && !!minima)} className="inline-flex items-center gap-1.5 rounded-xl bg-ov/10 px-4 py-2 text-sm">
+              <Check size={16} /> Fatta
+            </button>
           </div>
 
           <div className="mt-2 flex items-center gap-4 text-sm text-muted">

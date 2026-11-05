@@ -5,7 +5,7 @@ import ObiettiviSettimana from "../components/ObiettiviSettimana";
 import CambiPiano from "../components/CambiPiano";
 import RitoSettimana from "../components/RitoSettimana";
 import VistaInsieme from "../components/VistaInsieme";
-import { ChevronLeft, Moon, Plane, Undo2 } from "lucide-react";
+import { CalendarDays, ChevronLeft, Moon, Plane, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { caricoGiorno } from "@/lib/carico";
@@ -98,6 +98,13 @@ export default function OggiVista() {
     setScelto(d === oggi ? null : d);
     setSettimana(true);
   }
+  // Dalla data si apre direttamente la vista d'insieme della settimana
+  function apriSettimana() {
+    setScelto(null);
+    setVistaSett("insieme");
+    setLunediVista(null);
+    setSettimana(true);
+  }
   function esciDallaSettimana() {
     setScelto(null);
     setVistaSett("giorno");
@@ -146,7 +153,9 @@ export default function OggiVista() {
             aria="Vista della settimana"
           />
         ) : (
-          <p className="text-sm text-muted first-letter:uppercase">{dataLunga(oggi)}</p>
+          <button data-suono="via" onClick={apriSettimana} className="inline-flex items-center gap-1.5 rounded-full bg-ov/10 px-3 py-1 text-sm text-muted first-letter:uppercase" aria-label="Apri la vista settimanale">
+            <CalendarDays size={14} /> <span className="first-letter:uppercase">{dataLunga(oggi)}</span>
+          </button>
         )}
         </div>
       </div>
