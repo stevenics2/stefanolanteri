@@ -2,7 +2,8 @@
 
 import Interr from "../components/Interruttore";
 import Segmentato from "../components/Segmentato";
-import { AlarmClock, Moon, Plane, Plus, Sun, X } from "lucide-react";
+import { AlarmClock, ChevronRight, Moon, Plane, Plus, Sun, X } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { inVacanza } from "@/lib/regole";
 import { useStore } from "@/lib/store";
@@ -84,6 +85,23 @@ export default function ImpostazioniVista() {
           <span>Avvisi dei semafori del terminal<span className="block text-xs text-muted">Notifica a ogni cambio, da 3 ore prima del turno a mezz&apos;ora dopo</span></span>
           <Interr valore={stato.impostazioni.avvisiTerminal} onChange={(v) => impostazioni({ avvisiTerminal: v })} />
         </label>
+        <label className={riga}>
+          <span>Benvenuto al risveglio<span className="block text-xs text-muted">La prima volta che apri l&apos;app dopo la notte: sonno, turno, meteo e giornata</span></span>
+          <Interr valore={stato.impostazioni.benvenuto} onChange={(v) => impostazioni({ benvenuto: v })} />
+        </label>
+        <label className={riga}>
+          <span>Come ti chiamo</span>
+          <input
+            value={stato.impostazioni.nome}
+            onChange={(e) => impostazioni({ nome: e.target.value.slice(0, 30) })}
+            placeholder="Il tuo nome"
+            className="w-36 rounded-xl bg-ov/10 px-3 py-1.5 text-right outline-none"
+          />
+        </label>
+        <Link href="/oggi/?benvenuto=1" data-suono="via" className={`${riga} text-sm`}>
+          <span>Rivedi il benvenuto<span className="block text-xs text-muted">Per provarlo durante la giornata</span></span>
+          <ChevronRight size={18} className="text-muted" />
+        </Link>
       </div>
 
       <NotificheImpostazioni />

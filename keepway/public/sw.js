@@ -22,6 +22,7 @@ self.addEventListener('notificationclick', (e) => {
   e.notification.close();
   let target = new URL((e.notification.data && e.notification.data.url) || '/oggi/', self.location.origin);
   if (target.origin !== self.location.origin) target = new URL('/oggi/', self.location.origin); // si aprono solo pagine nostre
+  target.searchParams.set('da', 'notifica'); // l'app lo sa: se arrivi da una notifica il benvenuto non compare
   e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
     for (const c of list) {
       if (c.url.startsWith(self.location.origin) && 'focus' in c) {

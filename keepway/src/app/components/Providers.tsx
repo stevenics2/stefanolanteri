@@ -10,6 +10,7 @@ import TemaApplicato from "./TemaApplicato";
 import SincronizzaNotifiche from "./SincronizzaNotifiche";
 import SincronizzaSalute from "./SincronizzaSalute";
 import AvvisoSalute from "./AvvisoSalute";
+import Benvenuto from "./Benvenuto";
 import SbloccaTraguardi from "./SbloccaTraguardi";
 import TimerSchermo from "./TimerSchermo";
 
@@ -27,6 +28,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <TemaApplicato />
       <SincronizzaNotifiche />
       <SincronizzaSalute />
+      <Benvenuto />
       <AvvisoSalute />
       <SbloccaTraguardi />
     </StoreProvider>
