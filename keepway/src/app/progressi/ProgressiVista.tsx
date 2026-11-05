@@ -2,9 +2,10 @@
 
 import { Flame } from "lucide-react";
 import { dataPiù, GIORNI_LUNGHI, giornoSettimana } from "@/lib/date";
-import { serie } from "@/lib/regole";
+import { giornata, serie } from "@/lib/regole";
 import { useStore } from "@/lib/store";
 import Livello from "../components/Livello";
+import RiepilogoOggi from "../components/RiepilogoOggi";
 import SaluteCard from "../components/SaluteCard";
 import Abitudine from "./Abitudine";
 import Allenamenti from "./Allenamenti";
@@ -18,6 +19,8 @@ export default function ProgressiVista() {
   const { pronto, stato, oggi } = useStore();
 
   if (!pronto) return null;
+
+  const oggiG = giornata(stato, oggi); // il box grande del riepilogo di oggi sta qui
 
   // Punti degli ultimi 7 giorni
   const giorni = Array.from({ length: 7 }, (_, i) => dataPiù(oggi, i - 6));
@@ -37,6 +40,7 @@ export default function ProgressiVista() {
   return (
     <section className="stagger space-y-5">
       <h1 className="text-2xl font-bold">Progressi</h1>
+      <RiepilogoOggi fatte={oggiG.fatte.length} totale={oggiG.previste.length} />
       <Livello />
 
       <Allenamenti />

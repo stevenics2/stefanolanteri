@@ -6,6 +6,7 @@ import FeedbackBox from "./FeedbackBox";
 import { EVENTO_COMBO, EVENTO_FIAMMATA } from "./FestaOverlay";
 import { aperturaCorrente, èDaRiprodurre, iscriviApertura, segnaRiprodotta } from "@/lib/apertura";
 import { dataPiù, inizioSettimana } from "@/lib/date";
+import { minutiNelGiorno } from "@/lib/giornoLogico";
 import { fineGiornataMin } from "@/lib/sonno";
 import { bossSettimana, èPrevista, livello, serie } from "@/lib/regole";
 import { useStore } from "@/lib/store";
@@ -82,8 +83,7 @@ export default function RiepilogoOggi({ fatte, totale, conFeedback = true }: { f
   let restante: { testo: string; poco: boolean } | null = null;
   const fineG = fineGiornataMin(oggi);
   if (fineG !== null && adesso > 0) {
-    const d = new Date(adesso);
-    const manca = fineG - (d.getHours() * 60 + d.getMinutes());
+    const manca = fineG - minutiNelGiorno(adesso, oggi);
     restante = manca <= 0 ? { testo: "finita", poco: true } : { testo: manca >= 60 ? `${Math.floor(manca / 60)}h ${String(manca % 60).padStart(2, "0")}m` : `${manca} min`, poco: manca < 60 };
   }
 
@@ -104,9 +104,9 @@ export default function RiepilogoOggi({ fatte, totale, conFeedback = true }: { f
       restante={restante}
       centro={{ fatte, totale }}
       stat={[
-        { id: "OGGI", nome: "Oggi", colore: "#fa114f", perc: percOggi, dettaglio: totale > 0 ? `${fatte}/${totale}` : "libero", pulsa: quasi },
-        { id: "SETTIMANA", nome: "Settimana", colore: "#92f000", perc: previsteSett > 0 ? (fatteSett / previsteSett) * 100 : 0, dettaglio: `${fatteSett}/${previsteSett}` },
-        { id: "LIVELLO", nome: "Livello", colore: "#00d9e8", perc: l.prossimo ? l.progresso * 100 : 100, dettaglio: l.prossimo ? `-${l.mancano}xp` : "MAX" },
+        { id: "OGGI", nome: "Oggi", colore: "#8fd3ff", perc: percOggi, dettaglio: totale > 0 ? `${fatte}/${totale}` : "libero", pulsa: quasi },
+        { id: "SETTIMANA", nome: "Settimana", colore: "#29a3f0", perc: previsteSett > 0 ? (fatteSett / previsteSett) * 100 : 0, dettaglio: `${fatteSett}/${previsteSett}` },
+        { id: "LIVELLO", nome: "Livello", colore: "#6d7cff", perc: l.prossimo ? l.progresso * 100 : 100, dettaglio: l.prossimo ? `-${l.mancano}xp` : "MAX" },
         { id: "BOSS", nome: "Boss", colore: tutto ? "#92f000" : "#ff9686", perc: boss.pianificate > 0 ? (boss.hp / boss.pianificate) * 100 : 0, dettaglio: boss.sconfitto ? "KO!" : `${boss.hp}hp` },
         { id: "SERIE", nome: "Serie", colore: "#ffb340", perc: (giorniSerie / traguardo) * 100, dettaglio: `${giorniSerie}/${traguardo}g` },
         { id: "COSTANZA", nome: "Costanza", colore: "#bf8cff", perc: (attivi / finestra) * 100, dettaglio: `${attivi}/${finestra}g` },

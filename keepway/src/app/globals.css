@@ -4,11 +4,12 @@
 :root {
   /* Spazio sopra il contenuto: l'iPhone sfuma la fascia sotto orologio e batteria, il testo non deve stare lì. */
   --pt-pagina: calc(env(safe-area-inset-top) + 2.5rem);
-  --background: #0b0f14;
-  --foreground: #e8edf3;
-  --card: #151b23;
-  --muted: #8b97a6;
-  --accent: #f5a524; /* giallo "gru/porto" */
+  --background: #0a0f16; /* blu notte, come l'icona */
+  --foreground: #e8f1fa;
+  --card: #0f1a28;
+  --muted: #8aa0b8;
+  --accent: #29a3f0; /* azzurro dell'icona; l'ambra resta per «attenzione» e «energia» (--ambra) */
+  --ambra: #f5a524;
   --ov: #ffffff; /* il colore delle velature: bianco sul tema scuro, scuro sul tema chiaro */
 }
 
@@ -19,7 +20,8 @@
   --foreground: #10151c;
   --card: #ffffff;
   --muted: #5b6675;
-  --accent: #d98200;
+  --accent: #1e88e5;
+  --ambra: #d98200;
   --ov: #0b0f14;
   --color-emerald-100: #064e3b; --color-emerald-200: #065f46; --color-emerald-300: #047857; --color-emerald-400: #059669;
   --color-red-100: #7f1d1d; --color-red-200: #991b1b; --color-red-300: #b91c1c; --color-red-400: #dc2626;
@@ -35,7 +37,7 @@
   position: fixed;
   inset: 0 0 auto 0;
   height: env(safe-area-inset-top);
-  background: #0b0f14;
+  background: #0a0f16;
   z-index: 100;
   pointer-events: none;
 }
@@ -500,3 +502,12 @@ button:not(:disabled):active, a[href]:active {
 .benvenuto-esce { animation: benvenuto-esce 0.65s cubic-bezier(0.4, 0, 0.2, 1) forwards; pointer-events: none; }
 .benvenuto-esce::after { content: ""; position: fixed; inset: 0; pointer-events: none; box-shadow: inset 0 0 90px 10px rgba(41, 163, 240, 0.45), inset 0 0 28px 2px rgba(255, 255, 255, 0.35); animation: benvenuto-luce 0.65s ease-in-out; }
 @media (prefers-reduced-motion: reduce) { .benvenuto-esce, .benvenuto-esce::after { animation: none; opacity: 0; } }
+
+/* «Adesso» in Oggi: la scheda respira piano con un bordo azzurro */
+@keyframes adesso-respira { 0%, 100% { box-shadow: 0 0 0 1.5px rgba(41, 163, 240, 0.45), 0 0 14px rgba(41, 163, 240, 0.12); } 50% { box-shadow: 0 0 0 1.5px rgba(41, 163, 240, 0.95), 0 0 26px rgba(41, 163, 240, 0.32); } }
+.adesso-respira { border-radius: 1.25rem; animation: adesso-respira 3.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .adesso-respira { animation: none; box-shadow: 0 0 0 1.5px rgba(41, 163, 240, 0.7); } }
+/* la barra del livello fa un piccolo impulso quando completi una task */
+@keyframes barra-impulso { 0% { filter: brightness(1.9); transform: scale(1.015); } 100% { filter: none; transform: none; } }
+.barra-impulso { animation: barra-impulso 0.7s var(--posa) both; }
+@media (prefers-reduced-motion: reduce) { .barra-impulso { animation: none; } }
