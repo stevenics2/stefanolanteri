@@ -1,5 +1,5 @@
 // Il meteo di Trieste (Open-Meteo, gratuito e senza chiave): temperatura e cielo di adesso. Se non risponde, il benvenuto semplicemente non ne parla.
-export type Meteo = { gradi: number; cielo: string };
+export type Meteo = { gradi: number; cielo: string; codice?: number };
 
 const TRIESTE = { lat: 45.6495, lon: 13.7768 };
 const CHIAVE = "keepway.meteo";
@@ -36,7 +36,8 @@ export async function scaricaMeteo(): Promise<Meteo | null> {
     const d = (await r.json()) as { current?: { temperature_2m?: number; weather_code?: number } };
     const t = d.current?.temperature_2m;
     if (typeof t !== "number") return null;
-    const m: Meteo = { gradi: Math.round(t), cielo: cieloDa(d.current?.weather_code ?? -1) };
+    const codice = d.current?.weather_code ?? -1;
+    const m: Meteo = { gradi: Math.round(t), cielo: cieloDa(codice), codice };
     try {
       localStorage.setItem(CHIAVE, JSON.stringify({ ts: Date.now(), m }));
     } catch {

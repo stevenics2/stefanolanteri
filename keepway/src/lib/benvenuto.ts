@@ -22,10 +22,24 @@ export function segnaBenvenuto(ms: number = Date.now()) {
 
 export function saluto(ora: number, nome: string): string {
   const n = nome.trim() ? ` ${nome.trim()}` : "";
-  if (ora >= 5 && ora < 12) return `Buongiorno${n} ☀️`;
-  if (ora >= 12 && ora < 18) return `Buon pomeriggio${n} 🌤️`;
-  if (ora >= 18 && ora < 23) return `Buonasera${n} 🌙`;
-  return `Ciao${n} 🌙`;
+  if (ora >= 5 && ora < 12) return `Buongiorno${n}`;
+  if (ora >= 12 && ora < 18) return `Buon pomeriggio${n}`;
+  if (ora >= 18 && ora < 23) return `Buonasera${n}`;
+  return `Ciao${n}`;
+}
+export type IconaSaluto = "sole" | "solenuvola" | "luna";
+export const iconaSaluto = (ora: number): IconaSaluto => (ora >= 5 && ora < 12 ? "sole" : ora >= 12 && ora < 18 ? "solenuvola" : "luna");
+export type IconaMeteo = "sole" | "solenuvola" | "nuvola" | "nebbia" | "pioggia" | "neve" | "temporale" | "termometro";
+export function iconaMeteo(codice: number | undefined): IconaMeteo {
+  if (codice === undefined || codice < 0) return "termometro";
+  if (codice === 0 || codice === 1) return "sole";
+  if (codice === 2) return "solenuvola";
+  if (codice === 3) return "nuvola";
+  if (codice === 45 || codice === 48) return "nebbia";
+  if ((codice >= 51 && codice <= 67) || (codice >= 80 && codice <= 82)) return "pioggia";
+  if ((codice >= 71 && codice <= 77) || codice === 85 || codice === 86) return "neve";
+  if (codice >= 95) return "temporale";
+  return "termometro";
 }
 
 const plurale = (n: number, uno: string, molti: string) => `${n} ${n === 1 ? uno : molti}`;
@@ -42,28 +56,23 @@ export function fraseSonno(min: number, obiettivoMin: number): string {
   const d = oreEMinutiInParole(min);
   const o = oreEMinutiInParole(obiettivoMin);
   const diff = min - obiettivoMin;
-  if (diff >= 60) return `Hai dormito **${d}**: più di un'ora sopra il tuo obiettivo di ${o}. Recupero ottimo 💪`;
-  if (diff >= 0) return `Hai dormito **${d}**, in linea con il tuo obiettivo di ${o}. Bel lavoro 👏`;
+  if (diff >= 60) return `Hai dormito **${d}**: più di un'ora sopra il tuo obiettivo di ${o}. Recupero ottimo.`;
+  if (diff >= 0) return `Hai dormito **${d}**, in linea con il tuo obiettivo di ${o}. Bel lavoro.`;
   if (diff >= -60) return `Hai dormito **${d}**, appena sotto l'obiettivo di ${o}. Niente di grave.`;
-  return `Hai dormito **${d}**, sotto l'obiettivo di ${o}. Oggi vai piano e, se riesci, ritagliati un riposino 😴`;
+  return `Hai dormito **${d}**, sotto l'obiettivo di ${o}. Oggi vai piano e, se riesci, ritagliati un riposino.`;
 }
-
-const orarioParole = (orario: string) => {
-  const p = orario.split("–");
-  return orario.includes("/") || p.length !== 2 ? orario : `dalle ${p[0]} alle ${p[1]}`;
-};
 
 function descrizioneTurno(g: GiornoEffettivo): string {
   if (g.modifica?.tipo === "assenza") return `in **${nomeAssenza(g.modifica.assenza ?? "altro").toLowerCase()}**`;
   if (g.riposo) return "a **riposo**";
   const nome = g.codici.length > 1 ? `doppio turno ${g.codici.slice().sort().join("+")}` : `turno ${g.codici[0]}`;
-  return `**${nome}**, ${orarioParole(g.orario)}`;
+  return `**${nome}** - (${g.orario.replace(/–/g, "-\u2060")})`;
 }
 
 export function fraseTurno(g: GiornoEffettivo | undefined): string | null {
   if (!g) return null;
   if (g.modifica?.tipo === "assenza") return `Oggi sei ${descrizioneTurno(g)}.`;
-  if (g.riposo) return "Oggi sei **a riposo** 🌿";
+  if (g.riposo) return "Oggi sei **a riposo**.";
   return `In programma hai il ${descrizioneTurno(g)}.`;
 }
 export function fraseDomani(g: GiornoEffettivo | undefined): string | null {
@@ -74,5 +83,5 @@ export function fraseDomani(g: GiornoEffettivo | undefined): string | null {
 
 export function fraseMeteo(m: Meteo): string {
   const g = Math.abs(m.gradi) === 1 ? "grado" : "gradi";
-  return `Fuori c'è **${m.cielo}** e la temperatura è di circa **${m.gradi} ${g}** 🌡️`;
+  return `Fuori c'è **${m.cielo}** e la temperatura è di circa **${m.gradi} ${g}**`;
 }

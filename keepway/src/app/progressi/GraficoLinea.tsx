@@ -7,7 +7,7 @@ export type PuntoGrafico = { etichetta: string; v: number | null };
 // Un grafico a linea come nelle app di allenamento: linea luminosa con i punti, griglia tratteggiata, riga dell'obiettivo,
 // titolo e variazione in alto. La linea si disegna da sinistra a destra.
 export default function GraficoLinea({
-  titolo, grande, grandeEtichetta, grandeNota, grandeColore, sotto, colore, punti, yMin, yMax, passo, formatoY = (n) => String(n), riferimento, annidato = false, alto = 170, colorePerValore,
+  titolo, grande, grandeEtichetta, grandeNota, grandeColore, sotto, colore, punti, yMin, yMax, passo, formatoY = (n) => String(n), riferimento, annidato = false, alto = 170, colorePerValore, senzaIntestazione = false,
 }: {
   titolo: string;
   grande?: string; // in alto a destra (es. «+33%»)
@@ -24,6 +24,7 @@ export default function GraficoLinea({
   riferimento?: { v: number; etichetta: string };
   annidato?: boolean;
   alto?: number; // altezza del disegno
+  senzaIntestazione?: boolean; // solo il grafico, senza titolo né numeri
   colorePerValore?: (v: number) => string; // se c'è, la linea e i punti cambiano colore secondo il valore (es. verde sopra lo zero, rosso sotto)
 }) {
   const id = useId().replace(/:/g, "");
@@ -52,7 +53,7 @@ export default function GraficoLinea({
 
   const corpo = (
     <>
-      <div className="flex items-start justify-between">
+      {!senzaIntestazione && <div className="flex items-start justify-between">
         <div>
           <div className="text-lg font-black uppercase tracking-wide">{titolo}</div>
           {sotto && <div className="text-xs font-medium" style={{ color: colore }}>{sotto}</div>}
@@ -64,8 +65,8 @@ export default function GraficoLinea({
             {grandeNota && <div className="text-[10px] tabular-nums text-muted">{grandeNota}</div>}
           </div>
         )}
-      </div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="mt-2 w-full" role="img" aria-label={titolo}>
+      </div>}
+      <svg viewBox={`0 0 ${W} ${H}`} className={`${senzaIntestazione ? "" : "mt-2 "}w-full`} role="img" aria-label={titolo}>
         <defs>
           {colorePerValore && (
             <linearGradient id={`v${id}`} gradientUnits="userSpaceOnUse" x1="0" x2="0" y1={y(yMax)} y2={y(yMin)}>

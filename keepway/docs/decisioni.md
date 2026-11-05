@@ -531,3 +531,10 @@
 
 ## «Rivedi il benvenuto» funziona anche senza ricaricare
 - Il benvenuto vive sopra tutte le schermate e decideva se comparire solo all'avvio: toccando «Rivedi il benvenuto» in Impostazioni (navigazione interna) non succedeva niente. Ora il pulsante manda un segnale (`keepway:benvenuto`) che lo riapre subito, anche se è spento o già visto.
+
+## Benvenuto: ritocchi dopo la prova
+- Animazione più veloce; saluto più piccolo; turno scritto «turno 3 - (13:00-19:00)» (il trattino non va a capo dentro l'orario).
+- Il grafico del sonno è solo grafico (`senzaIntestazione`) e compare anche se la notte non è ancora arrivata (con le notti che ci sono).
+- Le task hanno la forma delle task (barra colorata, icona dell'area, titolo, orario), non un elenco puntato.
+- Niente emoji: a sinistra di ogni frase c'è un'icona disegnata coerente (sole/luna per il saluto, letto, valigetta per il turno, icona del meteo dal codice del tempo, calendario, lista).
+- LET'S GO! e Aggiungi qualcosa stanno in fondo alla pagina, dentro il contenuto, e la pagina scende da sola mentre compare altro (si ferma se scorri tu).
