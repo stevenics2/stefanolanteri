@@ -2,10 +2,10 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BedDouble, Briefcase, CalendarDays, Clock, Cloud, CloudFog, CloudLightning, CloudRain, CloudSun, ListChecks, Moon, Snowflake, Sun, Thermometer, type LucideIcon } from "lucide-react";
+import { CloudSun, Moon, Sun, Thermometer, type LucideIcon } from "lucide-react";
 import { giornoEffettivo } from "@/lib/calendario";
 import { dataPiù, oggiLocale } from "@/lib/date";
-import { fraseDomani, fraseMeteo, fraseSonno, fraseTurno, iconaMeteo, iconaSaluto, PAUSA_MINIMA_MS, saluto, segnaBenvenuto, ultimoBenvenuto, type IconaMeteo } from "@/lib/benvenuto";
+import { fraseDomani, fraseMeteo, fraseSonno, fraseTurno, iconaSaluto, PAUSA_MINIMA_MS, saluto, segnaBenvenuto, ultimoBenvenuto } from "@/lib/benvenuto";
 import { scaricaMeteo, type Meteo } from "@/lib/meteo";
 import { momentoGiusto } from "@/lib/momento";
 import { PAUSA_NOTTE_MS, pausaDaUltimoUso } from "@/lib/presenza";
@@ -73,28 +73,16 @@ function Scritto({ testo, quanti, cursore }: { testo: string; quanti: number; cu
   );
 }
 
-type IconaNome = "sole" | "solenuvola" | "luna" | "sonno" | "turno" | "domani" | "giornata" | IconaMeteo;
-const ICONE: Record<IconaNome, LucideIcon> = {
-  sole: Sun, solenuvola: CloudSun, luna: Moon, sonno: BedDouble, turno: Briefcase, domani: CalendarDays, giornata: ListChecks,
-  nuvola: Cloud, nebbia: CloudFog, pioggia: CloudRain, neve: Snowflake, temporale: CloudLightning, termometro: Thermometer,
-};
+const ICONE_SALUTO: Record<"sole" | "solenuvola" | "luna", LucideIcon> = { sole: Sun, solenuvola: CloudSun, luna: Moon };
 type CartaTask = { id: string; titolo: string; orario: string; colore: string; icona: string };
 type Voce =
-  | { tipo: "saluto"; testo: string; icona: IconaNome }
-  | { tipo: "testo"; testo: string; icona: IconaNome; sync?: boolean }
+  | { tipo: "saluto"; testo: string; icona: "sole" | "solenuvola" | "luna" }
+  | { tipo: "testo"; testo: string; sync?: boolean; termometro?: boolean }
+  | { tipo: "piccolo"; testo: string }
   | { tipo: "grafico" }
   | { tipo: "task"; carta: CartaTask }
   | { tipo: "fine" };
 type Blocco = Voce & { inizio: number; durata: number };
-
-const Pastiglia = ({ nome, grande }: { nome: IconaNome; grande?: boolean }) => {
-  const I = ICONE[nome];
-  return (
-    <span className={`flex shrink-0 items-center justify-center rounded-full bg-[#29a3f0]/15 text-[#7cc8f7] ${grande ? "h-10 w-10" : "h-8 w-8"}`}>
-      <I size={grande ? 22 : 17} strokeWidth={2} />
-    </span>
-  );
-};
 
 function Schermata({ onChiudi }: { onChiudi: () => void }) {
   const router = useRouter();
@@ -105,6 +93,7 @@ function Schermata({ onChiudi }: { onChiudi: () => void }) {
   const [scaduto, setScaduto] = useState(false);
   const [t, setT] = useState(0);
   const [saltato, setSaltato] = useState(false);
+  const [uscita, setUscita] = useState(false); // l'animazione che porta a Oggi
   const ridotto = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const scorri = useRef<HTMLDivElement>(null);
   const manuale = useRef(false); // se scorri tu con il dito, la pagina smette di scendere da sola
@@ -129,30 +118,30 @@ function Schermata({ onChiudi }: { onChiudi: () => void }) {
     const punti = Array.from({ length: 7 }, (_, i) => { const g = dataPiù(calendario, i - 6); const n = nott.find((y) => y.giorno === g); return { etichetta: `${Number(g.slice(8))}/${Number(g.slice(5, 7))}`, v: n ? Math.round((n.minuti / 60) * 10) / 10 : null }; });
     const lista: Voce[] = [];
     lista.push({ tipo: "saluto", testo: saluto(oraH, stato.impostazioni.nome), icona: iconaSaluto(oraH) });
-    if (stanotte) lista.push({ tipo: "testo", testo: fraseSonno(stanotte.minuti, obiettivo), icona: "sonno" });
-    else if (dati !== null) lista.push({ tipo: "testo", testo: "Il sonno di stanotte non è ancora arrivato dall'iPhone.", icona: "sonno", sync: true });
+    if (stanotte) lista.push({ tipo: "testo", testo: fraseSonno(stanotte.minuti, obiettivo) });
+    else if (dati !== null) lista.push({ tipo: "testo", testo: "Il sonno di questa notte non è ancora sincronizzato", sync: true });
     if (punti.some((p) => p.v !== null)) lista.push({ tipo: "grafico" }); // anche se l'ultima notte non è ancora arrivata
     const turno = fraseTurno(giornoEffettivo(oggi));
-    if (turno) lista.push({ tipo: "testo", testo: turno, icona: "turno" });
-    if (meteo) lista.push({ tipo: "testo", testo: fraseMeteo(meteo), icona: iconaMeteo(meteo.codice) });
+    if (turno) lista.push({ tipo: "testo", testo: turno });
+    const dom = fraseDomani(giornoEffettivo(domani));
+    if (dom) lista.push({ tipo: "piccolo", testo: dom });
+    if (meteo) lista.push({ tipo: "testo", testo: fraseMeteo(meteo), termometro: true });
 
     const previste = stato.task.filter((x) => èPrevista(x, oggi, { vacanza: stato.vacanza }) && !èIgnorata(stato.ignorati, x.id, oggi) && !stato.completamenti.some((c) => c.taskId === x.id && c.data === oggi));
     const righe = previste
       .map((x) => { const m = momentoGiusto(x, oggi, stato.momenti.find((y) => y.taskId === x.id && y.data === oggi)); const area = stato.aree.find((a) => a.id === x.areaId); return { da: m?.da ?? 99999, carta: { id: x.id, titolo: titoloTask(x, stato, oggi), orario: m ? `${hhmm(m.da)}–${hhmm(m.a)}` : "", colore: area?.colore ?? "#888", icona: iconaTask(x, area?.icona ?? "") } }; })
       .sort((a, b) => a.da - b.da);
-    lista.push({ tipo: "testo", testo: righe.length ? "Oggi la tua giornata prevede:" : "Oggi non hai task in programma. Giornata libera.", icona: "giornata" });
+    lista.push({ tipo: "testo", testo: righe.length ? "Oggi la tua giornata prevede:" : "Oggi non hai task in programma. Giornata libera." });
     for (const r of righe) lista.push({ tipo: "task", carta: r.carta });
-    const dom = fraseDomani(giornoEffettivo(domani));
-    if (dom) lista.push({ tipo: "testo", testo: dom, icona: "domani" });
     lista.push({ tipo: "fine" });
 
     // la cascata: ogni blocco comincia quando finisce il precedente
-    let cursore = 150;
+    let cursore = 120;
     const out: Blocco[] = lista.map((b) => {
-      const testuale = b.tipo === "saluto" || b.tipo === "testo";
-      const durata = b.tipo === "grafico" ? 300 : b.tipo === "task" ? 160 : b.tipo === "fine" ? 200 : testuale ? Math.min(750, Math.max(300, lunghezza(b.testo) * 12)) : 0;
+      const testuale = b.tipo === "saluto" || b.tipo === "testo" || b.tipo === "piccolo";
+      const durata = b.tipo === "grafico" ? 260 : b.tipo === "task" ? 130 : b.tipo === "fine" ? 180 : testuale ? Math.min(650, Math.max(240, lunghezza(b.testo) * 10)) : 0;
       const x: Blocco = { ...b, inizio: cursore, durata };
-      cursore += durata + (b.tipo === "task" ? 30 : 170);
+      cursore += durata + (b.tipo === "task" ? 20 : b.tipo === "piccolo" ? 60 : 130);
       return x;
     });
     return { blocchi: out, fine: cursore, grafico: { punti, obiettivo } };
@@ -169,7 +158,13 @@ function Schermata({ onChiudi }: { onChiudi: () => void }) {
 
   const tt = ridotto || saltato ? fine : t; // con «riduci movimento», o con un tocco, tutto compare subito
   const salta = () => setSaltato(true);
-  const vai = (a: () => void) => { onChiudi(); a(); };
+  // Con LET'S GO (o Aggiungi qualcosa) la pagina si dissolve verso Oggi, con un bagliore, e poi si apre quello che hai scelto.
+  const vai = (a: () => void) => {
+    if (uscita) return;
+    if (ridotto) { onChiudi(); a(); return; }
+    setUscita(true);
+    setTimeout(() => { onChiudi(); a(); }, 650);
+  };
   const visibili = partito ? blocchi.filter((b) => tt >= b.inizio).length : 0;
 
   // la pagina scende da sola man mano che compare altro (finché non scorri tu)
@@ -180,16 +175,16 @@ function Schermata({ onChiudi }: { onChiudi: () => void }) {
   }, [visibili, saltato]);
 
   return (
-    <div ref={scorri} className="dissolve fixed inset-0 z-[60] overflow-y-auto" style={{ background: "radial-gradient(120% 60% at 50% 0%, #14202e, #0a0f16 70%), #0a0f16" }} onClick={salta} onTouchStart={() => { manuale.current = true; }} onWheel={() => { manuale.current = true; }} role="dialog" aria-label="Benvenuto">
-      <div className="mx-auto max-w-md px-6" style={{ paddingTop: "calc(env(safe-area-inset-top) + 3.5rem)", paddingBottom: "calc(env(safe-area-inset-bottom) + 2.5rem)" }}>
-        {!partito && <p className="text-[15px] text-muted">Controllo i dati…</p>}
-        <div className="space-y-4 text-[16px] leading-relaxed text-foreground/85">
+    <div ref={scorri} className={`${uscita ? "benvenuto-esce" : "dissolve"} fixed inset-0 z-[60] overflow-y-auto`} style={{ background: "radial-gradient(120% 60% at 50% 0%, #14202e, #0a0f16 70%), #0a0f16" }} onClick={salta} onTouchStart={() => { manuale.current = true; }} onWheel={() => { manuale.current = true; }} role="dialog" aria-label="Benvenuto">
+      <div className="mx-auto max-w-md px-5" style={{ paddingTop: "calc(env(safe-area-inset-top) + 2rem)", paddingBottom: "calc(env(safe-area-inset-bottom) + 1.5rem)" }}>
+        {!partito && <p className="text-[14px] text-muted">Controllo i dati…</p>}
+        <div className="space-y-2.5 text-[15px] leading-snug text-foreground/85">
           {blocchi.map((b, i) => {
             if (!partito || tt < b.inizio) return null;
             const p = b.durata ? Math.max(0, Math.min(1, (tt - b.inizio) / b.durata)) : 1;
             if (b.tipo === "grafico") {
               return (
-                <div key={i} className="entra rounded-2xl bg-card/70 p-3">
+                <div key={i} className="entra rounded-2xl bg-card/70 p-2">
                   <GraficoLinea
                     titolo="Ore di sonno"
                     senzaIntestazione
@@ -198,7 +193,7 @@ function Schermata({ onChiudi }: { onChiudi: () => void }) {
                     yMin={3} yMax={10} passo={1}
                     formatoY={(n) => `${n}h`}
                     riferimento={{ v: grafico.obiettivo / 60, etichetta: "obiettivo" }}
-                    alto={120}
+                    alto={104}
                     annidato
                   />
                 </div>
@@ -207,42 +202,42 @@ function Schermata({ onChiudi }: { onChiudi: () => void }) {
             if (b.tipo === "task") {
               const c = b.carta;
               return (
-                <div key={i} className="entra !mt-2 flex items-center gap-3 rounded-2xl bg-card px-3 py-2.5" style={{ borderLeft: `4px solid ${c.colore}` }}>
-                  <AreaIcona nome={c.icona} colore={c.colore} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-semibold leading-tight text-foreground">{c.titolo}</span>
-                    {c.orario && <span className="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-emerald-300"><Clock size={11} /> {c.orario}</span>}
-                  </span>
+                <div key={i} className="entra !mt-1.5 flex items-center gap-2 rounded-xl bg-card px-2 py-1" style={{ borderLeft: `3px solid ${c.colore}` }}>
+                  <AreaIcona nome={c.icona} colore={c.colore} size={11} />
+                  <span className="min-w-0 flex-1 truncate text-[13px] font-semibold leading-tight text-foreground">{c.titolo}</span>
+                  {c.orario && <span className="shrink-0 text-[11px] font-semibold tabular-nums text-emerald-300">{c.orario}</span>}
                 </div>
               );
             }
             if (b.tipo === "fine") {
               return (
-                <div key={i} className="entra !mt-8 flex flex-col gap-2.5">
-                  <button data-suono="via" onClick={(e) => { e.stopPropagation(); vai(() => {}); }} className="rounded-2xl bg-[#29a3f0] py-4 text-lg font-black tracking-wide text-[#04121f]">LET&apos;S GO!</button>
-                  <button data-suono="via" onClick={(e) => { e.stopPropagation(); vai(() => router.push("/task/")); }} className="rounded-2xl bg-ov/10 py-3 text-[15px] font-semibold text-foreground">Aggiungi qualcosa</button>
+                <div key={i} className="entra !mt-5 flex flex-col gap-2">
+                  <button data-suono="via" onClick={(e) => { e.stopPropagation(); vai(() => {}); }} className="rounded-2xl bg-[#29a3f0] py-3.5 text-base font-black tracking-wide text-[#04121f]">LET&apos;S GO!</button>
+                  <button data-suono="via" onClick={(e) => { e.stopPropagation(); vai(() => router.push("/task/")); }} className="rounded-2xl bg-ov/10 py-2.5 text-sm font-semibold text-foreground">Aggiungi qualcosa</button>
                 </div>
               );
             }
             const n = Math.round(lunghezza(b.testo) * p);
             const scrivendo = p < 1;
             if (b.tipo === "saluto") {
+              const I = ICONE_SALUTO[b.icona];
               return (
-                <div key={i} className="flex items-center gap-3 text-[22px] font-bold leading-tight text-foreground">
-                  <Pastiglia nome={b.icona} grande />
+                <div key={i} className="flex items-center gap-2.5 text-[21px] font-bold leading-tight text-foreground">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#29a3f0]/15 text-[#7cc8f7]"><I size={18} /></span>
                   <span><Scritto testo={b.testo} quanti={n} cursore={scrivendo} /></span>
                 </div>
               );
             }
+            if (b.tipo === "piccolo") return <p key={i} className="!mt-0.5 text-[12px] text-muted"><Scritto testo={b.testo} quanti={n} cursore={scrivendo} /></p>;
             return (
-              <div key={i} className="flex items-start gap-3">
-                <span className="mt-0.5"><Pastiglia nome={b.icona} /></span>
+              <div key={i} className="flex items-center justify-between gap-2">
                 <p className="min-w-0 flex-1">
                   <Scritto testo={b.testo} quanti={n} cursore={scrivendo} />
-                  {b.sync && !scrivendo && (
-                    <a href={linkSincronizza()} onClick={(e) => e.stopPropagation()} className="mt-2 block w-fit rounded-full bg-ov/10 px-4 py-2 text-sm font-semibold text-[#7cc8f7]">Sincronizza ora</a>
-                  )}
+                  {b.termometro && !scrivendo && <Thermometer size={15} className="ml-1 inline -translate-y-px text-[#7cc8f7]" />}
                 </p>
+                {b.sync && !scrivendo && (
+                  <a href={linkSincronizza()} onClick={(e) => e.stopPropagation()} className="shrink-0 rounded-full bg-ov/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-[#7cc8f7]">Sincronizza</a>
+                )}
               </div>
             );
           })}

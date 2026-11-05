@@ -72,13 +72,13 @@ function descrizioneTurno(g: GiornoEffettivo): string {
 export function fraseTurno(g: GiornoEffettivo | undefined): string | null {
   if (!g) return null;
   if (g.modifica?.tipo === "assenza") return `Oggi sei ${descrizioneTurno(g)}.`;
-  if (g.riposo) return "Oggi sei **a riposo**.";
-  return `In programma hai il ${descrizioneTurno(g)}.`;
+  if (g.riposo) return "Da Roster oggi sei **a riposo**.";
+  return `Da Roster hai il ${descrizioneTurno(g)}`;
 }
+// La riga piccola sotto il turno di oggi.
 export function fraseDomani(g: GiornoEffettivo | undefined): string | null {
   if (!g) return null;
-  if (g.modifica?.tipo === "assenza" || g.riposo) return `Domani sei ${descrizioneTurno(g)}.`;
-  return `Domani hai il ${descrizioneTurno(g)}.`;
+  return `Domani: ${descrizioneTurno(g).replace(/\*\*/g, "")}`;
 }
 
 export function fraseMeteo(m: Meteo): string {

@@ -538,3 +538,7 @@
 - Le task hanno la forma delle task (barra colorata, icona dell'area, titolo, orario), non un elenco puntato.
 - Niente emoji: a sinistra di ogni frase c'è un'icona disegnata coerente (sole/luna per il saluto, letto, valigetta per il turno, icona del meteo dal codice del tempo, calendario, lista).
 - LET'S GO! e Aggiungi qualcosa stanno in fondo alla pagina, dentro il contenuto, e la pagina scende da sola mentre compare altro (si ferma se scorri tu).
+
+## Benvenuto: tutto in una pagina
+- Layout compatto: saluto con icona; frase del sonno solo testo (se non c'è: «Il sonno di questa notte non è ancora sincronizzato» con il tasto piccolo SINCRONIZZA sulla stessa riga); grafico; «Da Roster hai il turno 3 - (13:00-19:00)» su una riga, sotto in piccolo «Domani: turno …»; meteo solo testo con il termometro in coda, della stessa dimensione; «Oggi la tua giornata prevede:» e le task molto più piccole (una riga: icona, titolo, orario). Il turno di domani non è più in fondo.
+- LET'S GO! / Aggiungi qualcosa: la pagina si dissolve verso l'alto con un bagliore azzurro di bordo (0,65 s, stile del box ricompensa) e sotto compare Oggi; poi si apre ciò che hai scelto. Con «riduci movimento» è immediato.
