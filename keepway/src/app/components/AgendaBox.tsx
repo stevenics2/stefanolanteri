@@ -32,16 +32,14 @@ export function RigaEvento({ e, oggi, conData = false, alTocco, senzaOra = false
         </span>
         <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${pr.classe}`}>{pr.nome}</span>
       </button>
-      {e.tipo === "promemoria" && (
-        <button
-          data-suono={e.fatto ? "indietro" : "ok"}
-          onClick={() => segnaEvento(e.id, !e.fatto)}
-          aria-label={e.fatto ? "Rimetti da fare" : "Fatto"}
-          className={`shrink-0 rounded-xl p-2 ${e.fatto ? "bg-ov/10 text-muted" : "bg-emerald-500/20 text-emerald-300"}`}
-        >
-          {e.fatto ? <Undo2 size={18} /> : <Check size={18} />}
-        </button>
-      )}
+      <button
+        data-suono={e.fatto ? "indietro" : "ok"}
+        onClick={() => segnaEvento(e.id, !e.fatto)}
+        aria-label={e.fatto ? "Rimetti da fare" : "Fatto"}
+        className={`shrink-0 rounded-xl p-2 ${e.fatto ? "bg-ov/10 text-muted" : "bg-emerald-500/20 text-emerald-300"}`}
+      >
+        {e.fatto ? <Undo2 size={18} /> : <Check size={18} />}
+      </button>
     </div>
   );
 }

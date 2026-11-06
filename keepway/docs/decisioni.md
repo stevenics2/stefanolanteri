@@ -580,3 +580,6 @@
 
 ## Benvenuto: anche gli appuntamenti
 - «Oggi la tua giornata prevede:» ora comprende gli appuntamenti e i promemoria di oggi (non ancora fatti), nello stesso elenco delle task e in ordine di orario; quelli senza ora («tutto il giorno») stanno in cima. Stessa forma piccola delle task, con il colore della priorità a sinistra e l'orario in azzurro per distinguerli (es. «Psicologa 16:30–17:30»). Se non c'è niente: «Oggi non hai task né appuntamenti. Giornata libera.»
+
+## Anche gli appuntamenti si segnano «fatti»
+- Il pulsante «Fatto» (e «Rimetti da fare») prima c'era solo sui promemoria; ora c'è anche sugli appuntamenti (es. dopo la psicologa), nella linea del tempo e negli elenchi (`RigaEvento`). L'appuntamento fatto si barra; non compare più nel benvenuto e smette di mandare avvisi. Non dà punti.
