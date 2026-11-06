@@ -577,3 +577,6 @@
 ## Etichette di Oggi
 - «Adesso» (la scheda in evidenza) ora si chiama **NEXT**; la sezione «Quando vuoi» (task senza orario) ora si chiama **BEFORE SLEEP**. La riga rossa della linea del tempo con l'ora corrente resta «adesso HH:MM».
 - In sospeso: trascinare le task sulla linea del tempo (tenere premuto, `user-select: none` per evitare la selezione del testo); manca la scelta fra «prende l'orario subito dopo quella sopra» e «scambia l'orario».
+
+## Benvenuto: anche gli appuntamenti
+- «Oggi la tua giornata prevede:» ora comprende gli appuntamenti e i promemoria di oggi (non ancora fatti), nello stesso elenco delle task e in ordine di orario; quelli senza ora («tutto il giorno») stanno in cima. Stessa forma piccola delle task, con il colore della priorità a sinistra e l'orario in azzurro per distinguerli (es. «Psicologa 16:30–17:30»). Se non c'è niente: «Oggi non hai task né appuntamenti. Giornata libera.»

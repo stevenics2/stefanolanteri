@@ -7,6 +7,7 @@ import { giornoEffettivo } from "@/lib/calendario";
 import { dataPiù, oggiLocale } from "@/lib/date";
 import { fraseDomani, fraseMeteo, fraseSonno, fraseTurno, iconaSaluto, PAUSA_MINIMA_MS, saluto, segnaBenvenuto, ultimoBenvenuto } from "@/lib/benvenuto";
 import { scaricaMeteo, type Meteo } from "@/lib/meteo";
+import { eventiDelGiorno, prioritaDi } from "@/lib/eventi";
 import { momentoGiusto } from "@/lib/momento";
 import { PAUSA_NOTTE_MS, pausaDaUltimoUso } from "@/lib/presenza";
 import { èIgnorata, èPrevista } from "@/lib/regole";
@@ -74,7 +75,7 @@ function Scritto({ testo, quanti, cursore }: { testo: string; quanti: number; cu
 }
 
 const ICONE_SALUTO: Record<"sole" | "solenuvola" | "luna", LucideIcon> = { sole: Sun, solenuvola: CloudSun, luna: Moon };
-type CartaTask = { id: string; titolo: string; orario: string; colore: string; icona: string };
+type CartaTask = { id: string; titolo: string; orario: string; colore: string; icona: string; appuntamento?: boolean };
 type Voce =
   | { tipo: "saluto"; testo: string; icona: "sole" | "solenuvola" | "luna" }
   | { tipo: "testo"; testo: string; sync?: boolean; termometro?: boolean }
@@ -128,10 +129,17 @@ function Schermata({ onChiudi }: { onChiudi: () => void }) {
     if (meteo) lista.push({ tipo: "testo", testo: fraseMeteo(meteo), termometro: true });
 
     const previste = stato.task.filter((x) => èPrevista(x, oggi, { vacanza: stato.vacanza }) && !èIgnorata(stato.ignorati, x.id, oggi) && !stato.completamenti.some((c) => c.taskId === x.id && c.data === oggi));
-    const righe = previste
-      .map((x) => { const m = momentoGiusto(x, oggi, stato.momenti.find((y) => y.taskId === x.id && y.data === oggi)); const area = stato.aree.find((a) => a.id === x.areaId); return { da: m?.da ?? 99999, carta: { id: x.id, titolo: titoloTask(x, stato, oggi), orario: m ? `${hhmm(m.da)}–${hhmm(m.a)}` : "", colore: area?.colore ?? "#888", icona: iconaTask(x, area?.icona ?? "") } }; })
-      .sort((a, b) => a.da - b.da);
-    lista.push({ tipo: "testo", testo: righe.length ? "Oggi la tua giornata prevede:" : "Oggi non hai task in programma. Giornata libera." });
+    const righeTask = previste.map((x) => { const m = momentoGiusto(x, oggi, stato.momenti.find((y) => y.taskId === x.id && y.data === oggi)); const area = stato.aree.find((a) => a.id === x.areaId); return { da: m?.da ?? 99999, carta: { id: x.id, titolo: titoloTask(x, stato, oggi), orario: m ? `${hhmm(m.da)}–${hhmm(m.a)}` : "", colore: area?.colore ?? "#888", icona: iconaTask(x, area?.icona ?? "") } as CartaTask }; });
+    // gli appuntamenti (e i promemoria) di oggi stanno nello stesso elenco, in ordine di orario; senza ora (tutto il giorno) vanno in cima
+    const righeEventi = eventiDelGiorno(stato.eventi, oggi, oggi)
+      .filter((e) => !e.fatto)
+      .map((e) => {
+        const da = e.ora ? Number(e.ora.slice(0, 2)) * 60 + Number(e.ora.slice(3, 5)) : -1;
+        const fine = e.ora && e.durataMin ? hhmm(da + e.durataMin) : "";
+        return { da, carta: { id: `e-${e.id}`, titolo: e.titolo, orario: e.ora ? (fine ? `${e.ora}–${fine}` : e.ora) : "tutto il giorno", colore: prioritaDi(e.priorita).colore, icona: e.icona, appuntamento: true } as CartaTask };
+      });
+    const righe = [...righeTask, ...righeEventi].sort((a, b) => a.da - b.da);
+    lista.push({ tipo: "testo", testo: righe.length ? "Oggi la tua giornata prevede:" : "Oggi non hai task né appuntamenti. Giornata libera." });
     for (const r of righe) lista.push({ tipo: "task", carta: r.carta });
     lista.push({ tipo: "fine" });
 
@@ -205,7 +213,7 @@ function Schermata({ onChiudi }: { onChiudi: () => void }) {
                 <div key={i} className="entra !mt-1.5 flex items-center gap-2 rounded-xl bg-card px-2 py-1" style={{ borderLeft: `3px solid ${c.colore}` }}>
                   <AreaIcona nome={c.icona} colore={c.colore} size={11} />
                   <span className="min-w-0 flex-1 truncate text-[13px] font-semibold leading-tight text-foreground">{c.titolo}</span>
-                  {c.orario && <span className="shrink-0 text-[11px] font-semibold tabular-nums text-emerald-300">{c.orario}</span>}
+                  {c.orario && <span className={`shrink-0 text-[11px] font-semibold tabular-nums ${c.appuntamento ? "text-sky-300" : "text-emerald-300"}`}>{c.orario}</span>}
                 </div>
               );
             }
