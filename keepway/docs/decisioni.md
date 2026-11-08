@@ -583,3 +583,8 @@
 
 ## Anche gli appuntamenti si segnano «fatti»
 - Il pulsante «Fatto» (e «Rimetti da fare») prima c'era solo sui promemoria; ora c'è anche sugli appuntamenti (es. dopo la psicologa), nella linea del tempo e negli elenchi (`RigaEvento`). L'appuntamento fatto si barra; non compare più nel benvenuto e smette di mandare avvisi. Non dà punti.
+
+## Allenamento: l'orario lo scegli tu
+- **Giorni scelti a mano** («Scelgo i giorni» nel modulo allenamento): campo «A che ora?» (`oraFissa` sulla task). Se c'è, il momento di quella task è sempre quell'orario (durata dell'allenamento da lì), non si sposta con la giornata e non lo cambia l'app. Senza orario, lo suggerisce l'app come prima.
+- **Pianificazione automatica**: nella lista dei giorni della task (modifica) ogni giorno acceso ha un pulsante con l'orario: lo cambi con il selettore e resta tuo (`PianoVoce.manuale`, azione `fissaOrarioGiornoAuto`); il piano non lo sposta più finché non lo cambi o rifai la proposta. La durata resta quella.
+- Provato con prove di logica (orario fisso 18:00 → 18:00–18:30, resta anche se è passato; giorno con orario scelto resta 17:45–18:15 dopo il ricalcolo del piano). Non provato con i tocchi nel modulo.

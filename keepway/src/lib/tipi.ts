@@ -40,6 +40,7 @@ export type Task = {
   apre?: string; // un indirizzo dell'app da aprire dalla scheda (es. la programmazione degli allenamenti)
   visibileDa?: number; // ms: la task compare solo da questo istante
   notificaTesto?: string; // testo della notifica all'istante visibileDa
+  oraFissa?: string; // «HH:MM»: l'orario che scegli tu per i giorni fissi (es. corsa il martedì alle 18:00); l'app non lo sposta
   adattaATurni?: boolean; // il momento giusto e i promemoria si scelgono nei momenti liberi tra turni e sonno
   attiva: boolean;
   creatoIl: string;
@@ -108,7 +109,7 @@ export type Bonus = { id: string; data: string; xp: number; tipo: "forziere" | "
 
 // Il piano automatico di una task "N volte a settimana". `auto` = scelto dall'app (si ricalcola da solo), `fissato` = scelto da te
 // (resta), `escluso` = un giorno che hai tolto (l'app non lo propone più). da/a = minuti dalla mezzanotte, il momento proposto.
-export type PianoVoce = { taskId: string; data: string; tipo: "auto" | "fissato" | "escluso"; da?: number; a?: number };
+export type PianoVoce = { taskId: string; data: string; tipo: "auto" | "fissato" | "escluso"; da?: number; a?: number; manuale?: boolean }; // manuale = l'orario l'hai scelto tu: il piano non lo cambia
 
 export type Impostazioni = { suoni: boolean; animazioni: boolean; vibrazione: boolean; suonoTocco: boolean; vistaOggi: "compatta" | "estesa"; tema: "scuro" | "chiaro"; obiettivoSonnoMin: number; avvisiTerminal: boolean; nome: string; benvenuto: boolean };
 

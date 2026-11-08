@@ -70,6 +70,7 @@ type Contesto = {
   rimanda: (taskId: string, alle: number) => void;
   annullaRinvio: (taskId: string) => void;
   sistemaGiornoAuto: (taskId: string, data: string, attivo: boolean) => void;
+  fissaOrarioGiornoAuto: (taskId: string, data: string, da: number, a: number) => void; // un giorno del piano con l'orario scelto da te
   ricalcolaPiano: (taskId: string) => void;
   fissaGiorniAuto: (taskId: string, date: string[]) => void;
   impostaMomento: (taskId: string, momento: { da: number; a: number } | null) => void;
@@ -434,6 +435,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           pianoAuto: [
             ...x.pianoAuto.filter((v) => !(v.taskId === taskId && v.data === data && v.tipo !== "auto")),
             { taskId, data, tipo: attivo ? "fissato" : "escluso" },
+          ],
+        }), true),
+      // Il giorno lo fissi tu e anche l'orario: il piano non lo sposta più (finché non lo cambi o rifai la proposta)
+      fissaOrarioGiornoAuto: (taskId, data, da, a) =>
+        aggiorna((x) => ({
+          ...x,
+          pianoAuto: [
+            ...x.pianoAuto.filter((v) => !(v.taskId === taskId && v.data === data && v.tipo !== "auto")),
+            { taskId, data, tipo: "fissato" as const, da, a, manuale: true },
           ],
         }), true),
       // Torna tutto automatico: si dimenticano i giorni fissati e tolti da oggi in poi

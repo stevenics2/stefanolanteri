@@ -7,6 +7,10 @@ import type { Evento, Task } from "./tipi";
 // Il momento giusto di una task in un giorno: quello scelto a mano, oppure quello calcolato dai turni.
 export function momentoGiusto(task: Task, data: string, scelto?: Finestra): Finestra | null {
   if (scelto) return scelto;
+  if (task.oraFissa) { // l'orario scelto da te per i giorni fissi
+    const da = Number(task.oraFissa.slice(0, 2)) * 60 + Number(task.oraFissa.slice(3, 5));
+    return { da, a: Math.min(24 * 60 - 1, da + (durataTotaleMin(task) || 30)) };
+  }
   if (èPianificata(task)) {
     const v = voceAuto(task.id, data);
     return v && v.da !== undefined && v.a !== undefined ? { da: v.da, a: v.a } : null;
@@ -41,6 +45,7 @@ export function momentoAttuale(
   const sceltoScaduto = !!opz.scelto && data === opz.oggi && opz.adessoMin > 0 && opz.adessoMin > opz.scelto.a - bisogno;
   const scelto = sceltoScaduto ? undefined : opz.scelto;
   const base = momentoGiusto(task, data, scelto);
+  if (task.oraFissa && base && !scelto) return { finestra: base, spostato: false, primaDiDormire: false, esaurito: false }; // l'orario fisso non scorre con la giornata
   if (!base || scelto || data !== opz.oggi || opz.adessoMin <= 0) return { finestra: base, spostato: false, primaDiDormire: false, esaurito: false };
   if (!sceltoScaduto && opz.adessoMin <= base.a - bisogno) {
     // Una finestra ampia (es. «dalle 10:30 alle 18:30») resta valida finché c'è tempo, ma l'inizio non può stare nel passato:

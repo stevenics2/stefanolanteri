@@ -221,7 +221,8 @@ export function pianifica(stato: Stato, oggi: string): PianoVoce[] {
 
     // i momenti proposti si aggiornano anche per i giorni fissati e per quelli già in piano da oggi
     for (const v of tenute) {
-      if (v.tipo !== "escluso" && v.data >= oggi) {
+      if (v.tipo === "fissato" && v.manuale && v.da !== undefined && v.a !== undefined && v.data >= oggi) out.push(v); // orario scelto da te: resta com'è
+      else if (v.tipo !== "escluso" && v.data >= oggi) {
         const slot = analizzaGiorno(task, v.data, eventi, dopo(v.data)).slot;
         out.push({ ...v, da: slot?.da, a: slot?.a });
       } else out.push(v);

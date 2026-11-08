@@ -37,6 +37,7 @@ export default function FormAllenamento({ onClose, iniziale }: { onClose: () => 
   const [spostamento, setSpostamento] = useState(iniziale?.spostamentoMin ?? attivitaIniziale.spostamento);
   const [giorni, setGiorni] = useState<number[]>(iniziale?.ricorrenza.tipo === "settimana" ? iniziale.ricorrenza.giorni : []);
   const [adatta, setAdatta] = useState(iniziale?.adattaATurni ?? true);
+  const [ora, setOra] = useState(iniziale?.oraFissa ?? ""); // l'orario dei giorni scelti da te (vuoto = lo suggerisce l'app)
   const [automatica, setAutomatica] = useState(iniziale ? iniziale.ricorrenza.tipo === "auto" : true); // il modo predefinito: sceglie l'app
   const [volte, setVolte] = useState(iniziale?.ricorrenza.tipo === "auto" ? iniziale.ricorrenza.volte : 3);
 
@@ -54,7 +55,7 @@ export default function FormAllenamento({ onClose, iniziale }: { onClose: () => 
     id: idTask, titolo: scelta.km ? `Corsa ${km} km` : scelta.nome, areaId: "allenamento", icona: scelta.id,
     durataMin: scelta.km ? null : durata, minimaMin: null, km: scelta.km ? km : undefined, spostamentoMin: spostamento,
     ricorrenza: automatica ? { tipo: "auto", volte } : { tipo: "settimana", giorni },
-    fascia: "qualsiasi", solo: "sempre", soloACasa: false, promemoria: [], adattaATurni: adatta,
+    fascia: "qualsiasi", solo: "sempre", soloACasa: false, promemoria: [], adattaATurni: adatta, oraFissa: !automatica && ora ? ora : undefined,
     punti: xpFinali, essenziale: false, attiva: iniziale?.attiva ?? true, creatoIl: iniziale?.creatoIl ?? oggi,
   });
   const salva = () => {
@@ -105,20 +106,29 @@ export default function FormAllenamento({ onClose, iniziale }: { onClose: () => 
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-7 gap-1.5">
-            {[1, 2, 3, 4, 5, 6, 0].map((g) => {
-              const attivo = giorni.includes(g);
-              return (
-                <button
-                  key={g}
-                  type="button"
-                  onClick={() => setGiorni((x) => (x.includes(g) ? x.filter((y) => y !== g) : [...x, g]))}
-                  className={`rounded-xl py-2.5 text-sm font-semibold ${attivo ? "bg-accent text-black" : "bg-ov/10"}`}
-                >
-                  {GIORNI_LUNGHI[g].slice(0, 3)}
-                </button>
-              );
-            })}
+          <div className="space-y-3">
+            <div className="grid grid-cols-7 gap-1.5">
+              {[1, 2, 3, 4, 5, 6, 0].map((g) => {
+                const attivo = giorni.includes(g);
+                return (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => setGiorni((x) => (x.includes(g) ? x.filter((y) => y !== g) : [...x, g]))}
+                    className={`rounded-xl py-2.5 text-sm font-semibold ${attivo ? "bg-accent text-black" : "bg-ov/10"}`}
+                  >
+                    {GIORNI_LUNGHI[g].slice(0, 3)}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex items-center justify-between gap-3 rounded-xl bg-ov/5 px-3 py-2.5">
+              <span className="text-sm">A che ora?<span className="block text-xs text-muted">{ora ? "Sempre a quest'ora, nei giorni scelti" : "Se non scegli, lo suggerisce l'app"}</span></span>
+              <span className="flex shrink-0 items-center gap-2">
+                <input type="time" value={ora} onChange={(e) => setOra(e.target.value)} aria-label="Orario dell'allenamento" className="w-[5.6rem] rounded-lg bg-ov/10 px-2 py-1.5 text-foreground" />
+                {ora && <button type="button" onClick={() => setOra("")} className="text-xs text-muted underline">togli</button>}
+              </span>
+            </div>
           </div>
         )}
       </div>
