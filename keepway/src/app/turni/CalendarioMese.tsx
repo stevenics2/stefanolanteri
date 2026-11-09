@@ -20,7 +20,8 @@ const p2 = (n: number) => String(n).padStart(2, "0");
 // Colore della casella: blu = lavoro (anche il 1+4 del roster), verde = riposo, ambra = assenza, grigio = non ho i turni.
 function stileTurno(g: GiornoEffettivo | undefined) {
   if (!g) return "bg-ov/5 text-muted";
-  if (g.modifica?.tipo === "assenza") return "bg-amber-500/25 text-amber-100";
+  if (g.modifica?.tipo === "assenza" && g.riposo) return "bg-amber-500/25 text-amber-100";
+  if (g.modifica?.tipo === "assenza") return "bg-blue-600 text-white ring-2 ring-inset ring-amber-400"; // assenza su un solo turno: lavori gli altri
   if (g.riposo) return "bg-emerald-500/20 text-emerald-200";
   return "bg-blue-600 text-white";
 }
@@ -28,7 +29,8 @@ function stileTurno(g: GiornoEffettivo | undefined) {
 // Cosa scrivere nella casella (poco spazio): 3, 2+3, R, FER...
 function testoCasella(g: GiornoEffettivo | undefined) {
   if (!g) return "";
-  if (g.modifica?.tipo === "assenza") return (g.modifica.assenza ?? "altro").slice(0, 3).toUpperCase();
+  if (g.modifica?.tipo === "assenza" && g.riposo) return (g.modifica.assenza ?? "altro").slice(0, 3).toUpperCase();
+  if (g.modifica?.tipo === "assenza") return `${(g.modifica.assenza ?? "altro").charAt(0).toUpperCase()}+${g.codici.join("+")}`;
   if (g.riposo) return g.codiceBase === "RD" && !g.modifica ? "RD" : "R";
   return g.codici.join("+");
 }

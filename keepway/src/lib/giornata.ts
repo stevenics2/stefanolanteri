@@ -24,7 +24,7 @@ export function riepilogoGiorno(data: string): RiepilogoGiorno {
 
   let etichetta = "Giorno senza turni noti";
   if (g) {
-    if (g.modifica?.tipo === "assenza") etichetta = g.etichetta.split(" ")[0].charAt(0) + g.etichetta.split(" ")[0].slice(1).toLowerCase();
+    if (g.modifica?.tipo === "assenza" && g.riposo) etichetta = g.etichetta.split(" ")[0].charAt(0) + g.etichetta.split(" ")[0].slice(1).toLowerCase();
     else if (g.riposo) etichetta = "Riposo";
     else etichetta = g.codici.length > 1 ? `Doppio turno ${g.codici.join("+")}` : `Turno ${g.codici[0]}`;
   }

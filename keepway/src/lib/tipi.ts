@@ -100,6 +100,7 @@ export type Modifica = {
   mostraEx: boolean; // scrivere "(ex 3)" accanto al nuovo turno
   extra?: string[]; // straordinario: i turni aggiunti
   assenza?: Assenza;
+  assenzaTurno?: string[]; // assenza su un solo turno di un doppio (es. ferie sul 1 del 1+4): i turni coperti dall'assenza; `codici` sono quelli che lavori
   gruppo?: string; // modifiche collegate (es. un turno spostato da un giorno a un altro)
   creato: number;
 };

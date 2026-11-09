@@ -63,7 +63,7 @@ export function fraseSonno(min: number, obiettivoMin: number): string {
 }
 
 function descrizioneTurno(g: GiornoEffettivo): string {
-  if (g.modifica?.tipo === "assenza") return `in **${nomeAssenza(g.modifica.assenza ?? "altro").toLowerCase()}**`;
+  if (g.modifica?.tipo === "assenza" && g.riposo) return `in **${nomeAssenza(g.modifica.assenza ?? "altro").toLowerCase()}**`;
   if (g.riposo) return "a **riposo**";
   const nome = g.codici.length > 1 ? `doppio turno ${g.codici.slice().sort().join("+")}` : `turno ${g.codici[0]}`;
   return `**${nome}** - (${g.orario.replace(/–/g, "-\u2060")})`;
@@ -71,7 +71,8 @@ function descrizioneTurno(g: GiornoEffettivo): string {
 
 export function fraseTurno(g: GiornoEffettivo | undefined): string | null {
   if (!g) return null;
-  if (g.modifica?.tipo === "assenza") return `Oggi sei ${descrizioneTurno(g)}.`;
+  if (g.modifica?.tipo === "assenza" && g.riposo) return `Oggi sei ${descrizioneTurno(g)}.`;
+  if (g.modifica?.tipo === "assenza" && g.modifica.assenzaTurno?.length) return `Da Roster hai il ${descrizioneTurno(g)} (${nomeAssenza(g.modifica.assenza ?? "altro").toLowerCase()} sul turno ${[...g.modifica.assenzaTurno].sort().join("+")})`;
   if (g.riposo) return "Da Roster oggi sei **a riposo**.";
   return `Da Roster hai il ${descrizioneTurno(g)}`;
 }

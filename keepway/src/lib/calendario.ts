@@ -92,7 +92,8 @@ export function giornoEffettivo(data: string): GiornoEffettivo | undefined {
   const riposo = codici.length === 0;
 
   let etichetta: string;
-  if (m?.tipo === "assenza") etichetta = `${NOMI_ASSENZA[m.assenza ?? "altro"]}${m.mostraEx && m.ex ? ` - (ex ${m.ex})` : ""}`;
+  if (m?.tipo === "assenza" && codici.length > 0 && m.assenzaTurno?.length) etichetta = `${NOMI_ASSENZA[m.assenza ?? "altro"]} (${unisci(m.assenzaTurno)}) · ${unisci(codici)}`; // assenza su un solo turno: lavori gli altri
+  else if (m?.tipo === "assenza") etichetta = `${NOMI_ASSENZA[m.assenza ?? "altro"]}${m.mostraEx && m.ex ? ` - (ex ${m.ex})` : ""}`;
   else if (riposo) etichetta = `${r.t === "RD" ? "RD" : "R"}${m?.mostraEx && m.ex ? ` - (ex ${m.ex})` : ""}`;
   else etichetta = `${unisci(codici)}${m?.mostraEx && m.ex ? ` - (ex ${m.ex})` : ""}`;
 

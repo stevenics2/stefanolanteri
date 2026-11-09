@@ -6,6 +6,7 @@ export function bandaDi(m: Modifica | undefined): { testo: string; classe: strin
   if (m.tipo === "straordinario") return { testo: "ORE DI STRAORDINARIO", classe: "bg-violet-600" };
   if (m.tipo === "cambio_azienda") return { testo: "CAMBIO TURNO PAGATO DA AZIENDA", classe: "bg-emerald-600" };
   if (m.tipo === "cambio_personale") return { testo: "CAMBIO TURNO PERSONALE", classe: "bg-slate-600" };
+  if (m.tipo === "assenza" && m.assenzaTurno?.length) return { testo: `${(m.assenza ?? "altro").toUpperCase()} SUL TURNO ${[...m.assenzaTurno].sort().join("+")}`, classe: "bg-amber-600" };
   return null;
 }
 

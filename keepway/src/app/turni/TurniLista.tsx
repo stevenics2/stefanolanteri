@@ -114,7 +114,7 @@ export default function TurniLista() {
 
 // Il blocco colorato: blu = turno (anche il 1+4 del roster), verde = riposo, ambra = assenza. Sotto, la striscia della modifica.
 function Blocco({ g, avviso }: { g: GiornoEffettivo; avviso?: string }) {
-  const assenza = g.modifica?.tipo === "assenza";
+  const assenza = g.modifica?.tipo === "assenza" && g.riposo; // assenza piena; su un solo turno il blocco resta blu con la striscia
   let classe: string;
   if (assenza) classe = "border border-amber-500/60 bg-amber-500/15 text-amber-100";
   else if (g.riposo) classe = "border border-emerald-500/60 bg-emerald-500/15 text-emerald-100";

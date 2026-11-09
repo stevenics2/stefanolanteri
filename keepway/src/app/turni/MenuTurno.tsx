@@ -41,6 +41,7 @@ function MenuGiorno({ data, onClose, onVai }: { data: string; onClose: () => voi
   const [extra, setExtra] = useState<string[]>([]);
   // assenza
   const [assenza, setAssenza] = useState<Assenza>("ferie");
+  const [turnoAssente, setTurnoAssente] = useState<string | null>(null); // null = tutto il giorno; altrimenti solo quel turno di un doppio
 
   if (!ge) {
     return (
@@ -99,9 +100,13 @@ function MenuGiorno({ data, onClose, onVai }: { data: string; onClose: () => voi
   };
 
   const salvaAssenza = () => {
+    const parziale = turnoAssente !== null && ge.codici.length > 1 && ge.codici.includes(turnoAssente);
     conferma(
-      [{ id: nuovoId(), data, tipo: "assenza", codici: [], ex: base, mostraEx: true, assenza, creato: adessoMs() }],
-      `${ASSENZE.find((a) => a.id === assenza)?.nome} registrata.`,
+      [{
+        id: nuovoId(), data, tipo: "assenza", codici: parziale ? ge.codici.filter((c) => c !== turnoAssente) : [], ex: base, mostraEx: true, assenza,
+        ...(parziale ? { assenzaTurno: [turnoAssente!] } : {}), creato: adessoMs(),
+      }],
+      parziale ? `${ASSENZE.find((a) => a.id === assenza)?.nome} registrata sul turno ${turnoAssente}.` : `${ASSENZE.find((a) => a.id === assenza)?.nome} registrata.`,
     );
   };
 
@@ -290,6 +295,16 @@ function MenuGiorno({ data, onClose, onVai }: { data: string; onClose: () => voi
               {ASSENZE.map((a) => <Chip key={a.id} attivo={assenza === a.id} onClick={() => setAssenza(a.id)}>{a.nome}</Chip>)}
             </div>
           </div>
+          {ge.codici.length > 1 && (
+            <div>
+              <Etichetta>Per quali turni?</Etichetta>
+              <div className="flex flex-wrap gap-2">
+                <Chip attivo={turnoAssente === null} onClick={() => setTurnoAssente(null)}>Tutto il giorno ({ge.codici.slice().sort().join("+")})</Chip>
+                {ge.codici.slice().sort().map((c) => <Chip key={c} attivo={turnoAssente === c} onClick={() => setTurnoAssente(c)}>Solo il turno {c}</Chip>)}
+              </div>
+              {turnoAssente !== null && <p className="mt-1.5 text-xs text-muted">Il turno {ge.codici.filter((c) => c !== turnoAssente).join("+")} lo lavori normalmente.</p>}
+            </div>
+          )}
           <button data-suono="via" onClick={salvaAssenza} className="w-full rounded-2xl bg-accent py-3.5 text-lg font-bold text-black">
             Salva assenza
           </button>
