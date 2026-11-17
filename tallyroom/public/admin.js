@@ -31,7 +31,7 @@ async function load() {
     <div class="card"><h2>Pending approval (${q.reviews.length})</h2>
     ${q.reviews.map((r) => `
       <div class="rev" data-id="${r.id}">
-        <b>${esc(r.ship_name)}</b> ${r.ship_status === 'pending' ? '<span class="badge">NEW SHIP</span>' : ''}
+        <b>${esc(r.ship_name)}</b> ${r.ship_status === 'pending' ? '<span class="badge">NEW SHIP</span>' : ''} <button class="btn sec sm" type="button" data-ren="${r.ship_id}" data-name="${esc(r.ship_name)}">Edit name</button>
         ${r.has_tally === 0 ? '<div class="npchip">✕ TALLY ROOM NOT PRESENT</div>' : `<div class="stars">${'★'.repeat(r.rating)}</div>
         <div class="muted">${Object.entries(AMEN).map(([k, l]) => (r.amenities[k] === 'y' ? '✔ ' : r.amenities[k] === 'n' ? '✘ ' : '? ') + l).join(' · ')}${r.capacity ? ' · Capacity: ' + ['', '1-2', '3-5', '6-10', '10+'][r.capacity] + ' people' : ''}</div>`}
         ${r.comment ? `<p>${esc(r.comment)}</p>` : ''}
@@ -115,6 +115,13 @@ async function load() {
       a.download = 'tallyrooms-backup-' + new Date().toISOString().slice(0, 10) + '.sql'; document.body.append(a); a.click(); a.remove();
     } catch (e) { alert(e.message); } finally { b.disabled = false; }
   };
+  async function renameShip(b, after) {
+    const name = prompt('New vessel name', b.dataset.name);
+    if (name === null || !name.trim() || name.trim().toUpperCase() === b.dataset.name) return;
+    b.disabled = true;
+    try { await api(`/ships/${b.dataset.ren}/rename`, 'POST', { name }); await after(); } catch (er) { alert(er.message); b.disabled = false; }
+  }
+  $app.querySelectorAll('.rev [data-ren]').forEach((b) => b.addEventListener('click', () => renameShip(b, load)));
   const vq = document.getElementById('vq'), vlist = document.getElementById('vlist');
   async function loadShips() {
     try {
@@ -122,12 +129,14 @@ async function load() {
       vlist.innerHTML = ships.map((s) => `
         <div class="vrow">
           <span class="vn"><b>${esc(s.name)}</b><small>${s.reviews} review${s.reviews === 1 ? '' : 's'}${s.pending ? `, ${s.pending} pending` : ''}${s.status === 'pending' ? ' · not published' : ''}</small></span>
-          <button class="btn bad sm" type="button" data-del="${s.id}" data-name="${esc(s.name)}" data-n="${s.reviews}">Delete</button>
+          <span class="row"><button class="btn sec sm" type="button" data-ren="${s.id}" data-name="${esc(s.name)}">Edit</button><button class="btn bad sm" type="button" data-del="${s.id}" data-name="${esc(s.name)}" data-n="${s.reviews}">Delete</button></span>
         </div>`).join('') || '<p class="muted">No vessel found.</p>';
     } catch { /* 401 is handled by api() */ }
   }
   let vt; vq.addEventListener('input', () => { clearTimeout(vt); vt = setTimeout(loadShips, 250); });
   vlist.addEventListener('click', async (e) => {
+    const rb = e.target.closest('[data-ren]');
+    if (rb) { await renameShip(rb, loadShips); return; }
     const b = e.target.closest('[data-del]'); if (!b) return;
     if (!confirm(`Delete "${b.dataset.name}" and its ${b.dataset.n} review(s), photos included?\n\nThis cannot be undone.`)) return;
     b.disabled = true;

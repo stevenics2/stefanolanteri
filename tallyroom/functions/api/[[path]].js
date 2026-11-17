@@ -525,6 +525,18 @@ async function adminShips(env, url) {
 }
 
 // Deletes a vessel with all its reviews, photos (files included) and reports. Cannot be undone.
+async function adminRenameShip(env, id, request) {
+  const d = await request.json().catch(() => ({}));
+  const name = cleanName(d.name), norm = normName(name);
+  if (norm.length < 2) return err('Please enter a valid vessel name');
+  const ship = await env.DB.prepare('SELECT id FROM ships WHERE id = ?').bind(id).first();
+  if (!ship) return err('Not found', 404);
+  const clash = await env.DB.prepare('SELECT id, name FROM ships WHERE name_norm = ? AND id != ?').bind(norm, id).first();
+  if (clash) return err(`Another vessel already has this name: ${up(clash.name)}`, 409);
+  await env.DB.prepare('UPDATE ships SET name = ?, name_norm = ? WHERE id = ?').bind(name, norm, id).run();
+  return json({ ok: true, name });
+}
+
 async function adminDeleteShip(env, id) {
   const ship = await env.DB.prepare('SELECT id FROM ships WHERE id = ?').bind(id).first();
   if (!ship) return err('Not found', 404);
@@ -803,6 +815,7 @@ export async function onRequest({ request, env, params, waitUntil }) {
       if (path === '/admin/push' && m === 'GET') return await adminPush(env);
       if (path === '/admin/push/test' && m === 'POST') return await adminPushTest(env);
       if (path === '/admin/news-check' && m === 'GET') return await adminNewsCheck(env);
+      if ((x = path.match(/^\/admin\/ships\/(\d+)\/rename$/)) && m === 'POST') return await adminRenameShip(env, +x[1], request);
       if ((x = path.match(/^\/admin\/ships\/(\d+)\/delete$/)) && m === 'POST') return await adminDeleteShip(env, +x[1]);
       if ((x = path.match(/^\/admin\/reviews\/(\d+)\/(approve|reject|delete)$/)) && m === 'POST')
         return await adminReview(env, +x[1], x[2]);
