@@ -50,7 +50,10 @@ async function buildSheet(env, ship) {
 
   // la Tally Room è "non presente" se nelle ultime recensioni la maggioranza lo dice
   const withTally = recent.filter((r) => r.has_tally);
-  const tally_present = !(recent.length && recent.length - withTally.length > withTally.length);
+  // ...ma lo stato "presente / non presente" guarda solo le ultime 3, così una stanza riparata torna presente in fretta
+  const last = parsed.slice(0, PRESENCE);
+  const lastYes = last.filter((r) => r.has_tally).length;
+  const tally_present = !(last.length && last.length - lastYes > lastYes);
 
   // voto = media delle ultime recensioni con Tally Room; il voto iniziale importato vale solo se non ce ne sono
   const ratings = withTally.map((r) => r.rating);
@@ -95,10 +98,12 @@ const normAmenities = (raw) => Object.fromEntries(AMENITIES.map((a) => [a, ans(r
 function safeJson(s) { try { return JSON.parse(s) || {}; } catch { return {}; } }
 
 const RECENT_SQL = `(SELECT rating, has_tally FROM reviews r WHERE r.ship_id = s.id AND r.status='approved' ORDER BY r.created_at DESC, r.id DESC LIMIT 5)`;
+const PRESENCE = 3;
+const PRESENCE_SQL = `(SELECT has_tally FROM reviews r WHERE r.ship_id = s.id AND r.status='approved' ORDER BY r.created_at DESC, r.id DESC LIMIT ${PRESENCE})`;
 const SHIP_STATS = `
   (SELECT ROUND(AVG(CASE WHEN has_tally = 1 THEN rating END), 1) FROM ${RECENT_SQL}) AS avg_rating,
-  (SELECT COALESCE(SUM(has_tally), 0) FROM ${RECENT_SQL}) AS present_n,
-  (SELECT COUNT(*) FROM ${RECENT_SQL}) AS recent_n,
+  (SELECT COALESCE(SUM(has_tally), 0) FROM ${PRESENCE_SQL}) AS present_n,
+  (SELECT COUNT(*) FROM ${PRESENCE_SQL}) AS recent_n,
   (SELECT COUNT(*) FROM reviews r WHERE r.ship_id = s.id AND r.status='approved') AS review_count`;
 const withFlag = (rows) => rows.map((r) => ({ ...r, name: up(r.name), not_present: r.recent_n > 0 && r.recent_n - r.present_n > r.present_n }));
 

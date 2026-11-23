@@ -6,7 +6,7 @@ Runs entirely on Cloudflare's free tier (Pages + D1 + R2).
 ## Features
 - Type a ship name; if it is not in the database yet, add it.
 - Star rating, amenity questions with YES / NO / blank (220V power, air conditioning, chairs, desk, cleanliness, lighting, toilet nearby), approximate capacity (people that fit inside), notes and up to 3 photos.
-- **Update this Tally Room**: every new submission is a dated update. The sheet shows rating and amenities based on the **latest 5 reviews**, so a room that gets dirty or loses its AC shows up quickly. The full history stays visible.
+- **Update this Tally Room**: every new submission is a dated update. The sheet shows rating and amenities based on the **latest 5 reviews**, so a room that gets dirty or loses its AC shows up quickly. The full history stays visible. Whether the Tally Room is shown as present or NO TALLY depends only on the latest 3 reviews, so a repaired room comes back after two positive reviews.
 - Reviews are **anonymous** and published only after **manual approval** in `/admin`.
 - An existing list of ships (name + rating) can be imported from `/admin`. The imported rating is used until the first real review arrives.
 - **Save to your phone**: on a phone, the first visit shows a one-time popup. On Android it installs the site to the home screen with one tap (the site is installable: `manifest.webmanifest`, `sw.js` and the icons in `public/`). On iPhone/iPad it shows the steps, because iOS does not allow this from code.
