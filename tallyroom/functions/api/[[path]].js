@@ -42,7 +42,7 @@ function isAdmin(request, env) {
 // ---- scheda nave: media sulle ultime recensioni approvate + stato comfort ----
 async function buildSheet(env, ship) {
   const { results: revs } = await env.DB.prepare(
-    `SELECT id, rating, has_tally, capacity, amenities, comment, created_at FROM reviews
+    `SELECT id, rating, has_tally, capacity, amenities, comment, country, created_at FROM reviews
      WHERE ship_id = ? AND status = 'approved' ORDER BY created_at DESC, id DESC`
   ).bind(ship.id).all();
   const parsed = revs.map((r) => ({ ...r, amenities: normAmenities(safeJson(r.amenities)) }));
@@ -126,8 +126,12 @@ async function sendEmail(env, { subject, text, replyTo }) {
   } catch { return false; }   // sending an email must never block a review
 }
 
-// Approximate origin of a request, from what Cloudflare tells us about the connection (country and continent only; never stored).
+// Approximate origin of a request, from what Cloudflare tells us about the connection (country and continent; only the 2-letter country is stored, with the review).
 const CONTINENTS = { AF: 'Africa', AN: 'Antarctica', AS: 'Asia', EU: 'Europe', NA: 'North America', OC: 'Oceania', SA: 'South America' };
+function countryCode(request) {
+  const code = String((request.cf || {}).country || request.headers.get('cf-ipcountry') || '').toUpperCase();
+  return /^[A-Z]{2}$/.test(code) && code !== 'XX' && code !== 'T1' ? code : null;
+}
 function describeOrigin(request) {
   const cf = request.cf || {};
   const code = String(cf.country || request.headers.get('cf-ipcountry') || '').toUpperCase();
@@ -424,9 +428,9 @@ async function submitReview(env, request, ctx) {
   }
 
   const rev = await env.DB.prepare(
-    `INSERT INTO reviews (ship_id, rating, has_tally, capacity, amenities, comment, status, ip_hash, created_at)
-     VALUES (?,?,?,?,?,?, 'pending', ?, ?)`
-  ).bind(shipId, rating, hasTally, capacity, JSON.stringify(amenities), comment, ipHash, now).run();
+    `INSERT INTO reviews (ship_id, rating, has_tally, capacity, amenities, comment, country, status, ip_hash, created_at)
+     VALUES (?,?,?,?,?,?,?, 'pending', ?, ?)`
+  ).bind(shipId, rating, hasTally, capacity, JSON.stringify(amenities), comment, countryCode(request), ipHash, now).run();
   const reviewId = rev.meta.last_row_id;
 
   for (const f of files) {
@@ -560,7 +564,7 @@ async function adminDeleteShip(env, id) {
 // ---- Backup: SQL dump of all data (ip_hash is deliberately left out). Same logic lives in reminder/worker.js ----
 const BACKUP_TABLES = [
   ['ships', ['id', 'name', 'name_norm', 'seed_rating', 'status', 'created_at']],
-  ['reviews', ['id', 'ship_id', 'rating', 'has_tally', 'capacity', 'amenities', 'comment', 'status', 'created_at']],
+  ['reviews', ['id', 'ship_id', 'rating', 'has_tally', 'capacity', 'amenities', 'comment', 'country', 'status', 'created_at']],
   ['photos', ['id', 'review_id', 'ship_id', 'r2_key', 'content_type', 'created_at']],
   ['reports', ['id', 'review_id', 'reason', 'created_at']],
 ];
@@ -778,6 +782,11 @@ async function ensureSchema(env) {
     await env.DB.prepare('SELECT capacity FROM reviews LIMIT 1').first();
   } catch {
     await env.DB.prepare('ALTER TABLE reviews ADD COLUMN capacity INTEGER').run();
+  }
+  try {
+    await env.DB.prepare('SELECT country FROM reviews LIMIT 1').first();
+  } catch {
+    await env.DB.prepare('ALTER TABLE reviews ADD COLUMN country TEXT').run();
   }
   // nomi nave sempre in maiuscolo (anche quelli salvati prima di questa regola)
   await env.DB.prepare('UPDATE ships SET name = UPPER(name) WHERE name != UPPER(name)').run();

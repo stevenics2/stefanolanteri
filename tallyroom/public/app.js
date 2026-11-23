@@ -48,6 +48,7 @@ document.getElementById('brand').innerHTML = `${icon('anchor')}Tally Room <span>
 const $app = document.getElementById('app');
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const stars = (v) => { const n = Math.round(v || 0); return `<span class="stars">${'★'.repeat(n)}<span class="off">${'★'.repeat(5 - n)}</span></span>`; };
+const countryName = (c) => { try { return new Intl.DisplayNames(['en'], { type: 'region' }).of(c) || ''; } catch { return ''; } };
 const fmtDate = (t) => new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 const api = async (path, opts) => {
   const r = await fetch('/api' + path, opts);
@@ -393,7 +394,7 @@ async function ship(id) {
     <div class="card"><h2>${icon('history')} Update history</h2>
       ${s.reviews.length ? s.reviews.map((r) => `
         <div class="rev">
-          <div class="row">${r.has_tally ? stars(r.rating) : `<span class="npchip">${icon('x')} Tally Room not present</span>`}<span class="muted">${fmtDate(r.created_at)}</span></div>
+          <div class="row">${r.has_tally ? stars(r.rating) : `<span class="npchip">${icon('x')} Tally Room not present</span>`}<span class="muted">${fmtDate(r.created_at)}${r.country && countryName(r.country) ? ' · ' + esc(countryName(r.country)) : ''}</span></div>
           ${r.has_tally ? `<div class="mini">${AMEN.filter(([k]) => r.amenities[k] === 'y').map(([k, l]) => `<span>${icon(k)}${l}</span>`).join('')}${AMEN.filter(([k]) => r.amenities[k] === 'n').map(([k, l]) => `<span class="no">${icon('x')}${l}</span>`).join('')}${r.capacity ? `<span>${icon('users')}${CAP[r.capacity]} people</span>` : ''}${!AMEN.some(([k]) => r.amenities[k]) && !r.capacity ? '<span style="background:var(--bg);color:var(--mut)">No amenities reported</span>' : ''}</div>` : ''}
           ${r.comment ? `<p>${esc(r.comment)}</p>` : ''}
           <button class="linkbtn" data-report="${r.id}">Report</button>
